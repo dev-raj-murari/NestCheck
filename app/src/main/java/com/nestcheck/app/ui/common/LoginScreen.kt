@@ -1,7 +1,6 @@
 package com.nestcheck.app.ui.common
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,15 +12,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.nestcheck.app.navigation.Screen
 import com.nestcheck.app.ui.theme.AlertRed
 import com.nestcheck.app.ui.theme.Black
+import com.nestcheck.app.ui.theme.NestCheckTheme
 import com.nestcheck.app.ui.theme.Typography
 import com.nestcheck.app.ui.theme.White
 
@@ -40,6 +40,25 @@ fun LoginScreen(
         }
     }
 
+    LoginContent(
+        uiState = uiState,
+        onEmailChange = viewModel::onEmailChange,
+        onPasswordChange = viewModel::onPasswordChange,
+        onNameChange = viewModel::onNameChange,
+        onToggleMode = viewModel::toggleAuthMode,
+        onSubmit = viewModel::submit
+    )
+}
+
+@Composable
+fun LoginContent(
+    uiState: AuthUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onNameChange: (String) -> Unit,
+    onToggleMode: () -> Unit,
+    onSubmit: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -66,7 +85,7 @@ fun LoginScreen(
             if (uiState.isRegistering) {
                 OutlinedTextField(
                     value = uiState.name,
-                    onValueChange = viewModel::onNameChange,
+                    onValueChange = onNameChange,
                     label = { Text("Parent Full Name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -80,7 +99,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = uiState.email,
-                onValueChange = viewModel::onEmailChange,
+                onValueChange = onEmailChange,
                 label = { Text("Email Address") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -95,7 +114,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = uiState.pass,
-                onValueChange = viewModel::onPasswordChange,
+                onValueChange = onPasswordChange,
                 label = { Text("Password") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
@@ -119,7 +138,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { viewModel.submit() },
+                onClick = onSubmit,
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -144,9 +163,24 @@ fun LoginScreen(
                 style = Typography.bodyMedium,
                 color = Black,
                 modifier = Modifier
-                    .clickable { viewModel.toggleAuthMode() }
+                    .clickable { onToggleMode() }
                     .padding(8.dp)
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    NestCheckTheme {
+        LoginContent(
+            uiState = AuthUiState(email = "parent@nestcheck.com"),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onNameChange = {},
+            onToggleMode = {},
+            onSubmit = {}
+        )
     }
 }
