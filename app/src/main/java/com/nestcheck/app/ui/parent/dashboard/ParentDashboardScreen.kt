@@ -43,7 +43,6 @@ class ParentDashboardViewModel @Inject constructor(
 data class DashboardCard(
     val title: String,
     val subtitle: String,
-    val featureTag: String,
     val icon: ImageVector,
     val route: String
 )
@@ -55,16 +54,16 @@ fun ParentDashboardScreen(
 ) {
     val child by viewModel.childProfile.collectAsState()
 
-    // 8 sections directly matching flowchart #2
+    // 8 clean dashboard cards matching the app architecture
     val dashboardCards = listOf(
-        DashboardCard("Child profiles", "Age, weight, height, auto BMI", "F13, F20", Icons.Outlined.Person, Screen.ChildProfile.route),
-        DashboardCard("Screen time", "Daily caps, countdown, limits", "F1, F2", Icons.Outlined.Timer, Screen.ScreenTime.route),
-        DashboardCard("App control", "Block, allow, install approvals", "F3, F9", Icons.Outlined.Block, Screen.AppControl.route),
-        DashboardCard("Content safety", "Web filters, NSFW detection", "F7, F8", Icons.Outlined.Shield, Screen.ContentFilter.route),
-        DashboardCard("Location", "Live map, school/home geofence", "F10-F12", Icons.Outlined.LocationOn, Screen.Location.route),
-        DashboardCard("Credits & routines", "Award credits, homework check", "F4-F6", Icons.Outlined.Stars, Screen.Credits.route),
-        DashboardCard("Device & safety", "SOS alerts, battery, remote lock", "F15, F16", Icons.Outlined.WarningAmber, Screen.SOS.route),
-        DashboardCard("Reports & alerts", "Weekly summary, notification feed", "F17, F18", Icons.Outlined.Assessment, Screen.Reports.route)
+        DashboardCard("Child profiles", "Age, weight, height, auto BMI", Icons.Outlined.Person, Screen.ChildProfile.route),
+        DashboardCard("Screen time", "Daily caps, countdown, limits", Icons.Outlined.Timer, Screen.ScreenTime.route),
+        DashboardCard("App control", "Block, allow, install approvals", Icons.Outlined.Block, Screen.AppControl.route),
+        DashboardCard("Content safety", "Web filters, NSFW detection", Icons.Outlined.Shield, Screen.ContentFilter.route),
+        DashboardCard("Location", "Live map, school/home geofence", Icons.Outlined.LocationOn, Screen.Location.route),
+        DashboardCard("Credits & routines", "Award credits, homework check", Icons.Outlined.Stars, Screen.Credits.route),
+        DashboardCard("Device & safety", "SOS alerts, battery, remote lock", Icons.Outlined.WarningAmber, Screen.SOS.route),
+        DashboardCard("Reports & alerts", "Weekly summary, notification feed", Icons.Outlined.Assessment, Screen.Reports.route)
     )
 
     Column(
@@ -209,12 +208,10 @@ fun ParentDashboardScreen(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
+                        Box(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            contentAlignment = Alignment.TopEnd
                         ) {
-                            Text(card.featureTag, color = CyberTextDim, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Icon(card.icon, contentDescription = card.title, tint = CyberTextBright, modifier = Modifier.size(18.dp))
                         }
 

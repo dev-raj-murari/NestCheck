@@ -80,7 +80,7 @@ fun LoginScreen(
             modifier = Modifier.padding(top = 2.dp, bottom = 20.dp)
         )
 
-        // IF REGISTERING: TOGGLE BETWEEN PARENT AND STUDENT
+        // IF REGISTERING: TOGGLE BETWEEN PARENT AND CHILD
         if (uiState.isRegistering) {
             Row(
                 modifier = Modifier
@@ -109,19 +109,19 @@ fun LoginScreen(
                     )
                 }
 
-                // Register as Student
+                // Register as Child
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(6.dp))
-                        .background(if (uiState.registerRole == RegisterRole.STUDENT) White else Color.Transparent)
-                        .clickable { viewModel.setRegisterRole(RegisterRole.STUDENT) },
+                        .background(if (uiState.registerRole == RegisterRole.CHILD) White else Color.Transparent)
+                        .clickable { viewModel.setRegisterRole(RegisterRole.CHILD) },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Register as Student",
-                        color = if (uiState.registerRole == RegisterRole.STUDENT) Black else CyberTextDim,
+                        text = "Register as Child",
+                        color = if (uiState.registerRole == RegisterRole.CHILD) Black else CyberTextDim,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp
                     )
@@ -351,16 +351,15 @@ fun LoginScreen(
                     }
 
                 } else {
-                    // === REGISTER AS STUDENT / CHILD ===
-                    Text("Student / Child Info", color = CyberTextBright, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text("Physical metrics and daily health goals", color = CyberTextDim, fontSize = 11.sp)
+                    // === REGISTER AS CHILD ===
+                    Text("Child Details", color = CyberTextBright, fontSize = 15.sp, fontWeight = FontWeight.Bold)
 
                     Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedTextField(
                         value = uiState.childName,
                         onValueChange = viewModel::onChildNameChange,
-                        label = { Text("Student Name") },
+                        label = { Text("Child Name") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -518,14 +517,14 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Button(
-                        onClick = viewModel::registerStudent,
+                        onClick = viewModel::registerChild,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
                         shape = RoundedCornerShape(6.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
                     ) {
-                        Text("Register Student Device", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text("Register Child", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
             }

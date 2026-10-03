@@ -16,7 +16,7 @@ import kotlin.random.Random
 
 enum class RegisterRole {
     PARENT,
-    STUDENT
+    CHILD
 }
 
 data class AuthUiState(
@@ -37,7 +37,7 @@ data class AuthUiState(
     val isOtpVerified: Boolean = false,
     val otpError: String? = null,
 
-    // Student / Child Profile Fields
+    // Child Profile Fields
     val childName: String = "Aarav",
     val childAge: String = "10",
     val childDob: String = "2014-06-15",
@@ -209,7 +209,7 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun registerStudent() {
+    fun registerChild() {
         val state = _uiState.value
         val age = state.childAge.toIntOrNull() ?: 10
         val weight = state.childWeight.toFloatOrNull() ?: 34f
