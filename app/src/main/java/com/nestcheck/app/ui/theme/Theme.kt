@@ -1,18 +1,18 @@
 package com.nestcheck.app.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val LightColorScheme = lightColorScheme(
-    primary = Black,
-    onPrimary = White,
-    secondary = GrayDark,
+private val DarkColorScheme = darkColorScheme(
+    primary = White,
+    onPrimary = Black,
+    secondary = CyberBorderBright,
     onSecondary = White,
-    background = White,
-    onBackground = Black,
-    surface = White,
-    onSurface = Black,
+    background = CyberBlack,
+    onBackground = CyberTextBright,
+    surface = CyberCard,
+    onSurface = CyberTextBright,
     error = AlertRed,
     onError = White
 )
@@ -22,7 +22,7 @@ fun NestCheckTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = LightColorScheme, // Always use light scheme for B&W minimalism
+        colorScheme = DarkColorScheme,
         typography = Typography,
         content = content
     )

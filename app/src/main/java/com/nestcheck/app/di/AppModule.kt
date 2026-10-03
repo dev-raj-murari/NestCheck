@@ -31,6 +31,7 @@ object AppModule {
     @Singleton
     fun provideAuthRepository(
         auth: FirebaseAuth,
-        firestore: FirebaseFirestore
-    ): AuthRepository = AuthRepositoryImpl(auth, firestore)
+        firestore: FirebaseFirestore,
+        profileRepository: com.nestcheck.app.data.repository.ProfileRepository
+    ): AuthRepository = AuthRepositoryImpl(auth, firestore, profileRepository)
 }
