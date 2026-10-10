@@ -5,3 +5,6 @@ local.properties
 *.apk
 *.aab
 google-services.json
+*PROMPT*.md
+*HANDOUT*.md
+*handout*.md

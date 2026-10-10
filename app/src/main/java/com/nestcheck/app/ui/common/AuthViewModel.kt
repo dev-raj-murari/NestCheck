@@ -2,58 +2,72 @@ package com.nestcheck.app.ui.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nestcheck.app.core.BMICalculator
+import com.nestcheck.app.data.model.ChildProfile
 import com.nestcheck.app.data.repository.AuthRepository
 import com.nestcheck.app.data.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
-import kotlin.random.Random
 
-enum class RegisterRole {
+enum class UserType {
     PARENT,
-    CHILD
+    KID
 }
 
+data class KidDraft(
+    val id: String = UUID.randomUUID().toString(),
+    val name: String = "",
+    val age: String = "",
+    val gender: String = "Boy",
+    val dob: String = "",
+    val height: String = "",
+    val weight: String = ""
+)
+
 data class AuthUiState(
-    // Mode
+    val userType: UserType = UserType.PARENT,
     val isRegistering: Boolean = false,
-    val registerRole: RegisterRole = RegisterRole.PARENT,
 
-    // Parent Credentials
-    val email: String = "devraj@nestcheck.app",
-    val pass: String = "password123",
-    val name: String = "Dev Raj",
-    val phone: String = "+91 98765 43210",
+    // Parent details
+    val parentEmail: String = "devraj@nestcheck.app",
+    val parentPassword: String = "password123",
+    val parentName: String = "Dev Raj",
+    val parentRoleInHouse: String = "Father",
+    val parentPhone: String = "+91 98765 43210",
 
-    // Gmail OTP Verification
-    val isOtpSent: Boolean = false,
-    val generatedOtp: String = "482910",
-    val enteredOtp: String = "",
-    val isOtpVerified: Boolean = false,
-    val otpError: String? = null,
+    // Child entry fields (entered during parent registration)
+    val kidName: String = "",
+    val kidAge: String = "",
+    val kidGender: String = "Boy",
+    val kidDob: String = "",
+    val kidHeight: String = "",
+    val kidWeight: String = "",
 
-    // Child Profile Fields
-    val childName: String = "Aarav",
-    val childAge: String = "10",
-    val childDob: String = "2014-06-15",
-    val childGender: String = "Boy",
-    val childWeight: String = "34.0",
-    val childHeight: String = "140.0",
-    val childGoal: String = "6000",
-    val childPairingCode: String = "NEST-8492",
-    val calculatedBmi: Float = 17.3f,
+    // List of added children
+    val addedKids: List<KidDraft> = listOf(
+        KidDraft(
+            name = "Aarav",
+            age = "10",
+            gender = "Boy",
+            dob = "2016-05-15",
+            height = "140",
+            weight = "34"
+        )
+    ),
 
-    // Actions
+    // Kid direct login
+    val kidLoginName: String = "Aarav",
+    val kidLoginPass: String = "1234",
+
+    // State (No dashboard after login)
+    val isLoggedIn: Boolean = false,
+    val loggedInUserType: UserType? = null,
     val isLoading: Boolean = false,
-    val error: String? = null,
-    val navigateToRole: Boolean = false,
-    val navigateToParentDashboard: Boolean = false,
-    val navigateToKidDashboard: Boolean = false
+    val error: String? = null
 )
 
 @HiltViewModel
@@ -65,172 +79,155 @@ class AuthViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    init {
-        val child = profileRepository.childProfile.value
-        val parent = profileRepository.parentProfile.value
-        _uiState.value = _uiState.value.copy(
-            name = parent.name,
-            email = parent.email,
-            phone = parent.phone.ifBlank { "+91 98765 43210" },
-            childName = child.name,
-            childAge = child.age.toString(),
-            childDob = child.dateOfBirth.ifBlank { "2014-06-15" },
-            childGender = child.gender,
-            childWeight = child.weight.toString(),
-            childHeight = child.height.toString(),
-            childGoal = child.dailyStepGoal.toString(),
-            calculatedBmi = child.bmi
+    fun setUserType(type: UserType) {
+        _uiState.value = _uiState.value.copy(userType = type, error = null)
+    }
+
+    fun setRegistering(isRegistering: Boolean) {
+        _uiState.value = _uiState.value.copy(isRegistering = isRegistering, error = null)
+    }
+
+    // Parent fields
+    fun onParentEmailChange(value: String) {
+        _uiState.value = _uiState.value.copy(parentEmail = value, error = null)
+    }
+
+    fun onParentPasswordChange(value: String) {
+        _uiState.value = _uiState.value.copy(parentPassword = value, error = null)
+    }
+
+    fun onParentNameChange(value: String) {
+        _uiState.value = _uiState.value.copy(parentName = value, error = null)
+    }
+
+    fun onParentRoleChange(value: String) {
+        _uiState.value = _uiState.value.copy(parentRoleInHouse = value, error = null)
+    }
+
+    // Kid fields
+    fun onKidNameChange(value: String) {
+        _uiState.value = _uiState.value.copy(kidName = value, error = null)
+    }
+
+    fun onKidAgeChange(value: String) {
+        _uiState.value = _uiState.value.copy(kidAge = value, error = null)
+    }
+
+    fun onKidGenderChange(value: String) {
+        _uiState.value = _uiState.value.copy(kidGender = value, error = null)
+    }
+
+    fun onKidDobChange(value: String) {
+        _uiState.value = _uiState.value.copy(kidDob = value, error = null)
+    }
+
+    fun onKidHeightChange(value: String) {
+        _uiState.value = _uiState.value.copy(kidHeight = value, error = null)
+    }
+
+    fun onKidWeightChange(value: String) {
+        _uiState.value = _uiState.value.copy(kidWeight = value, error = null)
+    }
+
+    fun addKidToList() {
+        val s = _uiState.value
+        if (s.kidName.isBlank()) return
+        val newKid = KidDraft(
+            name = s.kidName,
+            age = s.kidAge,
+            gender = s.kidGender,
+            dob = s.kidDob,
+            height = s.kidHeight,
+            weight = s.kidWeight
+        )
+        _uiState.value = s.copy(
+            addedKids = s.addedKids + newKid,
+            kidName = "",
+            kidAge = "",
+            kidDob = "",
+            kidHeight = "",
+            kidWeight = ""
         )
     }
 
-    fun setRegistering(registering: Boolean) {
-        _uiState.value = _uiState.value.copy(isRegistering = registering, error = null, otpError = null)
-    }
-
-    fun setRegisterRole(role: RegisterRole) {
-        _uiState.value = _uiState.value.copy(registerRole = role, error = null)
-    }
-
-    fun onEmailChange(email: String) {
-        _uiState.value = _uiState.value.copy(email = email, error = null)
-    }
-
-    fun onPasswordChange(pass: String) {
-        _uiState.value = _uiState.value.copy(pass = pass, error = null)
-    }
-
-    fun onNameChange(name: String) {
-        _uiState.value = _uiState.value.copy(name = name, error = null)
-    }
-
-    fun onPhoneChange(phone: String) {
-        _uiState.value = _uiState.value.copy(phone = phone, error = null)
-    }
-
-    // Gmail OTP System
-    fun sendGmailOtp() {
-        val email = _uiState.value.email
-        if (email.isBlank() || !email.contains("@")) {
-            _uiState.value = _uiState.value.copy(otpError = "Please enter a valid Gmail address")
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, otpError = null)
-            delay(600) // Simulated network dispatch to Gmail SMTP
-            val newOtp = (100000 + Random.nextInt(900000)).toString()
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                isOtpSent = true,
-                generatedOtp = newOtp,
-                enteredOtp = newOtp, // Pre-filled for effortless testing
-                otpError = null
-            )
-        }
-    }
-
-    fun onEnteredOtpChange(otp: String) {
-        _uiState.value = _uiState.value.copy(enteredOtp = otp, otpError = null)
-    }
-
-    fun verifyGmailOtp() {
-        val state = _uiState.value
-        if (state.enteredOtp == state.generatedOtp || state.enteredOtp == "123456") {
-            _uiState.value = state.copy(isOtpVerified = true, otpError = null)
-        } else {
-            _uiState.value = state.copy(otpError = "Invalid OTP code. Please check your Gmail.")
-        }
-    }
-
-    // Child Fields
-    fun onChildNameChange(name: String) {
-        _uiState.value = _uiState.value.copy(childName = name)
-    }
-
-    fun onChildAgeChange(age: String) {
-        _uiState.value = _uiState.value.copy(childAge = age)
-        recalculateBmiAndGoal()
-    }
-
-    fun onChildDobChange(dob: String) {
-        _uiState.value = _uiState.value.copy(childDob = dob)
-    }
-
-    fun onChildGenderChange(gender: String) {
-        _uiState.value = _uiState.value.copy(childGender = gender)
-    }
-
-    fun onChildWeightChange(weight: String) {
-        _uiState.value = _uiState.value.copy(childWeight = weight)
-        recalculateBmiAndGoal()
-    }
-
-    fun onChildHeightChange(height: String) {
-        _uiState.value = _uiState.value.copy(childHeight = height)
-        recalculateBmiAndGoal()
-    }
-
-    fun onChildGoalChange(goal: String) {
-        _uiState.value = _uiState.value.copy(childGoal = goal)
-    }
-
-    private fun recalculateBmiAndGoal() {
-        val w = _uiState.value.childWeight.toFloatOrNull() ?: 34f
-        val h = _uiState.value.childHeight.toFloatOrNull() ?: 140f
-        val a = _uiState.value.childAge.toIntOrNull() ?: 10
-        val bmi = BMICalculator.calculateBMI(w, h)
-        val goal = BMICalculator.calculateStepGoal(a, bmi)
+    fun removeKid(id: String) {
         _uiState.value = _uiState.value.copy(
-            calculatedBmi = bmi,
-            childGoal = goal.toString()
+            addedKids = _uiState.value.addedKids.filter { it.id != id }
         )
     }
 
-    // Submission
-    fun login() {
+    // Kid Login fields
+    fun onKidLoginNameChange(value: String) {
+        _uiState.value = _uiState.value.copy(kidLoginName = value, error = null)
+    }
+
+    fun onKidLoginPassChange(value: String) {
+        _uiState.value = _uiState.value.copy(kidLoginPass = value, error = null)
+    }
+
+    // Auth actions
+    fun loginParent() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            authRepository.login(_uiState.value.email, _uiState.value.pass)
-            _uiState.value = _uiState.value.copy(isLoading = false, navigateToRole = true)
+            authRepository.login(_uiState.value.parentEmail, _uiState.value.parentPassword)
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                isLoggedIn = true,
+                loggedInUserType = UserType.PARENT
+            )
         }
     }
 
     fun registerParent() {
-        val state = _uiState.value
+        val s = _uiState.value
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            // Convert added kids to ChildProfile models
+            val kidsToSave = s.addedKids.mapIndexed { idx, k ->
+                ChildProfile(
+                    uid = "child_${idx + 1}",
+                    parentUid = "parent_1",
+                    name = k.name,
+                    age = k.age.toIntOrNull() ?: 10,
+                    gender = k.gender,
+                    dateOfBirth = k.dob,
+                    height = k.height.toFloatOrNull() ?: 140f,
+                    weight = k.weight.toFloatOrNull() ?: 34f
+                )
+            }
+
             profileRepository.updateParentProfile(
-                name = state.name.ifBlank { "Parent" },
-                email = state.email,
-                phone = state.phone
+                name = s.parentName.ifBlank { "Parent" },
+                email = s.parentEmail,
+                roleInHouse = s.parentRoleInHouse,
+                phone = s.parentPhone
             )
-            authRepository.register(state.email, state.pass, state.name)
-            _uiState.value = _uiState.value.copy(isLoading = false, navigateToParentDashboard = true)
+            profileRepository.setChildren(kidsToSave)
+            authRepository.register(s.parentEmail, s.parentPassword, s.parentName)
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                isLoggedIn = true,
+                loggedInUserType = UserType.PARENT
+            )
         }
     }
 
-    fun registerChild() {
-        val state = _uiState.value
-        val age = state.childAge.toIntOrNull() ?: 10
-        val weight = state.childWeight.toFloatOrNull() ?: 34f
-        val height = state.childHeight.toFloatOrNull() ?: 140f
-
-        profileRepository.updateChildProfile(
-            name = state.childName.ifBlank { "Aarav" },
-            age = age,
-            gender = state.childGender,
-            weight = weight,
-            height = height
-        )
-
-        _uiState.value = _uiState.value.copy(navigateToKidDashboard = true)
+    fun loginKid() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                isLoggedIn = true,
+                loggedInUserType = UserType.KID
+            )
+        }
     }
 
-    fun onNavigated() {
+    fun logout() {
         _uiState.value = _uiState.value.copy(
-            navigateToRole = false,
-            navigateToParentDashboard = false,
-            navigateToKidDashboard = false
+            isLoggedIn = false,
+            loggedInUserType = null
         )
     }
 }

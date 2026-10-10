@@ -12,15 +12,10 @@
 
 ## 📱 App Screenshots
 
-### Onboarding, Auth & Registration
-| Login | Role Selection | Parent Register (Gmail OTP) | Child Register (Metrics & BMI) |
-| :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/login_screen.png" width="220" /> | <img src="docs/screenshots/role_selection.png" width="220" /> | <img src="docs/screenshots/parent_register_otp.png" width="220" /> | <img src="docs/screenshots/child_register.png" width="220" /> |
-
-### Dashboards & Child Device
-| Parent Dashboard | Child Home Screen | Reference Design |
-| :---: | :---: | :---: |
-| <img src="docs/screenshots/parent_dashboard.png" width="240" /> | <img src="docs/screenshots/kid_home.png" width="240" /> | <img src="docs/architecture/06_kid_ui_reference_phone.jpg" width="240" /> |
+### Authentication & Onboarding
+| Parent Login | Kid Direct Login | Parent Register & Role | Add Child Details | Session State |
+| :---: | :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/parent_login.png" width="180" /> | <img src="docs/screenshots/kid_login.png" width="180" /> | <img src="docs/screenshots/parent_register.png" width="180" /> | <img src="docs/screenshots/parent_register_scrolled.png" width="180" /> | <img src="docs/screenshots/session_logged_in.png" width="180" /> |
 
 ---
 
