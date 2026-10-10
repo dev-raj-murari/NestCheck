@@ -81,7 +81,7 @@ fun ParentDashboardScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { navController.navigate(Screen.RoleSelection.route) }) {
+                IconButton(onClick = { navController.navigate(Screen.Login.route) }) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = CyberTextBright)
                 }
                 Text(
@@ -96,7 +96,7 @@ fun ParentDashboardScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                     .border(1.dp, CyberBorder, RoundedCornerShape(4.dp))
-                    .clickable { navController.navigate(Screen.RoleSelection.route) }
+                    .clickable { navController.navigate(Screen.Login.route) }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(

@@ -71,7 +71,7 @@ fun KidHomeScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                     .border(1.dp, CyberBorder, RoundedCornerShape(4.dp))
-                    .clickable { navController.navigate(Screen.RoleSelection.route) }
+                    .clickable { navController.navigate(Screen.Login.route) }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
