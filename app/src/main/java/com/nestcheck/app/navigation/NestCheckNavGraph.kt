@@ -10,6 +10,7 @@ sealed class Screen(val route: String) {
     object AppControl : Screen("app_control")
     object Location : Screen("location")
     object ContentFilter : Screen("content_filter")
+    object AppQuarantine : Screen("app_quarantine")
     object Reports : Screen("reports")
     object Credits : Screen("credits")
     object Settings : Screen("settings")
@@ -24,4 +25,5 @@ sealed class Screen(val route: String) {
     object SOS : Screen("sos")
     object KidProfile : Screen("kid_profile")
     object MoodCheckIn : Screen("mood_checkin")
+    object BlockedUrl : Screen("blocked_url")
 }
