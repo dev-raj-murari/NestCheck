@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.nestcheck.app.navigation.Screen
 import com.nestcheck.app.ui.theme.*
 
 @Composable
@@ -113,6 +114,63 @@ fun LoginScreen(
                         Text(text = "Kid Name: ${uiState.kidLoginName}", color = CyberTextBright, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(text = "Status: Connected", color = SuccessGreen, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = { navController.navigate(Screen.MyCredits.route) },
+                            modifier = Modifier.fillMaxWidth().height(42.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CyberCard, contentColor = CyberTextBright)
+                        ) {
+                            Text("My Credits & Rewards", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    if (uiState.userType == UserType.PARENT) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Text(text = "Active Modules:", color = CyberTextDim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.ScreenTime.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Screen Time", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.TimeLimits.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Time Limits", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.AppControl.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("App Control", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.Credits.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Credits Ledger", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
