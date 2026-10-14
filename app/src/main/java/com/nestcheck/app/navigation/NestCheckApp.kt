@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nestcheck.app.ui.common.LoginScreen
 import com.nestcheck.app.ui.common.SplashScreen
+import com.nestcheck.app.ui.parent.dashboard.ParentDashboardScreen
 import com.nestcheck.app.ui.parent.screentime.ScreenTimeScreen
 import com.nestcheck.app.ui.parent.screentime.TimeLimitScreen
 import com.nestcheck.app.ui.parent.appcontrol.AppControlScreen
@@ -17,6 +18,11 @@ import com.nestcheck.app.ui.child.steps.StepCounterScreen
 import com.nestcheck.app.ui.child.mood.MoodCheckInScreen
 import com.nestcheck.app.ui.child.sos.SOSScreen
 
+import com.nestcheck.app.ui.parent.content.ContentFilterScreen
+import com.nestcheck.app.ui.parent.location.LocationScreen
+import com.nestcheck.app.ui.sinan.AppQuarantineScreen
+import com.nestcheck.app.ui.sinan.BlockedUrlLandingScreen
+
 @Composable
 fun NestCheckApp() {
     val navController = rememberNavController()
@@ -24,6 +30,7 @@ fun NestCheckApp() {
     NavHost(navController = navController, startDestination = Screen.Splash.route) {
         composable(Screen.Splash.route) { SplashScreen(navController) }
         composable(Screen.Login.route) { LoginScreen(navController) }
+        composable(Screen.ParentDashboard.route) { ParentDashboardScreen(navController) }
         
         // Rohit's Feature Routes (F1, F2, F3, F4)
         composable(Screen.ScreenTime.route) { ScreenTimeScreen(navController) }
@@ -37,5 +44,11 @@ fun NestCheckApp() {
         composable(Screen.StepCounter.route) { StepCounterScreen(navController) }
         composable(Screen.MoodCheckIn.route) { MoodCheckInScreen(navController) }
         composable(Screen.SOS.route) { SOSScreen(navController) }
+
+        // Sinan's Feature Routes (F7, F8, F9, F10)
+        composable(Screen.ContentFilter.route) { ContentFilterScreen(navController) }
+        composable(Screen.Location.route) { LocationScreen(navController) }
+        composable(Screen.AppQuarantine.route) { AppQuarantineScreen(navController) }
+        composable(Screen.BlockedUrl.route) { BlockedUrlLandingScreen(navController) }
     }
 }
