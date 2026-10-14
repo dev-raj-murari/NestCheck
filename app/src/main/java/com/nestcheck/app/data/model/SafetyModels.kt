@@ -1,0 +1,113 @@
+package com.nestcheck.app.data.model
+
+// ============================================================================
+// F7: ON-DEVICE NSFW & EXPLICIT CONTENT DETECTION MODELS
+// ============================================================================
+
+enum class NsfwSeverity(val label: String) {
+    LOW("Low Severity"),
+    MEDIUM("Medium Risk"),
+    HIGH("High Risk")
+}
+
+enum class IncidentStatus(val displayName: String) {
+    BLURRED("Auto-Blurred"),
+    QUARANTINED("Quarantined"),
+    REVIEWED("Reviewed"),
+    DISMISSED("Dismissed")
+}
+
+enum class NsfwSensitivityLevel(val displayName: String, val threshold: Float) {
+    LOW("Lenient (0.85)", 0.85f),
+    MEDIUM("Balanced (0.65)", 0.65f),
+    HIGH("Strict (0.45)", 0.45f)
+}
+
+data class NsfwIncident(
+    val id: String = "",
+    val mediaName: String = "",
+    val sourceApp: String = "",
+    val confidenceScore: Float = 0.0f,
+    val timestamp: Long = System.currentTimeMillis(),
+    val severity: NsfwSeverity = NsfwSeverity.MEDIUM,
+    val status: IncidentStatus = IncidentStatus.BLURRED,
+    val isBlurred: Boolean = true,
+    val flagReason: String = "Explicit visual patterns detected"
+)
+
+data class SafetyScannerConfig(
+    val sensitivityLevel: NsfwSensitivityLevel = NsfwSensitivityLevel.MEDIUM,
+    val realtimeBlurEnabled: Boolean = true,
+    val notifyParentInstant: Boolean = true,
+    val scanIncomingMedia: Boolean = true,
+    val totalScannedCount: Int = 142,
+    val totalBlockedCount: Int = 8
+)
+
+// ============================================================================
+// F8: WEB CATEGORY CONTENT FILTERING MODELS
+// ============================================================================
+
+enum class WebCategory(val displayName: String, val description: String) {
+    ADULT("Adult & NSFW", "Explicit or adult-oriented material"),
+    GAMBLING("Gambling & Betting", "Casinos, lotteries, and sports betting"),
+    VIOLENCE("Violence & Gore", "Graphic gore and physical harm"),
+    WEAPONS("Weapons & Firearms", "Firearms, ammunition, and explosives"),
+    PIRACY("Piracy & Torrenting", "Illegal software and streaming downloads"),
+    SOCIAL("Social Media", "Public chatrooms and unrestrained feeds"),
+    GAMING("Browser Games", "Web-based distraction games")
+}
+
+data class WebCategoryRule(
+    val category: WebCategory,
+    val isBlocked: Boolean = true,
+    val blockCount: Int = 0
+)
+
+data class CustomDomainRule(
+    val id: String = "",
+    val domain: String = "",
+    val isBlocked: Boolean = true,
+    val addedTimestamp: Long = System.currentTimeMillis(),
+    val note: String = ""
+)
+
+data class WebAccessLog(
+    val id: String = "",
+    val url: String = "",
+    val domain: String = "",
+    val category: WebCategory = WebCategory.ADULT,
+    val timestamp: Long = System.currentTimeMillis(),
+    val wasBlocked: Boolean = true,
+    val blockedReason: String = "Category Blocked"
+)
+
+// ============================================================================
+// F9: NEW APP INSTALL APPROVAL & QUARANTINE MODELS
+// ============================================================================
+
+enum class QuarantineStatus(val displayName: String) {
+    PENDING_APPROVAL("Pending Approval"),
+    APPROVED("Approved"),
+    BLOCKED("Quarantined & Blocked")
+}
+
+enum class RiskRating(val displayName: String) {
+    SAFE("Low Risk"),
+    MODERATE("Moderate Risk"),
+    HIGH_RISK("High Risk")
+}
+
+data class QuarantinedApp(
+    val id: String = "",
+    val packageName: String = "",
+    val appName: String = "",
+    val versionName: String = "1.0.0",
+    val developer: String = "Unknown Developer",
+    val installTimestamp: Long = System.currentTimeMillis(),
+    val contentRating: String = "12+",
+    val permissions: List<String> = emptyList(),
+    val status: QuarantineStatus = QuarantineStatus.PENDING_APPROVAL,
+    val riskRating: RiskRating = RiskRating.MODERATE,
+    val category: String = "Utility"
+)
