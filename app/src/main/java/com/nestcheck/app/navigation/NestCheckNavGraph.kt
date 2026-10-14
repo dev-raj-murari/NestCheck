@@ -15,6 +15,7 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object ChildProfile : Screen("child_profile")
     object TimeLimits : Screen("time_limits")
+    object ParentSecurity : Screen("parent_security")
     
     // Kid routes
     object KidHome : Screen("kid_home")
@@ -22,4 +23,5 @@ sealed class Screen(val route: String) {
     object MyCredits : Screen("my_credits")
     object SOS : Screen("sos")
     object KidProfile : Screen("kid_profile")
+    object MoodCheckIn : Screen("mood_checkin")
 }

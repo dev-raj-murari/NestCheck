@@ -12,6 +12,11 @@ import com.nestcheck.app.ui.parent.appcontrol.AppControlScreen
 import com.nestcheck.app.ui.parent.credits.CreditsScreen
 import com.nestcheck.app.ui.child.credits.MyCreditsScreen
 
+import com.nestcheck.app.ui.parent.security.ParentPinSecurityScreen
+import com.nestcheck.app.ui.child.steps.StepCounterScreen
+import com.nestcheck.app.ui.child.mood.MoodCheckInScreen
+import com.nestcheck.app.ui.child.sos.SOSScreen
+
 @Composable
 fun NestCheckApp() {
     val navController = rememberNavController()
@@ -26,5 +31,11 @@ fun NestCheckApp() {
         composable(Screen.AppControl.route) { AppControlScreen(navController) }
         composable(Screen.Credits.route) { CreditsScreen(navController) }
         composable(Screen.MyCredits.route) { MyCreditsScreen(navController) }
+
+        // Dev Raj's Feature Routes (F45, F14, F37, F15)
+        composable(Screen.ParentSecurity.route) { ParentPinSecurityScreen(navController) }
+        composable(Screen.StepCounter.route) { StepCounterScreen(navController) }
+        composable(Screen.MoodCheckIn.route) { MoodCheckInScreen(navController) }
+        composable(Screen.SOS.route) { SOSScreen(navController) }
     }
 }

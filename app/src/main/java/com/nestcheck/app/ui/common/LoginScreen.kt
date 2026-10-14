@@ -121,9 +121,41 @@ fun LoginScreen(
                             onClick = { navController.navigate(Screen.MyCredits.route) },
                             modifier = Modifier.fillMaxWidth().height(42.dp),
                             shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CyberCard, contentColor = CyberTextBright)
+                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
                         ) {
                             Text("My Credits & Rewards", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.StepCounter.route) },
+                                modifier = Modifier.weight(1f).height(42.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = SuccessGreen)
+                            ) {
+                                Text("Step Counter", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.MoodCheckIn.route) },
+                                modifier = Modifier.weight(1f).height(42.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Mood Check-In", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { navController.navigate(Screen.SOS.route) },
+                            modifier = Modifier.fillMaxWidth().height(42.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = AlertRed, contentColor = White)
+                        ) {
+                            Text("Emergency SOS", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -170,6 +202,17 @@ fun LoginScreen(
                             ) {
                                 Text("Credits Ledger", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { navController.navigate(Screen.ParentSecurity.route) },
+                            modifier = Modifier.fillMaxWidth().height(40.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = White)
+                        ) {
+                            Text("Parent PIN & Biometrics", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
