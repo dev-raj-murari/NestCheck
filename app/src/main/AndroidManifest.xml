@@ -32,6 +32,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Sinan's Feature Receivers & Services (F7 & F9) -->
+        <receiver
+            android:name=".service.AppInstallReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".service.MediaScannerService"
+            android:exported="false" />
     </application>
 
 </manifest>
