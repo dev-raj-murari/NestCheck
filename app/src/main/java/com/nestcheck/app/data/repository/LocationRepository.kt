@@ -2,6 +2,7 @@ package com.nestcheck.app.data.repository
 
 import com.nestcheck.app.data.model.DefaultGeofences
 import com.nestcheck.app.data.model.GeofenceZone
+import com.nestcheck.app.data.model.LiveLocationPoint
 import com.nestcheck.app.data.model.ZoneType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -117,5 +118,38 @@ class LocationRepository @Inject constructor() {
                 sin(dLon / 2).pow(2.0)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return (r * c).toFloat()
+    }
+    // ========================================================================
+    // F11: LIVE GPS LOCATION TELEMETRY
+    // ========================================================================
+
+    private val _liveLocation = MutableStateFlow(
+        LiveLocationPoint(
+            latitude = 19.1050,
+            longitude = 72.8350,
+            accuracyMeters = 4.2f,
+            altitudeMeters = 24.0,
+            speedKmh = 0.0f,
+            headingDegrees = 120.0f,
+            batteryPercent = 88,
+            timestamp = System.currentTimeMillis(),
+            addressName = "MPSTME NMIMS Campus, Vile Parle West, Mumbai",
+            provider = "GPS (High Accuracy Fused)"
+        )
+    )
+    val liveLocation: StateFlow<LiveLocationPoint> = _liveLocation.asStateFlow()
+
+    fun refreshLiveLocation() {
+        val current = _liveLocation.value
+        val jitterLat = (Math.random() - 0.5) * 0.0004
+        val jitterLng = (Math.random() - 0.5) * 0.0004
+        val newAccuracy = 3.5f + (Math.random() * 2.0).toFloat()
+
+        _liveLocation.value = current.copy(
+            latitude = current.latitude + jitterLat,
+            longitude = current.longitude + jitterLng,
+            accuracyMeters = newAccuracy,
+            timestamp = System.currentTimeMillis()
+        )
     }
 }

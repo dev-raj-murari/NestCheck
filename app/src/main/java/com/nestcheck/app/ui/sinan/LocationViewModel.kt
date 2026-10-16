@@ -2,6 +2,7 @@ package com.nestcheck.app.ui.sinan
 
 import androidx.lifecycle.ViewModel
 import com.nestcheck.app.data.model.GeofenceZone
+import com.nestcheck.app.data.model.LiveLocationPoint
 import com.nestcheck.app.data.model.ZoneType
 import com.nestcheck.app.data.repository.GeofenceStatusResult
 import com.nestcheck.app.data.repository.LocationRepository
@@ -11,10 +12,30 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
+enum class LocationTab(val label: String) {
+    LIVE_TELEMETRY("Live GPS"),
+    GEOFENCES("Safe Zones")
+}
+
 @HiltViewModel
 class LocationViewModel @Inject constructor(
     private val locationRepository: LocationRepository
 ) : ViewModel() {
+
+    // Tab Selection
+    private val _currentTab = MutableStateFlow(LocationTab.LIVE_TELEMETRY)
+    val currentTab: StateFlow<LocationTab> = _currentTab.asStateFlow()
+
+    fun selectTab(tab: LocationTab) {
+        _currentTab.value = tab
+    }
+
+    // F11: Live Telemetry
+    val liveLocation: StateFlow<LiveLocationPoint> = locationRepository.liveLocation
+
+    fun refreshLiveGps() {
+        locationRepository.refreshLiveLocation()
+    }
 
     val zones: StateFlow<List<GeofenceZone>> = locationRepository.zones
 

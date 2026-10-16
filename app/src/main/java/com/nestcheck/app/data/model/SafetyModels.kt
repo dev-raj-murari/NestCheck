@@ -111,3 +111,20 @@ data class QuarantinedApp(
     val riskRating: RiskRating = RiskRating.MODERATE,
     val category: String = "Utility"
 )
+
+// ============================================================================
+// F11: LIVE GPS LOCATION TELEMETRY MODELS
+// ============================================================================
+
+data class LiveLocationPoint(
+    val latitude: Double = 19.1050,
+    val longitude: Double = 72.8350,
+    val accuracyMeters: Float = 4.5f,
+    val altitudeMeters: Double = 22.0,
+    val speedKmh: Float = 0.0f,
+    val headingDegrees: Float = 145f,
+    val batteryPercent: Int = 88,
+    val timestamp: Long = System.currentTimeMillis(),
+    val addressName: String = "MPSTME NMIMS Campus, Vile Parle West, Mumbai",
+    val provider: String = "GPS (High Accuracy Fused)"
+)
