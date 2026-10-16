@@ -11,22 +11,37 @@ import com.nestcheck.app.ui.parent.screentime.ScreenTimeScreen
 import com.nestcheck.app.ui.parent.screentime.TimeLimitScreen
 import com.nestcheck.app.ui.parent.appcontrol.AppControlScreen
 import com.nestcheck.app.ui.parent.credits.CreditsScreen
-import com.nestcheck.app.ui.child.credits.MyCreditsScreen
-
+import com.nestcheck.app.ui.parent.profile.ChildProfileScreen
+import com.nestcheck.app.ui.parent.homework.HomeworkScreen
+import com.nestcheck.app.ui.parent.schedule.ScheduleScreen
+import com.nestcheck.app.ui.parent.chores.ChoresScreen
+import com.nestcheck.app.ui.parent.presets.AgePresetsScreen
+import com.nestcheck.app.ui.parent.quotas.CategoryQuotasScreen
+import com.nestcheck.app.ui.parent.requests.TimeRequestsScreen
 import com.nestcheck.app.ui.parent.security.ParentPinSecurityScreen
-import com.nestcheck.app.ui.child.steps.StepCounterScreen
-import com.nestcheck.app.ui.child.mood.MoodCheckInScreen
-import com.nestcheck.app.ui.child.sos.SOSScreen
 import com.nestcheck.app.ui.parent.battery.BatteryMonitorScreen
 import com.nestcheck.app.ui.parent.notifications.NotificationHubScreen
 import com.nestcheck.app.ui.parent.sync.OfflineSyncScreen
 import com.nestcheck.app.ui.parent.reports.ReportsScreen
 import com.nestcheck.app.ui.parent.ai.AIDigestScreen
-
 import com.nestcheck.app.ui.parent.content.ContentFilterScreen
 import com.nestcheck.app.ui.parent.location.LocationScreen
 import com.nestcheck.app.ui.sinan.AppQuarantineScreen
 import com.nestcheck.app.ui.sinan.BlockedUrlLandingScreen
+import com.nestcheck.app.ui.child.home.KidHomeScreen
+import com.nestcheck.app.ui.child.profile.KidProfileScreen
+import com.nestcheck.app.ui.child.credits.MyCreditsScreen
+import com.nestcheck.app.ui.child.steps.StepCounterScreen
+import com.nestcheck.app.ui.child.mood.MoodCheckInScreen
+import com.nestcheck.app.ui.child.sos.SOSScreen
+import com.nestcheck.app.ui.child.chores.KidChoresScreen
+import com.nestcheck.app.ui.child.homework.KidHomeworkScreen
+import com.nestcheck.app.ui.child.focus.FocusModeScreen
+import com.nestcheck.app.ui.child.rewards.RewardShopScreen
+import com.nestcheck.app.ui.child.lock.BedtimeLockScreen
+import com.nestcheck.app.ui.child.lock.DevicePausedScreen
+import com.nestcheck.app.ui.child.streaks.HabitStreaksScreen
+import com.nestcheck.app.ui.child.health.WaterReminderScreen
 
 @Composable
 fun NestCheckApp() {
@@ -37,25 +52,42 @@ fun NestCheckApp() {
         composable(Screen.Login.route) { LoginScreen(navController) }
         composable(Screen.ParentDashboard.route) { ParentDashboardScreen(navController) }
         
-        // Rohit's Feature Routes (F1, F2, F3, F4)
+        // Rohit's Feature Routes (F1-F6, F21-F28, F40)
         composable(Screen.ScreenTime.route) { ScreenTimeScreen(navController) }
         composable(Screen.TimeLimits.route) { TimeLimitScreen(navController) }
         composable(Screen.AppControl.route) { AppControlScreen(navController) }
         composable(Screen.Credits.route) { CreditsScreen(navController) }
-        composable(Screen.MyCredits.route) { MyCreditsScreen(navController) }
+        composable(Screen.Homework.route) { HomeworkScreen(navController) }
+        composable(Screen.BedtimeSchedule.route) { ScheduleScreen(navController) }
+        composable(Screen.Chores.route) { ChoresScreen(navController) }
+        composable(Screen.AgePresets.route) { AgePresetsScreen(navController) }
+        composable(Screen.CategoryQuotas.route) { CategoryQuotasScreen(navController) }
+        composable(Screen.TimeRequests.route) { TimeRequestsScreen(navController) }
+        composable(Screen.FocusMode.route) { FocusModeScreen(navController) }
+        composable(Screen.KidChores.route) { KidChoresScreen(navController) }
+        composable(Screen.KidHomework.route) { KidHomeworkScreen(navController) }
+        composable(Screen.RewardShop.route) { RewardShopScreen(navController) }
+        composable(Screen.BedtimeLock.route) { BedtimeLockScreen(navController) }
+        composable(Screen.DevicePaused.route) { DevicePausedScreen(navController) }
+        composable(Screen.HabitChallenges.route) { HabitStreaksScreen(navController) }
+        composable(Screen.WaterReminder.route) { WaterReminderScreen(navController) }
 
-        // Dev Raj's Feature Routes (F45, F14, F37, F15)
+        // Dev Raj's Feature Routes (F13, F45, F14, F37, F15, F16, F18, F44, F17, F38)
+        composable(Screen.ChildProfile.route) { ChildProfileScreen(navController) }
         composable(Screen.ParentSecurity.route) { ParentPinSecurityScreen(navController) }
         composable(Screen.StepCounter.route) { StepCounterScreen(navController) }
         composable(Screen.MoodCheckIn.route) { MoodCheckInScreen(navController) }
         composable(Screen.SOS.route) { SOSScreen(navController) }
-
-        // Dev Raj's Batch 2 Feature Routes (F16, F18, F44, F17, F38)
         composable(Screen.BatteryMonitor.route) { BatteryMonitorScreen(navController) }
         composable(Screen.NotificationsHub.route) { NotificationHubScreen(navController) }
         composable(Screen.OfflineSync.route) { OfflineSyncScreen(navController) }
         composable(Screen.Reports.route) { ReportsScreen(navController) }
         composable(Screen.AIDigest.route) { AIDigestScreen(navController) }
+
+        // Kid Core Routes
+        composable(Screen.KidHome.route) { KidHomeScreen(navController) }
+        composable(Screen.KidProfile.route) { KidProfileScreen(navController) }
+        composable(Screen.MyCredits.route) { MyCreditsScreen(navController) }
 
         // Sinan's Feature Routes (F7, F8, F9, F10)
         composable(Screen.ContentFilter.route) { ContentFilterScreen(navController) }

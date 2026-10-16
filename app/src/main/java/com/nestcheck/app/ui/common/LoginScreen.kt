@@ -147,6 +147,67 @@ fun LoginScreen(
                             }
                         }
 
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.FocusMode.route) },
+                                modifier = Modifier.weight(1f).height(42.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Focus Mode", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.HabitChallenges.route) },
+                                modifier = Modifier.weight(1f).height(42.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Streaks", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.KidChores.route) },
+                                modifier = Modifier.weight(1f).height(42.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("My Chores", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.KidHomework.route) },
+                                modifier = Modifier.weight(1f).height(42.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("My Homework", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.WaterReminder.route) },
+                                modifier = Modifier.weight(1f).height(42.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Hydration & Sleep", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.RewardShop.route) },
+                                modifier = Modifier.weight(1f).height(42.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = WarningAmber)
+                            ) {
+                                Text("Reward Shop", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Button(
