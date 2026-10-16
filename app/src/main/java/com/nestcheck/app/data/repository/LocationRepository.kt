@@ -5,6 +5,7 @@ import com.nestcheck.app.data.model.GeofenceZone
 import com.nestcheck.app.data.model.LiveLocationPoint
 import com.nestcheck.app.data.model.LocationBreadcrumb
 import com.nestcheck.app.data.model.GeofenceTransitionAlert
+import com.nestcheck.app.data.model.HighVelocityAlert
 import com.nestcheck.app.data.model.TransitionType
 import com.nestcheck.app.data.model.ZoneType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -283,5 +284,60 @@ class LocationRepository @Inject constructor() {
             address = loc.addressName
         )
         _transitionAlerts.value = listOf(alert) + _transitionAlerts.value
+    }
+
+    // ========================================================================
+    // F30: HIGH-VELOCITY TRAVEL & SPEEDING TRIGGER ALERT
+    // ========================================================================
+
+    private val _speedThresholdKmh = MutableStateFlow(45.0f)
+    val speedThresholdKmh: StateFlow<Float> = _speedThresholdKmh.asStateFlow()
+
+    private val _inTransitMode = MutableStateFlow(false)
+    val inTransitMode: StateFlow<Boolean> = _inTransitMode.asStateFlow()
+
+    private val _speedAlerts = MutableStateFlow<List<HighVelocityAlert>>(
+        listOf(
+            HighVelocityAlert(
+                id = "spd_1",
+                recordedSpeedKmh = 58.4f,
+                speedThresholdKmh = 45.0f,
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 85,
+                locationAddress = "Western Express Highway Near Andheri Flyover",
+                inTransitDesignated = false,
+                isDismissed = false
+            )
+        )
+    )
+    val speedAlerts: StateFlow<List<HighVelocityAlert>> = _speedAlerts.asStateFlow()
+
+    fun setSpeedThreshold(threshold: Float) {
+        _speedThresholdKmh.value = threshold
+    }
+
+    fun toggleTransitMode() {
+        _inTransitMode.value = !_inTransitMode.value
+    }
+
+    fun simulateSpeedReading(speedKmh: Float) {
+        val current = _liveLocation.value
+        _liveLocation.value = current.copy(speedKmh = speedKmh)
+
+        if (speedKmh > _speedThresholdKmh.value && !_inTransitMode.value) {
+            val alert = HighVelocityAlert(
+                id = UUID.randomUUID().toString(),
+                recordedSpeedKmh = speedKmh,
+                speedThresholdKmh = _speedThresholdKmh.value,
+                timestamp = System.currentTimeMillis(),
+                locationAddress = current.addressName,
+                inTransitDesignated = false,
+                isDismissed = false
+            )
+            _speedAlerts.value = listOf(alert) + _speedAlerts.value
+        }
+    }
+
+    fun dismissSpeedAlert(id: String) {
+        _speedAlerts.value = _speedAlerts.value.filterNot { it.id == id }
     }
 }

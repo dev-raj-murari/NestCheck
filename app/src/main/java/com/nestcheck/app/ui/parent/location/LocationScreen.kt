@@ -43,6 +43,9 @@ fun LocationScreen(
     val zones by viewModel.zones.collectAsState()
     val breadcrumbs by viewModel.breadcrumbs.collectAsState()
     val transitionAlerts by viewModel.transitionAlerts.collectAsState()
+    val speedAlerts by viewModel.speedAlerts.collectAsState()
+    val speedThreshold by viewModel.speedThresholdKmh.collectAsState()
+    val inTransitMode by viewModel.inTransitMode.collectAsState()
     val isAddZoneDialogOpen by viewModel.isAddZoneDialogOpen.collectAsState()
     val testResult by viewModel.testResult.collectAsState()
 
@@ -125,6 +128,18 @@ fun LocationScreen(
                 LiveTelemetryTabContent(
                     liveLoc = liveLoc,
                     onRefresh = viewModel::refreshLiveGps
+                )
+            }
+            LocationTab.SPEED_MONITOR -> {
+                SpeedMonitorTabContent(
+                    liveLoc = liveLoc,
+                    speedAlerts = speedAlerts,
+                    speedThreshold = speedThreshold,
+                    inTransitMode = inTransitMode,
+                    onSetThreshold = viewModel::setSpeedThreshold,
+                    onToggleTransit = viewModel::toggleTransitMode,
+                    onTriggerSimulation = viewModel::triggerSpeedSimulation,
+                    onDismissAlert = viewModel::dismissSpeedAlert
                 )
             }
             LocationTab.BREADCRUMBS -> {
@@ -968,6 +983,229 @@ private fun BreadcrumbTrailTabContent(
                         ) {
                             Text("${crumb.category} • Stay: ${crumb.durationSpentMinutes} mins", color = CyberTextDim, fontSize = 11.sp)
                             Text("${crumb.latitude}° N, ${crumb.longitude}° E", color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+// ============================================================================
+// F30: HIGH-VELOCITY TRAVEL ALERT COMPOSABLES
+// ============================================================================
+
+@Composable
+private fun SpeedMonitorTabContent(
+    liveLoc: LiveLocationPoint,
+    speedAlerts: List<HighVelocityAlert>,
+    speedThreshold: Float,
+    inTransitMode: Boolean,
+    onSetThreshold: (Float) -> Unit,
+    onToggleTransit: () -> Unit,
+    onTriggerSimulation: (Float) -> Unit,
+    onDismissAlert: (String) -> Unit
+) {
+    val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // VELOCITY SPEEDOMETER CARD
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(CyberCard)
+                    .border(
+                        1.dp,
+                        if (liveLoc.speedKmh > speedThreshold && !inTransitMode) AlertRed else CyberBorder,
+                        RoundedCornerShape(12.dp)
+                    )
+                    .padding(18.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "VELOCITY TELEMETRY (F30)",
+                            color = CyberTextDim,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(if (inTransitMode) WarningAmber else if (liveLoc.speedKmh > speedThreshold) AlertRed else SuccessGreen)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (inTransitMode) "TRANSIT MODE ON" else if (liveLoc.speedKmh > speedThreshold) "SPEEDING DETECTED" else "NORMAL SPEEDS",
+                                color = Black,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = "${liveLoc.speedKmh.toInt()}",
+                            color = if (liveLoc.speedKmh > speedThreshold && !inTransitMode) AlertRed else CyberTextBright,
+                            fontSize = 44.sp,
+                            fontFamily = TechMono,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "km/h",
+                            color = CyberTextDim,
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "Threshold: ${speedThreshold.toInt()} km/h",
+                            color = CyberTextDim,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // SPEED THRESHOLD SLIDER
+                    Text("Speed Warning Trigger Threshold", color = CyberTextDim, fontSize = 11.sp)
+                    Slider(
+                        value = speedThreshold,
+                        onValueChange = onSetThreshold,
+                        valueRange = 20f..90f,
+                        steps = 6,
+                        colors = SliderDefaults.colors(
+                            thumbColor = White,
+                            activeTrackColor = Color(0xFF00E5FF),
+                            inactiveTrackColor = CyberBorder
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Designate Transit Mode", color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text("Mutes speeding alerts when child travels by authorized bus/car", color = CyberTextDim, fontSize = 11.sp)
+                        }
+                        Switch(
+                            checked = inTransitMode,
+                            onCheckedChange = { onToggleTransit() },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Black,
+                                checkedTrackColor = White,
+                                uncheckedThumbColor = CyberTextDim,
+                                uncheckedTrackColor = CyberBlack
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        // SIMULATE SPEED BURSTS
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = { onTriggerSimulation(62.5f) },
+                    modifier = Modifier.weight(1f).height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AlertRed, contentColor = White)
+                ) {
+                    Text("Simulate Speeding (62 km/h)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+
+                Button(
+                    onClick = { onTriggerSimulation(12.0f) },
+                    modifier = Modifier.weight(1f).height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CyberCard, contentColor = CyberTextBright),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
+                ) {
+                    Text("Simulate Walking (12 km/h)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        // HIGH-VELOCITY INCIDENT FEED
+        item {
+            Text(
+                text = "Speeding Trigger Alerts (${speedAlerts.size})",
+                color = CyberTextBright,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (speedAlerts.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(CyberCard).padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No high-velocity triggers recorded.", color = CyberTextDim, fontSize = 12.sp)
+                }
+            }
+        } else {
+            items(speedAlerts, key = { it.id }) { alert ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(CyberCard)
+                        .border(1.dp, AlertRed.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(AlertRed)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text("${alert.recordedSpeedKmh.toInt()} KM/H", color = White, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = TechMono)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Exceeded ${alert.speedThresholdKmh.toInt()} km/h cap", color = CyberTextBright, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(alert.locationAddress, color = CyberTextDim, fontSize = 11.sp)
+                            Text("Logged at: ${dateFormat.format(Date(alert.timestamp))}", color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
+                        }
+
+                        IconButton(onClick = { onDismissAlert(alert.id) }) {
+                            Icon(Icons.Outlined.Check, contentDescription = "Dismiss", tint = CyberTextDim)
                         }
                     }
                 }

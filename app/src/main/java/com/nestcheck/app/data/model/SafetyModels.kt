@@ -163,3 +163,17 @@ data class GeofenceTransitionAlert(
     val longitude: Double = 0.0,
     val address: String = ""
 )
+
+// ============================================================================
+// F30: HIGH-VELOCITY TRAVEL ALERT MODELS
+// ============================================================================
+
+data class HighVelocityAlert(
+    val id: String = "",
+    val recordedSpeedKmh: Float = 0.0f,
+    val speedThresholdKmh: Float = 45.0f,
+    val timestamp: Long = System.currentTimeMillis(),
+    val locationAddress: String = "",
+    val inTransitDesignated: Boolean = false,
+    val isDismissed: Boolean = false
+)

@@ -5,6 +5,7 @@ import com.nestcheck.app.data.model.GeofenceZone
 import com.nestcheck.app.data.model.LiveLocationPoint
 import com.nestcheck.app.data.model.LocationBreadcrumb
 import com.nestcheck.app.data.model.GeofenceTransitionAlert
+import com.nestcheck.app.data.model.HighVelocityAlert
 import com.nestcheck.app.data.model.TransitionType
 import com.nestcheck.app.data.model.ZoneType
 import com.nestcheck.app.data.repository.GeofenceStatusResult
@@ -18,6 +19,7 @@ import javax.inject.Inject
 enum class LocationTab(val label: String) {
     LIVE_TELEMETRY("Live GPS"),
     GEOFENCES("Safe Zones"),
+    SPEED_MONITOR("Speed Guard"),
     BREADCRUMBS("Trail Log")
 }
 
@@ -34,6 +36,28 @@ class LocationViewModel @Inject constructor(
         _currentTab.value = tab
     }
 
+
+
+    // F30: Speeding Alerts
+    val speedAlerts: StateFlow<List<HighVelocityAlert>> = locationRepository.speedAlerts
+    val speedThresholdKmh: StateFlow<Float> = locationRepository.speedThresholdKmh
+    val inTransitMode: StateFlow<Boolean> = locationRepository.inTransitMode
+
+    fun setSpeedThreshold(threshold: Float) {
+        locationRepository.setSpeedThreshold(threshold)
+    }
+
+    fun toggleTransitMode() {
+        locationRepository.toggleTransitMode()
+    }
+
+    fun triggerSpeedSimulation(speed: Float) {
+        locationRepository.simulateSpeedReading(speed)
+    }
+
+    fun dismissSpeedAlert(id: String) {
+        locationRepository.dismissSpeedAlert(id)
+    }
 
     // F29: Geofence Transition Alerts
     val transitionAlerts: StateFlow<List<GeofenceTransitionAlert>> = locationRepository.transitionAlerts
