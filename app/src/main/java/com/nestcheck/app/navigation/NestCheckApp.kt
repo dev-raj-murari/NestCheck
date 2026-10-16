@@ -16,6 +16,11 @@ import com.nestcheck.app.ui.parent.security.ParentPinSecurityScreen
 import com.nestcheck.app.ui.child.steps.StepCounterScreen
 import com.nestcheck.app.ui.child.mood.MoodCheckInScreen
 import com.nestcheck.app.ui.child.sos.SOSScreen
+import com.nestcheck.app.ui.parent.battery.BatteryMonitorScreen
+import com.nestcheck.app.ui.parent.notifications.NotificationHubScreen
+import com.nestcheck.app.ui.parent.sync.OfflineSyncScreen
+import com.nestcheck.app.ui.parent.reports.ReportsScreen
+import com.nestcheck.app.ui.parent.ai.AIDigestScreen
 
 @Composable
 fun NestCheckApp() {
@@ -37,5 +42,12 @@ fun NestCheckApp() {
         composable(Screen.StepCounter.route) { StepCounterScreen(navController) }
         composable(Screen.MoodCheckIn.route) { MoodCheckInScreen(navController) }
         composable(Screen.SOS.route) { SOSScreen(navController) }
+
+        // Dev Raj's Batch 2 Feature Routes (F16, F18, F44, F17, F38)
+        composable(Screen.BatteryMonitor.route) { BatteryMonitorScreen(navController) }
+        composable(Screen.NotificationsHub.route) { NotificationHubScreen(navController) }
+        composable(Screen.OfflineSync.route) { OfflineSyncScreen(navController) }
+        composable(Screen.Reports.route) { ReportsScreen(navController) }
+        composable(Screen.AIDigest.route) { AIDigestScreen(navController) }
     }
 }

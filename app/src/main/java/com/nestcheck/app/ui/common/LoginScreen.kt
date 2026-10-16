@@ -214,6 +214,59 @@ fun LoginScreen(
                         ) {
                             Text("Parent PIN & Biometrics", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.BatteryMonitor.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = SuccessGreen)
+                            ) {
+                                Text("Battery Telemetry", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.NotificationsHub.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Notification Hub", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.Reports.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Weekly Reports", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.OfflineSync.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = WarningAmber)
+                            ) {
+                                Text("Offline Sync", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { navController.navigate(Screen.AIDigest.route) },
+                            modifier = Modifier.fillMaxWidth().height(40.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
+                        ) {
+                            Text("✨ AI Daily Digest Synthesis", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))

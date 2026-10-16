@@ -17,6 +17,10 @@ sealed class Screen(val route: String) {
     object ChildProfile : Screen("child_profile")
     object TimeLimits : Screen("time_limits")
     object ParentSecurity : Screen("parent_security")
+    object BatteryMonitor : Screen("battery_monitor")
+    object NotificationsHub : Screen("notifications_hub")
+    object OfflineSync : Screen("offline_sync")
+    object AIDigest : Screen("ai_digest")
     
     // Kid routes
     object KidHome : Screen("kid_home")
