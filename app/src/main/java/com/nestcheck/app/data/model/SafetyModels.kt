@@ -143,3 +143,23 @@ data class LocationBreadcrumb(
     val category: String = "Stay",
     val speedKmh: Float = 0.0f
 )
+
+// ============================================================================
+// F29: GEOFENCE TRANSITION ALERTS MODELS
+// ============================================================================
+
+enum class TransitionType(val displayName: String, val verb: String) {
+    ENTERED("Arrived", "entered"),
+    EXITED("Departed", "left")
+}
+
+data class GeofenceTransitionAlert(
+    val id: String = "",
+    val zoneName: String = "",
+    val transitionType: TransitionType = TransitionType.ENTERED,
+    val zoneType: ZoneType = ZoneType.SAFE_ZONE,
+    val timestamp: Long = System.currentTimeMillis(),
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val address: String = ""
+)

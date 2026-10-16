@@ -42,6 +42,7 @@ fun LocationScreen(
     val liveLoc by viewModel.liveLocation.collectAsState()
     val zones by viewModel.zones.collectAsState()
     val breadcrumbs by viewModel.breadcrumbs.collectAsState()
+    val transitionAlerts by viewModel.transitionAlerts.collectAsState()
     val isAddZoneDialogOpen by viewModel.isAddZoneDialogOpen.collectAsState()
     val testResult by viewModel.testResult.collectAsState()
 
@@ -132,6 +133,7 @@ fun LocationScreen(
             LocationTab.GEOFENCES -> {
                 GeofencesTabContent(
                     zones = zones,
+                    transitionAlerts = transitionAlerts,
                     testResult = testResult,
                     testLatInput = testLatInput,
                     testLngInput = testLngInput,
@@ -140,7 +142,8 @@ fun LocationScreen(
                     onCheckPosition = viewModel::checkPosition,
                     onToggleZone = viewModel::toggleZone,
                     onDeleteZone = viewModel::deleteZone,
-                    onOpenAddDialog = viewModel::openAddZoneDialog
+                    onOpenAddDialog = viewModel::openAddZoneDialog,
+                    onSimulateTransition = viewModel::simulateTransition
                 )
             }
         }
@@ -332,6 +335,7 @@ private fun TelemetryRow(label: String, value: String) {
 @Composable
 private fun GeofencesTabContent(
     zones: List<GeofenceZone>,
+    transitionAlerts: List<GeofenceTransitionAlert>,
     testResult: GeofenceStatusResult?,
     testLatInput: String,
     testLngInput: String,
@@ -340,8 +344,10 @@ private fun GeofencesTabContent(
     onCheckPosition: (Double, Double) -> Unit,
     onToggleZone: (String) -> Unit,
     onDeleteZone: (String) -> Unit,
-    onOpenAddDialog: () -> Unit
+    onOpenAddDialog: () -> Unit,
+    onSimulateTransition: (String, TransitionType, ZoneType) -> Unit
 ) {
+    val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
     val safeZonesCount = zones.count { it.zoneType == ZoneType.SAFE_ZONE && it.isActive }
     val restrictedZonesCount = zones.count { it.zoneType == ZoneType.RESTRICTED_ZONE && it.isActive }
 
@@ -384,6 +390,90 @@ private fun GeofencesTabContent(
                     onCheckPosition(lat, lng)
                 }
             )
+        }
+
+        // F29: TRANSITION EVENTS FEED
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Transition Alert Log (F29)",
+                    color = CyberTextBright,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                TextButton(
+                    onClick = {
+                        onSimulateTransition("MPSTME NMIMS", TransitionType.ENTERED, ZoneType.SAFE_ZONE)
+                    }
+                ) {
+                    Text("+ Simulate Transition", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        if (transitionAlerts.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(CyberCard).padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No geofence transitions recorded.", color = CyberTextDim, fontSize = 12.sp)
+                }
+            }
+        } else {
+            items(transitionAlerts, key = { it.id }) { alert ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(CyberCard)
+                        .border(
+                            1.dp,
+                            if (alert.zoneType == ZoneType.RESTRICTED_ZONE) AlertRed.copy(alpha = 0.5f) else CyberBorder,
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(if (alert.transitionType == TransitionType.ENTERED) SuccessGreen else WarningAmber)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = alert.transitionType.displayName.uppercase(),
+                                    color = Black,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(alert.zoneName, color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text(alert.address, color = CyberTextDim, fontSize = 11.sp)
+                            }
+                        }
+
+                        Text(
+                            text = dateFormat.format(Date(alert.timestamp)),
+                            color = CyberTextDim,
+                            fontSize = 10.sp,
+                            fontFamily = TechMono
+                        )
+                    }
+                }
+            }
         }
 
         // ACTIVE GEOFENCE ZONES HEADER

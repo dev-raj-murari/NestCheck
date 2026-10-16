@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import com.nestcheck.app.data.model.GeofenceZone
 import com.nestcheck.app.data.model.LiveLocationPoint
 import com.nestcheck.app.data.model.LocationBreadcrumb
+import com.nestcheck.app.data.model.GeofenceTransitionAlert
+import com.nestcheck.app.data.model.TransitionType
 import com.nestcheck.app.data.model.ZoneType
 import com.nestcheck.app.data.repository.GeofenceStatusResult
 import com.nestcheck.app.data.repository.LocationRepository
@@ -30,6 +32,14 @@ class LocationViewModel @Inject constructor(
 
     fun selectTab(tab: LocationTab) {
         _currentTab.value = tab
+    }
+
+
+    // F29: Geofence Transition Alerts
+    val transitionAlerts: StateFlow<List<GeofenceTransitionAlert>> = locationRepository.transitionAlerts
+
+    fun simulateTransition(zoneName: String, type: TransitionType, zoneType: ZoneType) {
+        locationRepository.triggerGeofenceTransition(zoneName, type, zoneType)
     }
 
     // F12: Breadcrumbs

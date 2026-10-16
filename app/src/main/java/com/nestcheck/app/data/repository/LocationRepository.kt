@@ -4,6 +4,8 @@ import com.nestcheck.app.data.model.DefaultGeofences
 import com.nestcheck.app.data.model.GeofenceZone
 import com.nestcheck.app.data.model.LiveLocationPoint
 import com.nestcheck.app.data.model.LocationBreadcrumb
+import com.nestcheck.app.data.model.GeofenceTransitionAlert
+import com.nestcheck.app.data.model.TransitionType
 import com.nestcheck.app.data.model.ZoneType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -222,5 +224,64 @@ class LocationRepository @Inject constructor() {
             speedKmh = _liveLocation.value.speedKmh
         )
         _breadcrumbs.value = listOf(item) + _breadcrumbs.value
+    }
+
+    // ========================================================================
+    // F29: GEOFENCE TRANSITION ALERTS
+    // ========================================================================
+
+    private val _transitionAlerts = MutableStateFlow<List<GeofenceTransitionAlert>>(
+        listOf(
+            GeofenceTransitionAlert(
+                id = "trans_1",
+                zoneName = "MPSTME NMIMS",
+                transitionType = TransitionType.ENTERED,
+                zoneType = ZoneType.SAFE_ZONE,
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 45,
+                latitude = 19.1050,
+                longitude = 72.8350,
+                address = "Vile Parle West, Mumbai"
+            ),
+            GeofenceTransitionAlert(
+                id = "trans_2",
+                zoneName = "Home Residence",
+                transitionType = TransitionType.EXITED,
+                zoneType = ZoneType.SAFE_ZONE,
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 120,
+                latitude = 19.1265,
+                longitude = 72.8310,
+                address = "DN Nagar Metro Area"
+            ),
+            GeofenceTransitionAlert(
+                id = "trans_3",
+                zoneName = "City Central Library",
+                transitionType = TransitionType.ENTERED,
+                zoneType = ZoneType.SAFE_ZONE,
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 60 * 24,
+                latitude = 19.1120,
+                longitude = 72.8400,
+                address = "Central Plaza"
+            )
+        )
+    )
+    val transitionAlerts: StateFlow<List<GeofenceTransitionAlert>> = _transitionAlerts.asStateFlow()
+
+    fun triggerGeofenceTransition(
+        zoneName: String,
+        transitionType: TransitionType,
+        zoneType: ZoneType
+    ) {
+        val loc = _liveLocation.value
+        val alert = GeofenceTransitionAlert(
+            id = UUID.randomUUID().toString(),
+            zoneName = zoneName,
+            transitionType = transitionType,
+            zoneType = zoneType,
+            timestamp = System.currentTimeMillis(),
+            latitude = loc.latitude,
+            longitude = loc.longitude,
+            address = loc.addressName
+        )
+        _transitionAlerts.value = listOf(alert) + _transitionAlerts.value
     }
 }
