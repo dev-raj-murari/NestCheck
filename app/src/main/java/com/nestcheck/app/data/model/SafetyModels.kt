@@ -128,3 +128,18 @@ data class LiveLocationPoint(
     val addressName: String = "MPSTME NMIMS Campus, Vile Parle West, Mumbai",
     val provider: String = "GPS (High Accuracy Fused)"
 )
+
+// ============================================================================
+// F12: HISTORICAL LOCATION BREADCRUMB TRAIL MODELS
+// ============================================================================
+
+data class LocationBreadcrumb(
+    val id: String = "",
+    val title: String = "",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val timestamp: Long = 0L,
+    val durationSpentMinutes: Int = 0,
+    val category: String = "Stay",
+    val speedKmh: Float = 0.0f
+)

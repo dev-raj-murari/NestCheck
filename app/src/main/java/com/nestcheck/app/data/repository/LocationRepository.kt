@@ -3,6 +3,7 @@ package com.nestcheck.app.data.repository
 import com.nestcheck.app.data.model.DefaultGeofences
 import com.nestcheck.app.data.model.GeofenceZone
 import com.nestcheck.app.data.model.LiveLocationPoint
+import com.nestcheck.app.data.model.LocationBreadcrumb
 import com.nestcheck.app.data.model.ZoneType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -151,5 +152,75 @@ class LocationRepository @Inject constructor() {
             accuracyMeters = newAccuracy,
             timestamp = System.currentTimeMillis()
         )
+    }
+
+    // ========================================================================
+    // F12: HISTORICAL LOCATION BREADCRUMB TRAIL
+    // ========================================================================
+
+    private val _breadcrumbs = MutableStateFlow<List<LocationBreadcrumb>>(
+        listOf(
+            LocationBreadcrumb(
+                id = "bc_1",
+                title = "Arrived at MPSTME NMIMS Campus",
+                latitude = 19.1050,
+                longitude = 72.8350,
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 360,
+                durationSpentMinutes = 320,
+                category = "School Stay",
+                speedKmh = 0.0f
+            ),
+            LocationBreadcrumb(
+                id = "bc_2",
+                title = "Transit via SV Road Bus Transit",
+                latitude = 19.1150,
+                longitude = 72.8380,
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 385,
+                durationSpentMinutes = 25,
+                category = "Transit",
+                speedKmh = 38.5f
+            ),
+            LocationBreadcrumb(
+                id = "bc_3",
+                title = "Study Session at City Central Library",
+                latitude = 19.1120,
+                longitude = 72.8400,
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 500,
+                durationSpentMinutes = 90,
+                category = "Study",
+                speedKmh = 0.0f
+            ),
+            LocationBreadcrumb(
+                id = "bc_4",
+                title = "Departed Home Residence",
+                latitude = 19.1265,
+                longitude = 72.8310,
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 520,
+                durationSpentMinutes = 15,
+                category = "Departure",
+                speedKmh = 4.2f
+            )
+        )
+    )
+    val breadcrumbs: StateFlow<List<LocationBreadcrumb>> = _breadcrumbs.asStateFlow()
+
+    fun addBreadcrumb(
+        title: String,
+        latitude: Double,
+        longitude: Double,
+        durationMinutes: Int = 0,
+        category: String = "Waypoint"
+    ) {
+        val item = LocationBreadcrumb(
+            id = UUID.randomUUID().toString(),
+            title = title,
+            latitude = latitude,
+            longitude = longitude,
+            timestamp = System.currentTimeMillis(),
+            durationSpentMinutes = durationMinutes,
+            category = category,
+            speedKmh = _liveLocation.value.speedKmh
+        )
+        _breadcrumbs.value = listOf(item) + _breadcrumbs.value
     }
 }

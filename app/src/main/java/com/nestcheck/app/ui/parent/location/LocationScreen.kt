@@ -41,6 +41,7 @@ fun LocationScreen(
     val currentTab by viewModel.currentTab.collectAsState()
     val liveLoc by viewModel.liveLocation.collectAsState()
     val zones by viewModel.zones.collectAsState()
+    val breadcrumbs by viewModel.breadcrumbs.collectAsState()
     val isAddZoneDialogOpen by viewModel.isAddZoneDialogOpen.collectAsState()
     val testResult by viewModel.testResult.collectAsState()
 
@@ -124,6 +125,9 @@ fun LocationScreen(
                     liveLoc = liveLoc,
                     onRefresh = viewModel::refreshLiveGps
                 )
+            }
+            LocationTab.BREADCRUMBS -> {
+                BreadcrumbTrailTabContent(breadcrumbs = breadcrumbs)
             }
             LocationTab.GEOFENCES -> {
                 GeofencesTabContent(
@@ -770,4 +774,118 @@ private fun AddGeofenceDialog(
         containerColor = CyberCard,
         shape = RoundedCornerShape(12.dp)
     )
+}
+
+// ============================================================================
+// F12: HISTORICAL BREADCRUMB TRAIL COMPOSABLES
+// ============================================================================
+
+@Composable
+private fun BreadcrumbTrailTabContent(
+    breadcrumbs: List<LocationBreadcrumb>
+) {
+    val timeFormat = remember { SimpleDateFormat("HH:mm a", Locale.getDefault()) }
+
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(CyberCard)
+                    .border(1.dp, CyberBorder, RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "PHYSICAL MOVEMENT TIMELINE (F12)",
+                            color = CyberTextDim,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Today's Itinerary",
+                            color = Color(0xFF00E5FF),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Timestamped Movement Waypoints",
+                        color = CyberTextBright,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Continuous historical breadcrumbs tracking child transit, arrival, and stay durations across known waypoints.",
+                        color = CyberTextDim,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "Chronological Waypoints (${breadcrumbs.size})",
+                color = CyberTextBright,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        items(breadcrumbs, key = { it.id }) { crumb ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(CyberCard)
+                    .border(1.dp, CyberBorder, RoundedCornerShape(10.dp))
+                    .padding(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF00E5FF))
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(crumb.title, color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text(timeFormat.format(Date(crumb.timestamp)), color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
+                        }
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("${crumb.category} • Stay: ${crumb.durationSpentMinutes} mins", color = CyberTextDim, fontSize = 11.sp)
+                            Text("${crumb.latitude}° N, ${crumb.longitude}° E", color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
 }
