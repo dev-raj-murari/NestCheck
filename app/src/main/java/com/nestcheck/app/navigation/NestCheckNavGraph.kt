@@ -44,4 +44,5 @@ sealed class Screen(val route: String) {
     object DevicePaused : Screen("device_paused")
     object HabitChallenges : Screen("habit_challenges")
     object WaterReminder : Screen("water_reminder")
+    object ChildCheckIn : Screen("child_checkin")
 }

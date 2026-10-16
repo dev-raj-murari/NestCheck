@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.nestcheck.app.data.model.*
 import com.nestcheck.app.data.repository.GeofenceStatusResult
+import com.nestcheck.app.navigation.Screen
 import com.nestcheck.app.ui.sinan.LocationTab
 import com.nestcheck.app.ui.sinan.LocationViewModel
 import com.nestcheck.app.ui.theme.*
@@ -46,6 +47,7 @@ fun LocationScreen(
     val speedAlerts by viewModel.speedAlerts.collectAsState()
     val speedThreshold by viewModel.speedThresholdKmh.collectAsState()
     val inTransitMode by viewModel.inTransitMode.collectAsState()
+    val checkIns by viewModel.checkIns.collectAsState()
     val isAddZoneDialogOpen by viewModel.isAddZoneDialogOpen.collectAsState()
     val testResult by viewModel.testResult.collectAsState()
 
@@ -83,21 +85,30 @@ fun LocationScreen(
                 )
             }
 
-            IconButton(onClick = viewModel::openAddZoneDialog) {
-                Icon(
-                    imageVector = Icons.Outlined.AddLocationAlt,
-                    contentDescription = "Add Safe Zone",
-                    tint = CyberTextBright
-                )
+            Row {
+                IconButton(onClick = { navController.navigate(Screen.ChildCheckIn.route) }) {
+                    Icon(
+                        imageVector = Icons.Outlined.NearMe,
+                        contentDescription = "Child Check-In",
+                        tint = Color(0xFF00E5FF)
+                    )
+                }
+                IconButton(onClick = viewModel::openAddZoneDialog) {
+                    Icon(
+                        imageVector = Icons.Outlined.AddLocationAlt,
+                        contentDescription = "Add Safe Zone",
+                        tint = CyberTextBright
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // TAB SELECTOR
+        // TAB SELECTOR: LIVE GPS | SAFE ZONES | SPEED GUARD | TRAIL LOG
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             LocationTab.values().forEach { tab ->
                 val isSelected = currentTab == tab
@@ -114,7 +125,7 @@ fun LocationScreen(
                     Text(
                         text = tab.label,
                         color = if (isSelected) Black else CyberTextDim,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -123,27 +134,16 @@ fun LocationScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        // TAB CONTENTS
         when (currentTab) {
             LocationTab.LIVE_TELEMETRY -> {
                 LiveTelemetryTabContent(
                     liveLoc = liveLoc,
-                    onRefresh = viewModel::refreshLiveGps
+                    checkIns = checkIns,
+                    onRefresh = viewModel::refreshLiveGps,
+                    onAcknowledgeCheckIn = viewModel::acknowledgeCheckIn,
+                    onOpenCheckInScreen = { navController.navigate(Screen.ChildCheckIn.route) }
                 )
-            }
-            LocationTab.SPEED_MONITOR -> {
-                SpeedMonitorTabContent(
-                    liveLoc = liveLoc,
-                    speedAlerts = speedAlerts,
-                    speedThreshold = speedThreshold,
-                    inTransitMode = inTransitMode,
-                    onSetThreshold = viewModel::setSpeedThreshold,
-                    onToggleTransit = viewModel::toggleTransitMode,
-                    onTriggerSimulation = viewModel::triggerSpeedSimulation,
-                    onDismissAlert = viewModel::dismissSpeedAlert
-                )
-            }
-            LocationTab.BREADCRUMBS -> {
-                BreadcrumbTrailTabContent(breadcrumbs = breadcrumbs)
             }
             LocationTab.GEOFENCES -> {
                 GeofencesTabContent(
@@ -160,6 +160,21 @@ fun LocationScreen(
                     onOpenAddDialog = viewModel::openAddZoneDialog,
                     onSimulateTransition = viewModel::simulateTransition
                 )
+            }
+            LocationTab.SPEED_MONITOR -> {
+                SpeedMonitorTabContent(
+                    liveLoc = liveLoc,
+                    speedAlerts = speedAlerts,
+                    speedThreshold = speedThreshold,
+                    inTransitMode = inTransitMode,
+                    onSetThreshold = viewModel::setSpeedThreshold,
+                    onToggleTransit = viewModel::toggleTransitMode,
+                    onTriggerSimulation = viewModel::triggerSpeedSimulation,
+                    onDismissAlert = viewModel::dismissSpeedAlert
+                )
+            }
+            LocationTab.BREADCRUMBS -> {
+                BreadcrumbTrailTabContent(breadcrumbs = breadcrumbs)
             }
         }
     }
@@ -181,10 +196,14 @@ fun LocationScreen(
 @Composable
 private fun LiveTelemetryTabContent(
     liveLoc: LiveLocationPoint,
-    onRefresh: () -> Unit
+    checkIns: List<ChildArrivalCheckIn>,
+    onRefresh: () -> Unit,
+    onAcknowledgeCheckIn: (String) -> Unit,
+    onOpenCheckInScreen: () -> Unit
 ) {
     val dateFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
 
+    // Subtle radar pulse animation
     val infiniteTransition = rememberInfiniteTransition(label = "radar")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.95f,
@@ -289,62 +308,131 @@ private fun LiveTelemetryTabContent(
             }
         }
 
-        // REFRESH BUTTON
+        // QUICK ACTIONS ROW
         item {
-            Button(
-                onClick = onRefresh,
-                modifier = Modifier.fillMaxWidth().height(44.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Refresh GPS Fix", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            }
-        }
+                Button(
+                    onClick = onRefresh,
+                    modifier = Modifier.weight(1f).height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
+                ) {
+                    Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Refresh GPS Fix", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
 
-        // HARDWARE TELEMETRY DETAILS CARD
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(CyberCard)
-                    .border(1.dp, CyberBorder, RoundedCornerShape(12.dp))
-                    .padding(16.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "Hardware Telemetry Details",
-                        color = CyberTextBright,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    TelemetryRow("Location Provider", liveLoc.provider)
-                    TelemetryRow("Compass Heading", "${liveLoc.headingDegrees}° SE")
-                    TelemetryRow("Update Frequency", "Adaptive Real-Time (30s interval)")
-                    TelemetryRow("Signal Quality", "Excellent (7 Satellites locked)")
-                    TelemetryRow("Geodesic Coordinate Datum", "WGS 84 (GPS Standard)")
+                OutlinedButton(
+                    onClick = onOpenCheckInScreen,
+                    modifier = Modifier.weight(1f).height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00E5FF)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00E5FF))
+                ) {
+                    Icon(Icons.Outlined.NearMe, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Kid Check-In UI", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun TelemetryRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, color = CyberTextDim, fontSize = 12.sp)
-        Text(value, color = CyberTextBright, fontSize = 12.sp, fontFamily = TechMono)
+        // F36: CHILD ARRIVAL CHECK-IN SECTION
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Arrival Check-In Pings (F36)",
+                    color = CyberTextBright,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${checkIns.size} pings",
+                    color = CyberTextDim,
+                    fontSize = 11.sp
+                )
+            }
+        }
+
+        if (checkIns.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(CyberCard)
+                        .border(1.dp, CyberBorder, RoundedCornerShape(8.dp))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No arrival check-in pings yet.", color = CyberTextDim, fontSize = 12.sp)
+                }
+            }
+        } else {
+            items(checkIns, key = { it.id }) { checkIn ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(CyberCard)
+                        .border(1.dp, if (checkIn.isParentAcknowledged) CyberBorder else SuccessGreen, RoundedCornerShape(10.dp))
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(SuccessGreen)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text("ARRIVED", color = Black, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(checkIn.locationLabel, color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(checkIn.customNote, color = CyberTextDim, fontSize = 12.sp)
+                            Text("Battery: ${checkIn.batteryLevel}% • Coordinates: ${checkIn.latitude}° N, ${checkIn.longitude}° E", color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
+                        }
+
+                        if (!checkIn.isParentAcknowledged) {
+                            Button(
+                                onClick = { onAcknowledgeCheckIn(checkIn.id) },
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = Black),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("Acknowledge", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            Text("Verified", color = CyberTextDim, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 
 // ============================================================================
-// F10: GEOFENCES TAB CONTENT
+// F10 & F29: GEOFENCES & TRANSITION ALERTS COMPOSABLES
 // ============================================================================
 
 @Composable
@@ -363,48 +451,70 @@ private fun GeofencesTabContent(
     onSimulateTransition: (String, TransitionType, ZoneType) -> Unit
 ) {
     val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
-    val safeZonesCount = zones.count { it.zoneType == ZoneType.SAFE_ZONE && it.isActive }
-    val restrictedZonesCount = zones.count { it.zoneType == ZoneType.RESTRICTED_ZONE && it.isActive }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        // SUMMARY ROW
+        // GEOFENCE SUMMARY HERO
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(CyberCard)
+                    .border(1.dp, CyberBorder, RoundedCornerShape(12.dp))
+                    .padding(16.dp)
             ) {
-                ZoneMetricCard(
-                    title = "Safe Zones",
-                    count = safeZonesCount,
-                    accentColor = SuccessGreen,
-                    modifier = Modifier.weight(1f)
-                )
-                ZoneMetricCard(
-                    title = "Restricted Zones",
-                    count = restrictedZonesCount,
-                    accentColor = AlertRed,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "CIRCULAR SAFE ZONES (F10)",
+                            color = CyberTextDim,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${zones.size} Zones Active",
+                            color = SuccessGreen,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
-        // POSITION SIMULATOR CARD
-        item {
-            PositionSimulatorCard(
-                lat = testLatInput,
-                lng = testLngInput,
-                result = testResult,
-                onLatChange = onLatChange,
-                onLngChange = onLngChange,
-                onTestClick = {
-                    val lat = testLatInput.toDoubleOrNull() ?: 0.0
-                    val lng = testLngInput.toDoubleOrNull() ?: 0.0
-                    onCheckPosition(lat, lng)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Automated Boundary Transitions & Geofencing",
+                        color = CyberTextBright,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Detects when child enters or leaves school, home, or restricted boundaries, logging instant transition events.",
+                        color = CyberTextDim,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = onOpenAddDialog,
+                        modifier = Modifier.fillMaxWidth().height(40.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
+                    ) {
+                        Icon(Icons.Outlined.AddLocation, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Create Safe or Restricted Zone", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
-            )
+            }
         }
 
         // F29: TRANSITION EVENTS FEED
@@ -491,464 +601,26 @@ private fun GeofencesTabContent(
             }
         }
 
-        // ACTIVE GEOFENCE ZONES HEADER
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Configured Boundaries (${zones.size})",
-                    color = CyberTextBright,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                TextButton(onClick = onOpenAddDialog) {
-                    Text("+ Add Zone", color = White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        // LIST OF ZONES
-        if (zones.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(CyberCard)
-                        .border(1.dp, CyberBorder, RoundedCornerShape(8.dp))
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No geofence boundaries configured.", color = CyberTextDim, fontSize = 13.sp)
-                }
-            }
-        } else {
-            items(zones, key = { it.id }) { zone ->
-                GeofenceZoneCard(
-                    zone = zone,
-                    onToggleActive = { onToggleZone(zone.id) },
-                    onDelete = { onDeleteZone(zone.id) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ZoneMetricCard(
-    title: String,
-    count: Int,
-    accentColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(CyberCard)
-            .border(1.dp, CyberBorder, RoundedCornerShape(10.dp))
-            .padding(14.dp)
-    ) {
-        Column {
-            Text(text = title, color = CyberTextDim, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(accentColor)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "$count Active",
-                    color = CyberTextBright,
-                    fontSize = 18.sp,
-                    fontFamily = TechMono,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PositionSimulatorCard(
-    lat: String,
-    lng: String,
-    result: GeofenceStatusResult?,
-    onLatChange: (String) -> Unit,
-    onLngChange: (String) -> Unit,
-    onTestClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(CyberCard)
-            .border(1.dp, CyberBorder, RoundedCornerShape(10.dp))
-            .padding(14.dp)
-    ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "GPS Coordinates Simulator",
-                    color = CyberTextBright,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "TEST HARNESS",
-                    color = CyberTextDim,
-                    fontSize = 10.sp,
-                    fontFamily = TechMono
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = lat,
-                    onValueChange = onLatChange,
-                    label = { Text("Latitude", fontSize = 10.sp) },
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = CyberTextBright,
-                        unfocusedTextColor = CyberTextBright,
-                        focusedBorderColor = White,
-                        unfocusedBorderColor = CyberBorder
-                    ),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = lng,
-                    onValueChange = onLngChange,
-                    label = { Text("Longitude", fontSize = 10.sp) },
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = CyberTextBright,
-                        unfocusedTextColor = CyberTextBright,
-                        focusedBorderColor = White,
-                        unfocusedBorderColor = CyberBorder
-                    ),
-                    singleLine = true
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Button(
-                onClick = onTestClick,
-                modifier = Modifier.fillMaxWidth().height(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
-            ) {
-                Text("Evaluate Boundary Status", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-
-            if (result != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                val isSafe = result.isInsideSafeZone
-                val isRestricted = result.isInsideRestrictedZone
-
-                val bannerColor = when {
-                    isRestricted -> AlertRed
-                    isSafe -> SuccessGreen
-                    else -> WarningAmber
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(bannerColor.copy(alpha = 0.15f))
-                        .border(1.dp, bannerColor, RoundedCornerShape(6.dp))
-                        .padding(10.dp)
-                ) {
-                    Column {
-                        val message = when {
-                            isSafe -> "Child is safely inside: ${result.currentZone?.name}"
-                            isRestricted -> "ALERT: Child inside restricted boundary: ${result.currentZone?.name}"
-                            else -> "Outside all boundaries (${result.distanceToNearestMeters.toInt()}m from nearest)"
-                        }
-                        Text(
-                            text = message,
-                            color = bannerColor,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun GeofenceZoneCard(
-    zone: GeofenceZone,
-    onToggleActive: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val isSafe = zone.zoneType == ZoneType.SAFE_ZONE
-    val typeColor = if (isSafe) SuccessGreen else AlertRed
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(CyberCard)
-            .border(1.dp, CyberBorder, RoundedCornerShape(10.dp))
-            .padding(14.dp)
-    ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(typeColor.copy(alpha = 0.2f))
-                            .border(1.dp, typeColor, RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = if (isSafe) "SAFE" else "RESTRICTED",
-                            color = typeColor,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = zone.name,
-                        color = CyberTextBright,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Switch(
-                        checked = zone.isActive,
-                        onCheckedChange = { onToggleActive() },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Black,
-                            checkedTrackColor = White,
-                            uncheckedThumbColor = CyberTextDim,
-                            uncheckedTrackColor = CyberBlack
-                        )
-                    )
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            imageVector = Icons.Outlined.DeleteOutline,
-                            contentDescription = "Delete",
-                            tint = CyberTextDim,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = zone.description,
-                color = CyberTextDim,
-                fontSize = 12.sp
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "${zone.latitude}° N, ${zone.longitude}° E",
-                    color = CyberTextDim,
-                    fontSize = 11.sp,
-                    fontFamily = TechMono
-                )
-                Text(
-                    text = "Radius: ${zone.radiusMeters.toInt()}m",
-                    color = CyberTextBright,
-                    fontSize = 11.sp,
-                    fontFamily = TechMono
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AddGeofenceDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (String, Double, Double, Float, ZoneType, String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-    var lat by remember { mutableStateOf("19.1050") }
-    var lng by remember { mutableStateOf("72.8350") }
-    var radius by remember { mutableStateOf("250") }
-    var selectedType by remember { mutableStateOf(ZoneType.SAFE_ZONE) }
-    var description by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Safe/Restricted Zone", color = CyberTextBright, fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Zone Name (e.g. School)") },
-                    singleLine = true
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = lat,
-                        onValueChange = { lat = it },
-                        label = { Text("Latitude") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = lng,
-                        onValueChange = { lng = it },
-                        label = { Text("Longitude") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                }
-                OutlinedTextField(
-                    value = radius,
-                    onValueChange = { radius = it },
-                    label = { Text("Radius (meters)") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description / Notes") }
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FilterChip(
-                        selected = selectedType == ZoneType.SAFE_ZONE,
-                        onClick = { selectedType = ZoneType.SAFE_ZONE },
-                        label = { Text("Safe Zone") }
-                    )
-                    FilterChip(
-                        selected = selectedType == ZoneType.RESTRICTED_ZONE,
-                        onClick = { selectedType = ZoneType.RESTRICTED_ZONE },
-                        label = { Text("Restricted Zone") }
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val latVal = lat.toDoubleOrNull() ?: 0.0
-                    val lngVal = lng.toDoubleOrNull() ?: 0.0
-                    val radVal = radius.toFloatOrNull() ?: 200f
-                    onConfirm(name, latVal, lngVal, radVal, selectedType, description)
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
-            ) {
-                Text("Save Zone")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = CyberTextDim)
-            }
-        },
-        containerColor = CyberCard,
-        shape = RoundedCornerShape(12.dp)
-    )
-}
-
-// ============================================================================
-// F12: HISTORICAL BREADCRUMB TRAIL COMPOSABLES
-// ============================================================================
-
-@Composable
-private fun BreadcrumbTrailTabContent(
-    breadcrumbs: List<LocationBreadcrumb>
-) {
-    val timeFormat = remember { SimpleDateFormat("HH:mm a", Locale.getDefault()) }
-
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxSize()
-    ) {
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(CyberCard)
-                    .border(1.dp, CyberBorder, RoundedCornerShape(12.dp))
-                    .padding(16.dp)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "PHYSICAL MOVEMENT TIMELINE (F12)",
-                            color = CyberTextDim,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Today's Itinerary",
-                            color = Color(0xFF00E5FF),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Timestamped Movement Waypoints",
-                        color = CyberTextBright,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Continuous historical breadcrumbs tracking child transit, arrival, and stay durations across known waypoints.",
-                        color = CyberTextDim,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-
+        // CONFIGURED ZONES LIST
         item {
             Text(
-                text = "Chronological Waypoints (${breadcrumbs.size})",
+                text = "Configured Perimeters (${zones.size})",
                 color = CyberTextBright,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
         }
 
-        items(breadcrumbs, key = { it.id }) { crumb ->
+        items(zones, key = { it.id }) { zone ->
+            GeofenceZoneCard(
+                zone = zone,
+                onToggleActive = { onToggleZone(zone.id) },
+                onDelete = { onDeleteZone(zone.id) }
+            )
+        }
+
+        // POSITION CHECKER
+        item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -957,33 +629,49 @@ private fun BreadcrumbTrailTabContent(
                     .border(1.dp, CyberBorder, RoundedCornerShape(10.dp))
                     .padding(14.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF00E5FF))
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(crumb.title, color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                            Text(timeFormat.format(Date(crumb.timestamp)), color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
-                        }
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("${crumb.category} • Stay: ${crumb.durationSpentMinutes} mins", color = CyberTextDim, fontSize = 11.sp)
-                            Text("${crumb.latitude}° N, ${crumb.longitude}° E", color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
-                        }
+                Column {
+                    Text("Check Coordinates Against Geofences", color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = testLatInput,
+                            onValueChange = onLatChange,
+                            label = { Text("Lat", color = CyberTextDim) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(focusedTextColor = CyberTextBright, unfocusedTextColor = CyberTextBright)
+                        )
+                        OutlinedTextField(
+                            value = testLngInput,
+                            onValueChange = onLngChange,
+                            label = { Text("Lng", color = CyberTextDim) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(focusedTextColor = CyberTextBright, unfocusedTextColor = CyberTextBright)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            val lat = testLatInput.toDoubleOrNull() ?: 19.1050
+                            val lng = testLngInput.toDoubleOrNull() ?: 72.8350
+                            onCheckPosition(lat, lng)
+                        },
+                        modifier = Modifier.fillMaxWidth().height(36.dp),
+                        shape = RoundedCornerShape(6.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
+                    ) {
+                        Text("Calculate Position", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    testResult?.let { res ->
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = if (res.isInsideSafeZone) "Child INSIDE SAFE ZONE (${res.currentZone?.name})" else if (res.isInsideRestrictedZone) "WARNING: Child INSIDE RESTRICTED ZONE" else "Outside all configured zones (${(res.distanceToNearestMeters).toInt()}m away)",
+                            color = if (res.isInsideSafeZone) SuccessGreen else if (res.isInsideRestrictedZone) AlertRed else CyberTextDim,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -1216,4 +904,386 @@ private fun SpeedMonitorTabContent(
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
+
+// ============================================================================
+// F12: HISTORICAL BREADCRUMB TRAIL COMPOSABLES
+// ============================================================================
+
+@Composable
+private fun BreadcrumbTrailTabContent(
+    breadcrumbs: List<LocationBreadcrumb>
+) {
+    val timeFormat = remember { SimpleDateFormat("HH:mm a", Locale.getDefault()) }
+
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(CyberCard)
+                    .border(1.dp, CyberBorder, RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "PHYSICAL MOVEMENT TIMELINE (F12)",
+                            color = CyberTextDim,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Today's Itinerary",
+                            color = Color(0xFF00E5FF),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Timestamped Movement Waypoints",
+                        color = CyberTextBright,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Continuous historical breadcrumbs tracking child transit, arrival, and stay durations across known waypoints.",
+                        color = CyberTextDim,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "Chronological Waypoints (${breadcrumbs.size})",
+                color = CyberTextBright,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        items(breadcrumbs, key = { it.id }) { crumb ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(CyberCard)
+                    .border(1.dp, CyberBorder, RoundedCornerShape(10.dp))
+                    .padding(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF00E5FF))
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(crumb.title, color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text(timeFormat.format(Date(crumb.timestamp)), color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
+                        }
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("${crumb.category} • Stay: ${crumb.durationSpentMinutes} mins", color = CyberTextDim, fontSize = 11.sp)
+                            Text("${crumb.latitude}° N, ${crumb.longitude}° E", color = CyberTextDim, fontSize = 10.sp, fontFamily = TechMono)
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+// ============================================================================
+// SHARED DIALOGS & CARDS
+// ============================================================================
+
+@Composable
+private fun GeofenceZoneCard(
+    zone: GeofenceZone,
+    onToggleActive: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(CyberCard)
+            .border(
+                1.dp,
+                if (zone.zoneType == ZoneType.RESTRICTED_ZONE) AlertRed.copy(alpha = 0.5f) else CyberBorder,
+                RoundedCornerShape(10.dp)
+            )
+            .padding(14.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(if (zone.zoneType == ZoneType.SAFE_ZONE) SuccessGreen else AlertRed)
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = zone.zoneType.displayName.uppercase(),
+                            color = if (zone.zoneType == ZoneType.SAFE_ZONE) Black else White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(CyberBlack)
+                            .border(0.5.dp, CyberBorderBright, RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "${zone.radiusMeters.toInt()}m Radius",
+                            color = CyberTextBright,
+                            fontSize = 10.sp,
+                            fontFamily = TechMono
+                        )
+                    }
+                }
+
+                Switch(
+                    checked = zone.isActive,
+                    onCheckedChange = { onToggleActive() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Black,
+                        checkedTrackColor = if (zone.zoneType == ZoneType.SAFE_ZONE) SuccessGreen else AlertRed,
+                        uncheckedThumbColor = CyberTextDim,
+                        uncheckedTrackColor = CyberBlack
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = zone.name,
+                color = CyberTextBright,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            if (zone.description.isNotBlank()) {
+                Text(
+                    text = zone.description,
+                    color = CyberTextDim,
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${zone.latitude}° N, ${zone.longitude}° E",
+                    color = CyberTextDim,
+                    fontSize = 11.sp,
+                    fontFamily = TechMono
+                )
+
+                IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = "Delete Zone",
+                        tint = CyberTextDim,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddGeofenceDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, Double, Double, Float, ZoneType, String) -> Unit
+) {
+    var nameInput by remember { mutableStateOf("") }
+    var latInput by remember { mutableStateOf("19.1150") }
+    var lngInput by remember { mutableStateOf("72.8420") }
+    var radiusSlider by remember { mutableFloatStateOf(300f) }
+    var selectedType by remember { mutableStateOf(ZoneType.SAFE_ZONE) }
+    var descriptionInput by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = CyberCard,
+        title = {
+            Text("Create Geofence Zone", color = CyberTextBright, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = nameInput,
+                    onValueChange = { nameInput = it },
+                    label = { Text("Zone Name (e.g. Grandma's House)", color = CyberTextDim) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = CyberTextBright,
+                        unfocusedTextColor = CyberTextBright,
+                        focusedBorderColor = White,
+                        unfocusedBorderColor = CyberBorder
+                    )
+                )
+
+                // ZONE TYPE SELECTOR
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(34.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (selectedType == ZoneType.SAFE_ZONE) SuccessGreen else CyberBlack)
+                            .border(1.dp, if (selectedType == ZoneType.SAFE_ZONE) SuccessGreen else CyberBorder, RoundedCornerShape(6.dp))
+                            .clickable { selectedType = ZoneType.SAFE_ZONE },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Safe Zone", color = if (selectedType == ZoneType.SAFE_ZONE) Black else White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(34.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (selectedType == ZoneType.RESTRICTED_ZONE) AlertRed else CyberBlack)
+                            .border(1.dp, if (selectedType == ZoneType.RESTRICTED_ZONE) AlertRed else CyberBorder, RoundedCornerShape(6.dp))
+                            .clickable { selectedType = ZoneType.RESTRICTED_ZONE },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Restricted", color = White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = latInput,
+                        onValueChange = { latInput = it },
+                        label = { Text("Latitude", color = CyberTextDim) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = CyberTextBright,
+                            unfocusedTextColor = CyberTextBright,
+                            focusedBorderColor = White,
+                            unfocusedBorderColor = CyberBorder
+                        )
+                    )
+                    OutlinedTextField(
+                        value = lngInput,
+                        onValueChange = { lngInput = it },
+                        label = { Text("Longitude", color = CyberTextDim) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = CyberTextBright,
+                            unfocusedTextColor = CyberTextBright,
+                            focusedBorderColor = White,
+                            unfocusedBorderColor = CyberBorder
+                        )
+                    )
+                }
+
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Radius", color = CyberTextDim, fontSize = 12.sp)
+                        Text("${radiusSlider.toInt()} meters", color = CyberTextBright, fontSize = 12.sp, fontFamily = TechMono, fontWeight = FontWeight.Bold)
+                    }
+                    Slider(
+                        value = radiusSlider,
+                        onValueChange = { radiusSlider = it },
+                        valueRange = 100f..1000f,
+                        steps = 9,
+                        colors = SliderDefaults.colors(
+                            thumbColor = White,
+                            activeTrackColor = if (selectedType == ZoneType.SAFE_ZONE) SuccessGreen else AlertRed,
+                            inactiveTrackColor = CyberBorder
+                        )
+                    )
+                }
+
+                OutlinedTextField(
+                    value = descriptionInput,
+                    onValueChange = { descriptionInput = it },
+                    label = { Text("Description Note", color = CyberTextDim) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = CyberTextBright,
+                        unfocusedTextColor = CyberTextBright,
+                        focusedBorderColor = White,
+                        unfocusedBorderColor = CyberBorder
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (nameInput.isNotBlank()) {
+                        val lat = latInput.toDoubleOrNull() ?: 19.1150
+                        val lng = lngInput.toDoubleOrNull() ?: 72.8420
+                        onConfirm(nameInput, lat, lng, radiusSlider, selectedType, descriptionInput)
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
+            ) {
+                Text("Save Zone", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = CyberTextDim)
+            }
+        }
+    )
 }

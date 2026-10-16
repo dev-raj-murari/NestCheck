@@ -1,13 +1,6 @@
 package com.nestcheck.app.data.repository
 
-import com.nestcheck.app.data.model.DefaultGeofences
-import com.nestcheck.app.data.model.GeofenceZone
-import com.nestcheck.app.data.model.LiveLocationPoint
-import com.nestcheck.app.data.model.LocationBreadcrumb
-import com.nestcheck.app.data.model.GeofenceTransitionAlert
-import com.nestcheck.app.data.model.HighVelocityAlert
-import com.nestcheck.app.data.model.TransitionType
-import com.nestcheck.app.data.model.ZoneType
+import com.nestcheck.app.data.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +18,10 @@ data class GeofenceStatusResult(
 
 @Singleton
 class LocationRepository @Inject constructor() {
+
+    // ========================================================================
+    // F10: GEOFENCING CONFIGURATION
+    // ========================================================================
 
     private val _zones = MutableStateFlow<List<GeofenceZone>>(
         listOf(
@@ -113,16 +110,6 @@ class LocationRepository @Inject constructor() {
         )
     }
 
-    private fun calculateDistanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Float {
-        val r = 6371000.0 // Earth radius in meters
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2).pow(2.0) +
-                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2).pow(2.0)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return (r * c).toFloat()
-    }
     // ========================================================================
     // F11: LIVE GPS LOCATION TELEMETRY
     // ========================================================================
@@ -145,6 +132,7 @@ class LocationRepository @Inject constructor() {
 
     fun refreshLiveLocation() {
         val current = _liveLocation.value
+        // Introduce small micro-jitter for live GPS realism
         val jitterLat = (Math.random() - 0.5) * 0.0004
         val jitterLng = (Math.random() - 0.5) * 0.0004
         val newAccuracy = 3.5f + (Math.random() * 2.0).toFloat()
@@ -339,5 +327,60 @@ class LocationRepository @Inject constructor() {
 
     fun dismissSpeedAlert(id: String) {
         _speedAlerts.value = _speedAlerts.value.filterNot { it.id == id }
+    }
+
+    // ========================================================================
+    // F36: "I'M HERE" ONE-TAP CHECK-IN
+    // ========================================================================
+
+    private val _checkIns = MutableStateFlow<List<ChildArrivalCheckIn>>(
+        listOf(
+            ChildArrivalCheckIn(
+                id = "chk_1",
+                childName = "Alex",
+                timestamp = System.currentTimeMillis() - 1000 * 60 * 50,
+                latitude = 19.1050,
+                longitude = 72.8350,
+                locationLabel = "Arrived at School",
+                customNote = "I arrived safely at MPSTME campus!",
+                batteryLevel = 88,
+                isParentAcknowledged = true
+            )
+        )
+    )
+    val checkIns: StateFlow<List<ChildArrivalCheckIn>> = _checkIns.asStateFlow()
+
+    fun sendChildCheckIn(label: String, note: String): ChildArrivalCheckIn {
+        val loc = _liveLocation.value
+        val checkIn = ChildArrivalCheckIn(
+            id = UUID.randomUUID().toString(),
+            childName = "Alex",
+            timestamp = System.currentTimeMillis(),
+            latitude = loc.latitude,
+            longitude = loc.longitude,
+            locationLabel = label,
+            customNote = note,
+            batteryLevel = loc.batteryPercent,
+            isParentAcknowledged = false
+        )
+        _checkIns.value = listOf(checkIn) + _checkIns.value
+        return checkIn
+    }
+
+    fun acknowledgeCheckIn(id: String) {
+        _checkIns.value = _checkIns.value.map {
+            if (it.id == id) it.copy(isParentAcknowledged = true) else it
+        }
+    }
+
+    private fun calculateDistanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Float {
+        val r = 6371000.0 // Earth radius in meters
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2).pow(2.0) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2).pow(2.0)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return (r * c).toFloat()
     }
 }

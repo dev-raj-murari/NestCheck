@@ -177,3 +177,19 @@ data class HighVelocityAlert(
     val inTransitDesignated: Boolean = false,
     val isDismissed: Boolean = false
 )
+
+// ============================================================================
+// F36: "I'M HERE" ONE-TAP CHECK-IN MODELS
+// ============================================================================
+
+data class ChildArrivalCheckIn(
+    val id: String = "",
+    val childName: String = "Alex",
+    val timestamp: Long = System.currentTimeMillis(),
+    val latitude: Double = 19.1050,
+    val longitude: Double = 72.8350,
+    val locationLabel: String = "Arrived at School",
+    val customNote: String = "I made it safely to campus!",
+    val batteryLevel: Int = 88,
+    val isParentAcknowledged: Boolean = false
+)

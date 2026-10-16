@@ -28,6 +28,7 @@ import com.nestcheck.app.ui.parent.content.ContentFilterScreen
 import com.nestcheck.app.ui.parent.location.LocationScreen
 import com.nestcheck.app.ui.sinan.AppQuarantineScreen
 import com.nestcheck.app.ui.sinan.BlockedUrlLandingScreen
+import com.nestcheck.app.ui.sinan.ChildCheckInScreen
 import com.nestcheck.app.ui.child.home.KidHomeScreen
 import com.nestcheck.app.ui.child.profile.KidProfileScreen
 import com.nestcheck.app.ui.child.credits.MyCreditsScreen
@@ -89,10 +90,11 @@ fun NestCheckApp() {
         composable(Screen.KidProfile.route) { KidProfileScreen(navController) }
         composable(Screen.MyCredits.route) { MyCreditsScreen(navController) }
 
-        // Sinan's Feature Routes (F7, F8, F9, F10)
+        // Sinan's Feature Routes (F7, F8, F9, F10, F36)
         composable(Screen.ContentFilter.route) { ContentFilterScreen(navController) }
         composable(Screen.Location.route) { LocationScreen(navController) }
         composable(Screen.AppQuarantine.route) { AppQuarantineScreen(navController) }
         composable(Screen.BlockedUrl.route) { BlockedUrlLandingScreen(navController) }
+        composable(Screen.ChildCheckIn.route) { ChildCheckInScreen(navController) }
     }
 }
