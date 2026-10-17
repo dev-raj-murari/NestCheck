@@ -39,6 +39,7 @@ import com.nestcheck.app.ui.sinan.ToxicTextMonitorScreen
 import com.nestcheck.app.ui.sinan.SafeSearchScreen
 import com.nestcheck.app.ui.sinan.LowBatteryPingScreen
 import com.nestcheck.app.ui.sinan.PermissionAuditorScreen
+import com.nestcheck.app.ui.sinan.EmergencyHubScreen
 import com.nestcheck.app.ui.child.home.KidHomeScreen
 import com.nestcheck.app.ui.child.profile.KidProfileScreen
 import com.nestcheck.app.ui.child.credits.MyCreditsScreen
@@ -116,5 +117,6 @@ fun NestCheckApp() {
         composable(Screen.SafeSearch.route) { SafeSearchScreen(navController) }
         composable(Screen.LowBatteryPing.route) { LowBatteryPingScreen(navController) }
         composable(Screen.PermissionAuditor.route) { PermissionAuditorScreen(navController) }
+        composable(Screen.EmergencyHub.route) { EmergencyHubScreen(navController) }
     }
 }

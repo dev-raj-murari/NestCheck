@@ -384,5 +384,43 @@ data class PermissionAuditorSummary(
     val lastScanTimestamp: Long = System.currentTimeMillis()
 )
 
+// ============================================================================
+// F41: EMERGENCY CONTACTS HUB & FAST-DIAL DISPATCHER MODELS
+// ============================================================================
+
+enum class EmergencyCategory(val displayName: String, val badgeColorHex: Long) {
+    FAMILY("Caregivers & Family", 0xFF00E5FF),
+    NATIONAL_EMERGENCY("National 24x7 Response", 0xFFFF5252),
+    MEDICAL("Medical & Ambulance", 0xFF00E676),
+    SAFETY_PATROL("Child Safety Patrol", 0xFFFFAB00)
+}
+
+data class FastDialEmergencyContact(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val name: String = "",
+    val roleTitle: String = "",
+    val phoneNumber: String = "",
+    val category: EmergencyCategory = EmergencyCategory.FAMILY,
+    val isPrimary: Boolean = false,
+    val isTollFree: Boolean = true
+)
+
+data class EmergencyDispatchRecord(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val contactName: String = "",
+    val phoneNumber: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val wasGpsBroadcast: Boolean = true,
+    val status: String = "Dispatched via Telephony & Cloud SOS"
+)
+
+data class EmergencyHubConfig(
+    val isCountdownEnabled: Boolean = true,
+    val countdownSeconds: Int = 3,
+    val autoSendLocationSmsOnCall: Boolean = true,
+    val totalEmergencyDispatches: Int = 2
+)
+
+
 
 
