@@ -27,6 +27,11 @@ sealed class Screen(val route: String) {
     object AgePresets : Screen("age_presets")
     object CategoryQuotas : Screen("category_quotas")
     object TimeRequests : Screen("time_requests")
+    object RemoteLock : Screen("remote_lock")
+    object MultiChild : Screen("multi_child")
+    object AIAssistant : Screen("ai_assistant")
+    object FamilySharing : Screen("family_sharing")
+    object LanguageSettings : Screen("language_settings")
     
     // Kid routes
     object KidHome : Screen("kid_home")

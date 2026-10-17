@@ -347,7 +347,7 @@ fun LoginScreen(
                                 onClick = { navController.navigate(Screen.Location.route) },
                                 modifier = Modifier.weight(1f).height(40.dp),
                                 shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberNeonCyan)
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AccentBlue)
                             ) {
                                 Text("📍 Location & Safety", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             }
@@ -370,6 +370,59 @@ fun LoginScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AlertRed)
                         ) {
                             Text("🛡️ App Quarantine Guard (F9)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.RemoteLock.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AlertRed)
+                            ) {
+                                Text("🔒 Remote Lock (F19)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.MultiChild.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AccentBlue)
+                            ) {
+                                Text("👨‍👧‍👦 Multi-Child (F20)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.AIAssistant.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("💡 AI Advisor (F39)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.FamilySharing.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("🤝 Co-Parents (F42)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { navController.navigate(Screen.LanguageSettings.route) },
+                            modifier = Modifier.fillMaxWidth().height(40.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = WarningAmber)
+                        ) {
+                            Text("🌐 Multi-Language & Region (F43)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 

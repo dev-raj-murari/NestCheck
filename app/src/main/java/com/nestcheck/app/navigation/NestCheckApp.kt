@@ -29,6 +29,11 @@ import com.nestcheck.app.ui.parent.location.LocationScreen
 import com.nestcheck.app.ui.sinan.AppQuarantineScreen
 import com.nestcheck.app.ui.sinan.BlockedUrlLandingScreen
 import com.nestcheck.app.ui.sinan.ChildCheckInScreen
+import com.nestcheck.app.ui.parent.lock.RemoteDeviceLockScreen
+import com.nestcheck.app.ui.parent.dashboard.MultiChildDashboardScreen
+import com.nestcheck.app.ui.parent.ai.AIParentingAssistantScreen
+import com.nestcheck.app.ui.parent.family.FamilySharingScreen
+import com.nestcheck.app.ui.parent.settings.LanguageSettingsScreen
 import com.nestcheck.app.ui.child.home.KidHomeScreen
 import com.nestcheck.app.ui.child.profile.KidProfileScreen
 import com.nestcheck.app.ui.child.credits.MyCreditsScreen
@@ -73,7 +78,7 @@ fun NestCheckApp() {
         composable(Screen.HabitChallenges.route) { HabitStreaksScreen(navController) }
         composable(Screen.WaterReminder.route) { WaterReminderScreen(navController) }
 
-        // Dev Raj's Feature Routes (F13, F45, F14, F37, F15, F16, F18, F44, F17, F38)
+        // Dev Raj's Feature Routes (F13, F45, F14, F37, F15, F16, F18, F44, F17, F38, F19, F20, F39, F42, F43)
         composable(Screen.ChildProfile.route) { ChildProfileScreen(navController) }
         composable(Screen.ParentSecurity.route) { ParentPinSecurityScreen(navController) }
         composable(Screen.StepCounter.route) { StepCounterScreen(navController) }
@@ -84,6 +89,11 @@ fun NestCheckApp() {
         composable(Screen.OfflineSync.route) { OfflineSyncScreen(navController) }
         composable(Screen.Reports.route) { ReportsScreen(navController) }
         composable(Screen.AIDigest.route) { AIDigestScreen(navController) }
+        composable(Screen.RemoteLock.route) { RemoteDeviceLockScreen(navController) }
+        composable(Screen.MultiChild.route) { MultiChildDashboardScreen(navController) }
+        composable(Screen.AIAssistant.route) { AIParentingAssistantScreen(navController) }
+        composable(Screen.FamilySharing.route) { FamilySharingScreen(navController) }
+        composable(Screen.LanguageSettings.route) { LanguageSettingsScreen(navController) }
 
         // Kid Core Routes
         composable(Screen.KidHome.route) { KidHomeScreen(navController) }
