@@ -271,3 +271,53 @@ data class ToxicScannerConfig(
     val totalScannedCount: Int = 384,
     val totalFlaggedCount: Int = 12
 )
+
+// ============================================================================
+// F33: SYSTEM-WIDE SAFESEARCH LOCK ENFORCEMENT MODELS
+// ============================================================================
+
+enum class SearchEngineType(
+    val displayName: String,
+    val hostDomain: String,
+    val queryParam: String,
+    val safeParam: String,
+    val safeValue: String
+) {
+    GOOGLE("Google Search", "google.com", "q", "safe", "active"),
+    BING("Microsoft Bing", "bing.com", "q", "adlt", "strict"),
+    YOUTUBE("YouTube Search", "youtube.com", "search_query", "safe", "active"),
+    DUCKDUCKGO("DuckDuckGo", "duckduckgo.com", "q", "kp", "1"),
+    YAHOO("Yahoo Search", "search.yahoo.com", "p", "vm", "r"),
+    ECOSIA("Ecosia", "ecosia.org", "q", "safesearch", "2")
+}
+
+data class SafeSearchEngineRule(
+    val engine: SearchEngineType,
+    val isEnforced: Boolean = true,
+    val requestsIntercepted: Int = 0
+)
+
+data class SafeSearchQueryLog(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val query: String = "",
+    val engine: SearchEngineType = SearchEngineType.GOOGLE,
+    val originalUrl: String = "",
+    val rewrittenUrl: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val isEnforced: Boolean = true
+)
+
+data class SafeSearchConfig(
+    val isTamperLockEnabled: Boolean = true,
+    val blockIncognitoBrowsing: Boolean = true,
+    val enforceRestrictedYouTubeMode: Boolean = true,
+    val totalQueriesFiltered: Int = 1420,
+    val engines: List<SafeSearchEngineRule> = listOf(
+        SafeSearchEngineRule(SearchEngineType.GOOGLE, true, 892),
+        SafeSearchEngineRule(SearchEngineType.BING, true, 215),
+        SafeSearchEngineRule(SearchEngineType.YOUTUBE, true, 194),
+        SafeSearchEngineRule(SearchEngineType.DUCKDUCKGO, true, 82),
+        SafeSearchEngineRule(SearchEngineType.YAHOO, true, 37)
+    )
+)
+

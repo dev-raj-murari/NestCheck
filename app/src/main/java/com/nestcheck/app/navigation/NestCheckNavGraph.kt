@@ -52,4 +52,5 @@ sealed class Screen(val route: String) {
     object ChildCheckIn : Screen("child_checkin")
     object TrustedContacts : Screen("trusted_contacts")
     object ToxicTextMonitor : Screen("toxic_text_monitor")
+    object SafeSearch : Screen("safesearch_lock")
 }
