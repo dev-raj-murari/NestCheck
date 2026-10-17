@@ -12,5 +12,6 @@ data class ChildProfile(
     val dateOfBirth: String = "2016-05-15",
     val avatarUrl: String = "",
     val bmi: Float = 17.3f,
-    val dailyStepGoal: Int = 6000
+    val dailyStepGoal: Int = 6000,
+    val pinHash: String = "" // salted hash of the kid's login PIN (salt = uid)
 )

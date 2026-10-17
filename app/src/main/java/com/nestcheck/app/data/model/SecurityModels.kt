@@ -6,7 +6,8 @@ data class SecurityConfig(
     val isAppLocked: Boolean = false,
     val autoLockTimeoutMinutes: Int = 5,
     val lastUnlockedTimestamp: Long = System.currentTimeMillis(),
-    val failedAttempts: Int = 0
+    val failedAttempts: Int = 0,
+    val lockedUntil: Long = 0L // epoch ms; PIN attempts rejected until then
 )
 
 enum class LockTimeoutOption(val label: String, val minutes: Int) {

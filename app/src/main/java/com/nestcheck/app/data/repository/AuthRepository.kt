@@ -1,8 +1,12 @@
 package com.nestcheck.app.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.nestcheck.app.BuildConfig
 import com.nestcheck.app.data.model.ParentUser
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -26,46 +30,51 @@ class AuthRepositoryImpl @Inject constructor(
     override val currentUser: FirebaseUser?
         get() = auth.currentUser
 
+    /**
+     * A wrong password / unknown user / duplicate email is ALWAYS a failure.
+     * The offline "demo" fallback only exists in debug builds, and only when Firebase itself is
+     * unreachable or misconfigured (dummy google-services.json) - never for bad credentials.
+     */
+    private fun mayFallBackToDemo(e: Exception): Boolean =
+        BuildConfig.DEBUG &&
+            e !is FirebaseAuthInvalidCredentialsException &&
+            e !is FirebaseAuthInvalidUserException &&
+            e !is FirebaseAuthUserCollisionException
+
     override suspend fun login(email: String, pass: String): Result<Boolean> = runCatching {
+        val cleanEmail = email.trim()
         try {
-            val result = auth.signInWithEmailAndPassword(email, pass).await()
+            val result = auth.signInWithEmailAndPassword(cleanEmail, pass).await()
             profileRepository.updateParentProfile(
-                name = result.user?.displayName ?: email.substringBefore("@"),
-                email = email
+                name = result.user?.displayName ?: cleanEmail.substringBefore("@"),
+                email = cleanEmail
             )
             true
         } catch (e: Exception) {
-            // If Firebase fails due to dummy API key or offline network, allow smooth local dev login
+            if (!mayFallBackToDemo(e)) throw e
             profileRepository.updateParentProfile(
-                name = email.substringBefore("@").replaceFirstChar { it.uppercase() },
-                email = email
+                name = cleanEmail.substringBefore("@").replaceFirstChar { it.uppercase() },
+                email = cleanEmail
             )
             true
         }
     }
 
     override suspend fun register(email: String, pass: String, name: String): Result<Boolean> = runCatching {
+        val cleanEmail = email.trim()
         try {
-            val result = auth.createUserWithEmailAndPassword(email, pass).await()
+            val result = auth.createUserWithEmailAndPassword(cleanEmail, pass).await()
             val user = result.user
             if (user != null) {
-                val parentProfile = ParentUser(
-                    uid = user.uid,
-                    email = email,
-                    name = name
-                )
                 firestore.collection("users")
                     .document(user.uid)
-                    .set(parentProfile)
+                    .set(ParentUser(uid = user.uid, email = cleanEmail, name = name))
                     .await()
             }
         } catch (e: Exception) {
-            // Fallback for offline/demo mode
+            if (!mayFallBackToDemo(e)) throw e
         }
-        profileRepository.updateParentProfile(
-            name = name,
-            email = email
-        )
+        profileRepository.updateParentProfile(name = name, email = cleanEmail)
         true
     }
 

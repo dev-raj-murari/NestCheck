@@ -103,9 +103,6 @@ fun LoginScreen(
                                         if (kid.dob.isNotBlank()) {
                                             Text(text = "DOB: ${kid.dob}", color = CyberTextDim, fontSize = 12.sp)
                                         }
-                                        if (kid.height.isNotBlank() || kid.weight.isNotBlank()) {
-                                            Text(text = "Height: ${kid.height} cm • Weight: ${kid.weight} kg", color = CyberTextDim, fontSize = 12.sp)
-                                        }
                                     }
                                 }
                             }
@@ -540,6 +537,8 @@ fun LoginScreen(
                             )
                         )
 
+                        Spacer(modifier = Modifier.height(12.dp))
+                        FormError(uiState.error)
                         Spacer(modifier = Modifier.height(20.dp))
 
                         Button(
@@ -722,37 +721,26 @@ fun LoginScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            OutlinedTextField(
-                                value = uiState.kidHeight,
-                                onValueChange = viewModel::onKidHeightChange,
-                                label = { Text("Height (cm)") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = CyberTextBright,
-                                    unfocusedTextColor = CyberTextBright,
-                                    focusedBorderColor = CyberTextBright,
-                                    unfocusedBorderColor = CyberBorder
-                                )
+                        OutlinedTextField(
+                            value = uiState.kidPin,
+                            onValueChange = viewModel::onKidPinChange,
+                            label = { Text("Child's login PIN (4 digits)") },
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = CyberTextBright,
+                                unfocusedTextColor = CyberTextBright,
+                                focusedBorderColor = CyberTextBright,
+                                unfocusedBorderColor = CyberBorder
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            OutlinedTextField(
-                                value = uiState.kidWeight,
-                                onValueChange = viewModel::onKidWeightChange,
-                                label = { Text("Weight (kg)") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = CyberTextBright,
-                                    unfocusedTextColor = CyberTextBright,
-                                    focusedBorderColor = CyberTextBright,
-                                    unfocusedBorderColor = CyberBorder
-                                )
-                            )
-                        }
+                        )
+                        Text(
+                            "Height, weight and BMI can be added later in Child Profile.",
+                            color = CyberTextDim, fontSize = 11.sp,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
 
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -793,7 +781,7 @@ fun LoginScreen(
                                                 fontWeight = FontWeight.SemiBold
                                             )
                                             Text(
-                                                text = "${kid.height}cm • ${kid.weight}kg • ${kid.dob}",
+                                                text = if (kid.dob.isBlank()) "PIN set" else "DOB ${kid.dob} • PIN set",
                                                 color = CyberTextDim,
                                                 fontSize = 11.sp
                                             )
@@ -811,6 +799,8 @@ fun LoginScreen(
                             }
                         }
 
+                        Spacer(modifier = Modifier.height(12.dp))
+                        FormError(uiState.error)
                         Spacer(modifier = Modifier.height(20.dp))
 
                         Button(
@@ -865,6 +855,8 @@ fun LoginScreen(
                             )
                         )
 
+                        Spacer(modifier = Modifier.height(12.dp))
+                        FormError(uiState.error)
                         Spacer(modifier = Modifier.height(20.dp))
 
                         Button(
@@ -879,139 +871,14 @@ fun LoginScreen(
                         }
 
                     } else {
-                        // === KID REGISTER ===
-                        Text("Kid Registration", color = CyberTextBright, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        OutlinedTextField(
-                            value = uiState.kidLoginName,
-                            onValueChange = viewModel::onKidLoginNameChange,
-                            label = { Text("Child Name") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = CyberTextBright,
-                                unfocusedTextColor = CyberTextBright,
-                                focusedBorderColor = CyberTextBright,
-                                unfocusedBorderColor = CyberBorder
-                            )
+                        // Kids never self-register: a parent creates the child + PIN.
+                        Text("Ask a parent", color = CyberTextBright, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            "Kid accounts are created by a parent. Ask them to add you from their " +
+                                "account, then log in here with your name and PIN.",
+                            color = CyberTextDim, fontSize = 13.sp
                         )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            OutlinedTextField(
-                                value = uiState.kidAge,
-                                onValueChange = viewModel::onKidAgeChange,
-                                label = { Text("Age") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = CyberTextBright,
-                                    unfocusedTextColor = CyberTextBright,
-                                    focusedBorderColor = CyberTextBright,
-                                    unfocusedBorderColor = CyberBorder
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            OutlinedTextField(
-                                value = uiState.kidDob,
-                                onValueChange = viewModel::onKidDobChange,
-                                label = { Text("DOB (YYYY-MM-DD)") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1.5f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = CyberTextBright,
-                                    unfocusedTextColor = CyberTextBright,
-                                    focusedBorderColor = CyberTextBright,
-                                    unfocusedBorderColor = CyberBorder
-                                )
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            OutlinedTextField(
-                                value = uiState.kidHeight,
-                                onValueChange = viewModel::onKidHeightChange,
-                                label = { Text("Height (cm)") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = CyberTextBright,
-                                    unfocusedTextColor = CyberTextBright,
-                                    focusedBorderColor = CyberTextBright,
-                                    unfocusedBorderColor = CyberBorder
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            OutlinedTextField(
-                                value = uiState.kidWeight,
-                                onValueChange = viewModel::onKidWeightChange,
-                                label = { Text("Weight (kg)") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = CyberTextBright,
-                                    unfocusedTextColor = CyberTextBright,
-                                    focusedBorderColor = CyberTextBright,
-                                    unfocusedBorderColor = CyberBorder
-                                )
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedTextField(
-                            value = uiState.parentEmail,
-                            onValueChange = viewModel::onParentEmailChange,
-                            label = { Text("Parent's Email") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = CyberTextBright,
-                                unfocusedTextColor = CyberTextBright,
-                                focusedBorderColor = CyberTextBright,
-                                unfocusedBorderColor = CyberBorder
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedTextField(
-                            value = uiState.kidLoginPass,
-                            onValueChange = viewModel::onKidLoginPassChange,
-                            label = { Text("Create PIN / Password") },
-                            singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = CyberTextBright,
-                                unfocusedTextColor = CyberTextBright,
-                                focusedBorderColor = CyberTextBright,
-                                unfocusedBorderColor = CyberBorder
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        Button(
-                            onClick = viewModel::loginKid,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
-                        ) {
-                            Text("Register Kid", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
                     }
                 }
             }
@@ -1029,4 +896,16 @@ fun LoginScreen(
                 .padding(8.dp)
         )
     }
+}
+
+@Composable
+private fun FormError(message: String?) {
+    if (message == null) return
+    Text(
+        text = message,
+        color = AlertRed,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+    )
 }
