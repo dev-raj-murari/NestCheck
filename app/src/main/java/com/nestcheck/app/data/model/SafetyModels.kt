@@ -347,4 +347,42 @@ data class LowBatteryConfig(
     val totalEmergencyPingsLogged: Int = 8
 )
 
+// ============================================================================
+// F35: APP PERMISSION AUDITOR MODELS
+// ============================================================================
+
+enum class PermissionRiskLevel(val displayName: String, val badgeColorHex: Long) {
+    CRITICAL("Critical Risk", 0xFFFF5252),
+    ELEVATED("Elevated Risk", 0xFFFFAB00),
+    SAFE("Low / Normal", 0xFF00E676)
+}
+
+data class SensitivePermission(
+    val permissionKey: String,
+    val title: String,
+    val hardwareResource: String,
+    val riskLevel: PermissionRiskLevel
+)
+
+data class AuditedApp(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val packageName: String = "",
+    val appName: String = "",
+    val category: String = "Utility",
+    val permissionsGranted: List<SensitivePermission> = emptyList(),
+    val overallRisk: PermissionRiskLevel = PermissionRiskLevel.SAFE,
+    val isSystemApp: Boolean = false,
+    val isQuarantined: Boolean = false,
+    val lastAuditedTimestamp: Long = System.currentTimeMillis()
+)
+
+data class PermissionAuditorSummary(
+    val totalAppsAudited: Int = 42,
+    val criticalRiskAppsCount: Int = 2,
+    val elevatedRiskAppsCount: Int = 3,
+    val safeAppsCount: Int = 37,
+    val lastScanTimestamp: Long = System.currentTimeMillis()
+)
+
+
 
