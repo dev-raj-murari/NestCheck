@@ -321,3 +321,30 @@ data class SafeSearchConfig(
     )
 )
 
+// ============================================================================
+// F34: LOW-BATTERY LAST PING TELEMETRY MODELS
+// ============================================================================
+
+data class LowBatteryLastPing(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val batteryLevel: Int = 12,
+    val isCriticalShutdown: Boolean = false,
+    val latitude: Double = 19.1054,
+    val longitude: Double = 72.8362,
+    val accuracyMeters: Float = 3.8f,
+    val timestamp: Long = System.currentTimeMillis(),
+    val addressName: String = "NMIMS MPSTME Building, Vile Parle West, Mumbai",
+    val networkType: String = "5G SA (Jio) / Wi-Fi Connected",
+    val isUploadedToCloud: Boolean = true,
+    val isSmsDispatched: Boolean = true
+)
+
+data class LowBatteryConfig(
+    val triggerThresholdPercent: Int = 15,
+    val criticalThresholdPercent: Int = 5,
+    val autoDispatchSmsToEmergencyContacts: Boolean = true,
+    val enableGpsHighPowerFixOnDrain: Boolean = true,
+    val totalEmergencyPingsLogged: Int = 8
+)
+
+
