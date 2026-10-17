@@ -233,3 +233,41 @@ data class UnknownCommunicationAlert(
     val isBlocked: Boolean = true,
     val isReviewed: Boolean = false
 )
+
+// ============================================================================
+// F32: CYBERBULLYING & TOXIC TEXT DETECTION MODELS
+// ============================================================================
+
+enum class ToxicityCategory(val displayName: String, val description: String) {
+    BULLYING("Cyberbullying & Insults", "Targeted verbal harassment, name-calling, or exclusion"),
+    PREDATORY("Predatory Solicitation", "Inappropriate meetups, secret requests, or coercion"),
+    PROFANITY("Severe Profanity", "Vulgar or degrading language"),
+    HARASSMENT("Persistent Harassment", "Intimidation, repeated hostility, or stalking"),
+    THREAT("Physical Threat", "Threats of physical harm, violence, or self-harm")
+}
+
+enum class ToxicitySensitivity(val displayName: String, val threshold: Float) {
+    STRICT("Strict (0.45)", 0.45f),
+    BALANCED("Balanced (0.65)", 0.65f),
+    LENIENT("Lenient (0.85)", 0.85f)
+}
+
+data class ToxicTextIncident(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val senderNumber: String = "",
+    val flaggedCategory: ToxicityCategory = ToxicityCategory.BULLYING,
+    val confidenceScore: Float = 0.88f,
+    val obfuscatedSnippet: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val sourceApp: String = "SMS Messaging",
+    val isReviewed: Boolean = false,
+    val isAlertSent: Boolean = true
+)
+
+data class ToxicScannerConfig(
+    val sensitivity: ToxicitySensitivity = ToxicitySensitivity.BALANCED,
+    val autoQuarantineSender: Boolean = true,
+    val notifyParentInstant: Boolean = true,
+    val totalScannedCount: Int = 384,
+    val totalFlaggedCount: Int = 12
+)

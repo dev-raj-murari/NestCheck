@@ -51,4 +51,5 @@ sealed class Screen(val route: String) {
     object WaterReminder : Screen("water_reminder")
     object ChildCheckIn : Screen("child_checkin")
     object TrustedContacts : Screen("trusted_contacts")
+    object ToxicTextMonitor : Screen("toxic_text_monitor")
 }
