@@ -34,6 +34,7 @@ import com.nestcheck.app.ui.parent.dashboard.MultiChildDashboardScreen
 import com.nestcheck.app.ui.parent.ai.AIParentingAssistantScreen
 import com.nestcheck.app.ui.parent.family.FamilySharingScreen
 import com.nestcheck.app.ui.parent.settings.LanguageSettingsScreen
+import com.nestcheck.app.ui.sinan.TrustedContactsScreen
 import com.nestcheck.app.ui.child.home.KidHomeScreen
 import com.nestcheck.app.ui.child.profile.KidProfileScreen
 import com.nestcheck.app.ui.child.credits.MyCreditsScreen
@@ -106,5 +107,6 @@ fun NestCheckApp() {
         composable(Screen.AppQuarantine.route) { AppQuarantineScreen(navController) }
         composable(Screen.BlockedUrl.route) { BlockedUrlLandingScreen(navController) }
         composable(Screen.ChildCheckIn.route) { ChildCheckInScreen(navController) }
+        composable(Screen.TrustedContacts.route) { TrustedContactsScreen(navController) }
     }
 }

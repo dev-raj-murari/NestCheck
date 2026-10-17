@@ -193,3 +193,43 @@ data class ChildArrivalCheckIn(
     val batteryLevel: Int = 88,
     val isParentAcknowledged: Boolean = false
 )
+
+// ============================================================================
+// F31: TRUSTED CONTACTS WHITELIST DIRECTORY MODELS
+// ============================================================================
+
+enum class ContactRelationship(val displayName: String) {
+    MOM("Mother"),
+    DAD("Father"),
+    GUARDIAN("Guardian"),
+    TUTOR("Teacher / Tutor"),
+    SIBLING("Sibling"),
+    FRIEND("Approved Friend"),
+    OTHER("Trusted Other")
+}
+
+enum class CommunicationType(val label: String) {
+    CALL("Voice Call"),
+    SMS("Text Message")
+}
+
+data class TrustedContact(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val name: String = "",
+    val phoneNumber: String = "",
+    val email: String = "",
+    val relationship: ContactRelationship = ContactRelationship.FRIEND,
+    val isCallAllowed: Boolean = true,
+    val isSmsAllowed: Boolean = true,
+    val addedTimestamp: Long = System.currentTimeMillis()
+)
+
+data class UnknownCommunicationAlert(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val senderAddress: String = "",
+    val communicationType: CommunicationType = CommunicationType.CALL,
+    val snippet: String = "Incoming communication from unregistered caller",
+    val timestamp: Long = System.currentTimeMillis(),
+    val isBlocked: Boolean = true,
+    val isReviewed: Boolean = false
+)

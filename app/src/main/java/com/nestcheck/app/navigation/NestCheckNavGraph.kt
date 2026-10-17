@@ -50,4 +50,5 @@ sealed class Screen(val route: String) {
     object HabitChallenges : Screen("habit_challenges")
     object WaterReminder : Screen("water_reminder")
     object ChildCheckIn : Screen("child_checkin")
+    object TrustedContacts : Screen("trusted_contacts")
 }
