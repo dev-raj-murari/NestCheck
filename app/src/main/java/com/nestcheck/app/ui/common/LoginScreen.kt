@@ -211,6 +211,17 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Button(
+                            onClick = { navController.navigate(Screen.ChildCheckIn.route) },
+                            modifier = Modifier.fillMaxWidth().height(42.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = SuccessGreen)
+                        ) {
+                            Text("📍 \"I'm Here\" Arrival Check-In (F36)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
                             onClick = { navController.navigate(Screen.SOS.route) },
                             modifier = Modifier.fillMaxWidth().height(42.dp),
                             shape = RoundedCornerShape(6.dp),
@@ -327,6 +338,38 @@ fun LoginScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
                         ) {
                             Text("✨ AI Daily Digest Synthesis", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.Location.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberNeonCyan)
+                            ) {
+                                Text("📍 Location & Safety", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = { navController.navigate(Screen.ContentFilter.route) },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            ) {
+                                Text("Web & NSFW Filter", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { navController.navigate(Screen.AppQuarantine.route) },
+                            modifier = Modifier.fillMaxWidth().height(40.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AlertRed)
+                        ) {
+                            Text("🛡️ App Quarantine Guard (F9)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
