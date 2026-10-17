@@ -293,7 +293,7 @@ fun MultiChildDashboardScreen(
                                     .padding(10.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(imageVector = Icons.AutoMirrored.Outlined.DirectionsWalk, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(18.dp))
+                                    Icon(imageVector = Icons.Outlined.DirectionsWalk, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(text = "${child.stepsToday}", color = TextWhite, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
