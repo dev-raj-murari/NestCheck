@@ -14,3 +14,18 @@ data class CreditTransaction(
     val reason: String = "",
     val timestamp: Long = 0L
 )
+
+enum class RewardType {
+    SCREEN_TIME_MINUTES,
+    BEDTIME_DELAY,
+    CUSTOM_PRIVILEGE
+}
+
+data class RewardPrivilege(
+    val id: String,
+    val title: String,
+    val costCredits: Int,
+    val bonusMinutes: Int,
+    val description: String,
+    val type: RewardType = RewardType.SCREEN_TIME_MINUTES
+)
