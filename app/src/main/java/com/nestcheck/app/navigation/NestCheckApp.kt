@@ -58,12 +58,13 @@ import com.nestcheck.app.ui.child.lock.BedtimeLockScreen
 import com.nestcheck.app.ui.child.lock.DevicePausedScreen
 import com.nestcheck.app.ui.child.streaks.HabitStreaksScreen
 import com.nestcheck.app.ui.child.health.WaterReminderScreen
+import com.nestcheck.app.ui.parent.timetable.TimetableScreen
 
 @Composable
-fun NestCheckApp() {
+fun NestCheckApp(startDestination: String = Screen.Splash.route) {
     val navController = rememberNavController()
     
-    NavHost(navController = navController, startDestination = Screen.Splash.route) {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Splash.route) { SplashScreen(navController) }
         composable(Screen.Login.route) { FamilyAuthScreen(navController) }
         composable(Screen.ParentDashboard.route) { ParentShellScreen(navController) }
@@ -104,6 +105,7 @@ fun NestCheckApp() {
         composable(Screen.AIAssistant.route) { AIParentingAssistantScreen(navController) }
         composable(Screen.FamilySharing.route) { FamilySharingScreen(navController) }
         composable(Screen.LanguageSettings.route) { LanguageSettingsScreen(navController) }
+        composable(Screen.Timetable.route) { TimetableScreen(navController) }
 
         // Kid Core Routes
         composable(Screen.KidHome.route) { KidShellScreen(navController) }

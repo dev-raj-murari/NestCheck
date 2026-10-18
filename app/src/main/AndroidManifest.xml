@@ -34,14 +34,31 @@
             android:value="AIzaSyNestCheckSafetyDemoDevelopmentKey123" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ParentMainActivity"
             android:exported="true"
+            android:label="NSP"
             android:theme="@style/Theme.NestCheck">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".KidMainActivity"
+            android:exported="true"
+            android:label="NSC"
+            android:theme="@style/Theme.NestCheck">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NestCheck" />
 
         <!-- Sinan's Feature Receivers & Services (F7 & F9) -->
         <receiver

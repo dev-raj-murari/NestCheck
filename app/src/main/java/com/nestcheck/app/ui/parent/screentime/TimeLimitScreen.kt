@@ -14,13 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.nestcheck.app.data.model.DaySchedule
-import com.nestcheck.app.ui.theme.*
+import com.nestcheck.app.ui.parent.shell.*
 
 @Composable
 fun TimeLimitScreen(
@@ -50,7 +50,7 @@ fun TimeLimitScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(CyberBlack)
+            .background(GflBgLight)
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -65,13 +65,13 @@ fun TimeLimitScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = "Back",
-                    tint = CyberTextBright
+                    tint = GflTextDark
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Time Limits",
-                color = CyberTextBright,
+                color = GflTextDark,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -80,15 +80,13 @@ fun TimeLimitScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         // MASTER DAILY LIMIT CARD
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(CyberCard)
-                .border(1.dp, CyberBorder, RoundedCornerShape(12.dp))
-                .padding(18.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+            border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
         ) {
-            Column {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,48 +94,46 @@ fun TimeLimitScreen(
                 ) {
                     Text(
                         text = "MASTER DAILY LIMIT",
-                        color = CyberTextDim,
-                        fontSize = 11.sp,
+                        color = GflTextMuted,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (isWarning) "WARNING: <15M LEFT" else "$remainingMins mins remaining",
-                        color = if (isWarning) WarningAmber else SuccessGreen,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
+                        text = if (isWarning) "Warning: <15m left" else "$remainingMins mins remaining",
+                        color = if (isWarning) Color(0xFFD97706) else GflGreen,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = "${masterHours}h ${masterMins}m",
-                        color = CyberTextBright,
+                        color = GflBlue,
                         fontSize = 36.sp,
-                        fontFamily = TechMono,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "allowed per day",
-                        color = CyberTextDim,
-                        fontSize = 13.sp,
+                        color = GflTextMuted,
+                        fontSize = 14.sp,
                         modifier = Modifier.padding(bottom = 6.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Slider(
                     value = masterDailyLimit,
                     onValueChange = { masterDailyLimit = it },
                     valueRange = 30f..360f,
-                    steps = 10,
                     colors = SliderDefaults.colors(
-                        thumbColor = White,
-                        activeTrackColor = White,
-                        inactiveTrackColor = CyberBorder
+                        thumbColor = GflBlue,
+                        activeTrackColor = GflBlue,
+                        inactiveTrackColor = Color(0xFFD3E3FD)
                     )
                 )
 
@@ -145,8 +141,8 @@ fun TimeLimitScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("30 mins", color = CyberTextDim, fontSize = 11.sp)
-                    Text("6 hours", color = CyberTextDim, fontSize = 11.sp)
+                    Text("30 mins", color = GflTextMuted, fontSize = 12.sp)
+                    Text("6 hours", color = GflTextMuted, fontSize = 12.sp)
                 }
             }
         }
@@ -156,8 +152,8 @@ fun TimeLimitScreen(
         // PER-DAY SCHEDULE CONFIGURATION
         Text(
             text = "Day-of-Week Schedule",
-            color = CyberTextBright,
-            fontSize = 15.sp,
+            color = GflTextDark,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(10.dp))
@@ -176,15 +172,13 @@ fun TimeLimitScreen(
             daysConfig.forEach { (dayName, value, onValueChange) ->
                 val hours = value.toInt() / 60
                 val mins = value.toInt() % 60
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(CyberCard)
-                        .border(1.dp, CyberBorder, RoundedCornerShape(8.dp))
-                        .padding(14.dp)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
                 ) {
-                    Column {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -192,28 +186,28 @@ fun TimeLimitScreen(
                         ) {
                             Text(
                                 text = dayName,
-                                color = CyberTextBright,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
+                                color = GflTextDark,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = "${hours}h ${mins}m",
-                                color = White,
-                                fontSize = 13.sp,
-                                fontFamily = TechMono,
+                                color = GflBlue,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         Slider(
                             value = value,
                             onValueChange = onValueChange,
                             valueRange = 30f..300f,
-                            steps = 8,
                             colors = SliderDefaults.colors(
-                                thumbColor = White,
-                                activeTrackColor = White,
-                                inactiveTrackColor = CyberBorder
+                                thumbColor = GflBlue,
+                                activeTrackColor = GflBlue,
+                                inactiveTrackColor = Color(0xFFD3E3FD)
                             )
                         )
                     }
@@ -232,11 +226,11 @@ fun TimeLimitScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
+            shape = RoundedCornerShape(24.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = GflBlue, contentColor = Color.White)
         ) {
             if (saveConfirmed) {
-                Icon(Icons.Outlined.Check, contentDescription = "Saved", tint = Black)
+                Icon(Icons.Outlined.Check, contentDescription = "Saved", tint = Color.White)
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Limits Saved", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             } else {

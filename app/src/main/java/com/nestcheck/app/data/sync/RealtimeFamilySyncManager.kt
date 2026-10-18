@@ -21,6 +21,14 @@ enum class DeviceApprovalStatus {
     REJECTED
 }
 
+data class TimetableItem(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val dayOfWeek: String, // "Monday", "Tuesday", etc.
+    val subject: String,
+    val timeSlot: String, // e.g. "08:30 AM - 09:30 AM"
+    val roomOrTeacher: String = "Room 101"
+)
+
 data class FamilySyncState(
     val familyCode: String = "NC-8294",
     val activeChildName: String = "Olivia",
@@ -43,7 +51,37 @@ data class FamilySyncState(
     val pendingDeviceName: String = "Google Pixel 9",
     val childAge: Int = 11,
     val bedtime: String = "9:00 PM",
-    val schoolHours: String = "8:30 AM - 3:15 PM"
+    val schoolHours: String = "8:30 AM - 3:15 PM",
+    val timetablePdfName: String = "School_Weekly_Timetable.pdf",
+    val timetableSyncedToCalendar: Boolean = false,
+    val timetableItems: List<TimetableItem> = listOf(
+        TimetableItem(dayOfWeek = "Monday", subject = "Mathematics", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Physics Lab", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Lab 2 • Mrs. Rao"),
+        TimetableItem(dayOfWeek = "Monday", subject = "English Literature", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 105 • Ms. Davis"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Lunch & Recreation", timeSlot = "12:15 PM - 01:15 PM", roomOrTeacher = "Cafeteria"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Computer Science", timeSlot = "01:15 PM - 02:15 PM", roomOrTeacher = "IT Lab • Mr. Patel"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Physical Education", timeSlot = "02:30 PM - 03:30 PM", roomOrTeacher = "Main Sports Ground"),
+
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Chemistry", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Science Hall • Dr. Mehta"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Algebra & Geometry", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "World History", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 108 • Mrs. Gupta"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Art & Design", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "Studio A • Ms. Sarah"),
+
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Biology", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Bio Lab • Dr. Roy"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Mathematics", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Spanish / Foreign Lang", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 112 • Senora Lopez"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Music & Orchestra", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "Auditorium"),
+
+        TimetableItem(dayOfWeek = "Thursday", subject = "Physics Theory", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Room 201 • Mrs. Rao"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Social Studies & Civics", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Room 108 • Mrs. Gupta"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "English Composition", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 105 • Ms. Davis"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Robotics Club", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "STEM Lab"),
+
+        TimetableItem(dayOfWeek = "Friday", subject = "Weekly Review & Math Quiz", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Geography & Ecology", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Room 110 • Mr. Wilson"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Library / Independent Study", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Central Library"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Sports & Athletics", timeSlot = "01:15 PM - 03:00 PM", roomOrTeacher = "Sports Arena")
+    )
 )
 
 @Singleton
@@ -314,5 +352,41 @@ class RealtimeFamilySyncManager @Inject constructor(
             } catch (e: Exception) {}
         }
     }
+
+    fun uploadTimetablePdf(fileName: String, newItems: List<TimetableItem>) {
+        _syncState.value = _syncState.value.copy(
+            timetablePdfName = fileName,
+            timetableItems = newItems,
+            timetableSyncedToCalendar = false
+        )
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf(
+                            "timetablePdfName" to fileName,
+                            "timetableSyncedToCalendar" to false
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun setTimetableCalendarSynced(synced: Boolean) {
+        _syncState.value = _syncState.value.copy(timetableSyncedToCalendar = synced)
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf("timetableSyncedToCalendar" to synced),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
 }
+
 

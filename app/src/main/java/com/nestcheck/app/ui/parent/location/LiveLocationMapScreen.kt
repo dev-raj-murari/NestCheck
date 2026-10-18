@@ -1,7 +1,11 @@
 package com.nestcheck.app.ui.parent.location
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,14 +26,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.*
 import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import com.nestcheck.app.ui.parent.shell.ParentShellViewModel
 
+@SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun LiveLocationMapScreen(
     navController: NavController,
@@ -38,53 +41,114 @@ fun LiveLocationMapScreen(
     val syncState by syncManager.syncState.collectAsState()
     val context = LocalContext.current
 
-    val childLocation = LatLng(syncState.kidLatitude, syncState.kidLongitude)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(childLocation, 15f)
-    }
-
     var showGeofence by remember { mutableStateOf(true) }
-    var selectedBreadcrumb by remember { mutableStateOf<String?>(null) }
+    var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
-    LaunchedEffect(syncState.kidLatitude, syncState.kidLongitude) {
-        cameraPositionState.position = CameraPosition.fromLatLngZoom(childLocation, 15.5f)
+    val lat = syncState.kidLatitude
+    val lon = syncState.kidLongitude
+    val childName = syncState.activeChildName
+
+    val mapHtml = remember(lat, lon, childName, showGeofence) {
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <style>
+                body, html, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #E5E7EB; }
+                .custom-marker {
+                    background: #0B57D0;
+                    color: white;
+                    border: 3px solid white;
+                    border-radius: 50%;
+                    width: 38px;
+                    height: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    font-size: 16px;
+                    box-shadow: 0 4px 12px rgba(11,87,208,0.45);
+                    animation: pulse 2s infinite;
+                }
+                @keyframes pulse {
+                    0% { box-shadow: 0 0 0 0 rgba(11,87,208,0.6); }
+                    70% { box-shadow: 0 0 0 16px rgba(11,87,208,0); }
+                    100% { box-shadow: 0 0 0 0 rgba(11,87,208,0); }
+                }
+            </style>
+        </head>
+        <body>
+            <div id="map"></div>
+            <script>
+                var lat = $lat;
+                var lon = $lon;
+                var map = L.map('map', { zoomControl: false }).setView([lat, lon], 15);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                    attribution: 'OpenStreetMap, CARTO'
+                }).addTo(map);
+
+                ${if (showGeofence) """
+                L.circle([lat, lon], {
+                    color: '#0B57D0',
+                    fillColor: '#D3E3FD',
+                    fillOpacity: 0.35,
+                    radius: 350
+                }).addTo(map);
+                """ else ""}
+
+                var markerHtml = '<div class="custom-marker">${childName.take(1)}</div>';
+                var customIcon = L.divIcon({
+                    html: markerHtml,
+                    className: '',
+                    iconSize: [38, 38],
+                    iconAnchor: [19, 19]
+                });
+
+                var marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
+                marker.bindPopup('<b>$childName</b><br>${syncState.locationAddress}').openPopup();
+
+                function recenterMap() {
+                    map.setView([lat, lon], 16);
+                }
+            </script>
+        </body>
+        </html>
+        """.trimIndent()
     }
 
     val breadcrumbs = remember {
         listOf(
-            Triple("Oakridge High School", "Arrived 8:25 AM • Departed 3:15 PM", LatLng(37.7780, -122.4220)),
-            Triple("City Public Library", "Arrived 3:35 PM • Departed 4:50 PM", LatLng(37.7720, -122.4150)),
-            Triple("Current: Home Safe Zone", "Arrived 5:10 PM • Safe inside radius", childLocation)
+            Triple("Oakridge High School", "Arrived 8:25 AM • Departed 3:15 PM", lat + 0.003 to lon - 0.004),
+            Triple("City Public Library", "Arrived 3:35 PM • Departed 4:50 PM", lat - 0.002 to lon + 0.003),
+            Triple("Current: Home Safe Zone", "Arrived 5:10 PM • Safe inside radius", lat to lon)
         )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Fullscreen Google Maps
-        GoogleMap(
+        // High Performance Interactive OpenStreetMap / CARTO Vector Map Engine
+        AndroidView(
             modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            uiSettings = MapUiSettings(
-                zoomControlsEnabled = false,
-                myLocationButtonEnabled = true,
-                compassEnabled = true
-            )
-        ) {
-            Marker(
-                state = MarkerState(position = childLocation),
-                title = syncState.activeChildName,
-                snippet = "${syncState.kidBattery}% ⚡ • ${syncState.locationAddress}"
-            )
-
-            if (showGeofence) {
-                Circle(
-                    center = childLocation,
-                    radius = 350.0,
-                    fillColor = Color(0x280B57D0),
-                    strokeColor = Color(0xFF0B57D0),
-                    strokeWidth = 3f
-                )
+            factory = { ctx ->
+                WebView(ctx).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.loadWithOverviewMode = true
+                    settings.useWideViewPort = true
+                    webChromeClient = WebChromeClient()
+                    webViewClient = WebViewClient()
+                    loadDataWithBaseURL("https://openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
+                    webViewRef = this
+                }
+            },
+            update = { webView ->
+                webView.loadDataWithBaseURL("https://openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
             }
-        }
+        )
 
         // Floating Top Header with Back Navigation and Status
         Surface(
@@ -94,7 +158,7 @@ fun LiveLocationMapScreen(
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             shape = RoundedCornerShape(20.dp),
-            color = Color.White.copy(alpha = 0.95f),
+            color = Color.White.copy(alpha = 0.96f),
             shadowElevation = 6.dp
         ) {
             Row(
@@ -112,7 +176,7 @@ fun LiveLocationMapScreen(
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "${syncState.activeChildName}'s Live Location",
+                                text = "${syncState.activeChildName}'s Live Map",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = Color(0xFF0F172A)
@@ -135,7 +199,7 @@ fun LiveLocationMapScreen(
                 }
 
                 IconButton(onClick = {
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(childLocation, 16f)
+                    webViewRef?.evaluateJavascript("recenterMap();", null)
                 }) {
                     Icon(Icons.Outlined.MyLocation, contentDescription = "Recenter", tint = Color(0xFF0B57D0))
                 }

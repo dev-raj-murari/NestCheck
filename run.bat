@@ -2,10 +2,10 @@
 setlocal enabledelayedexpansion
 
 echo ========================================================
-echo       Starting NestCheck - All-in-One Launcher
+echo       Starting NestCheck (NSP & NSC) - All-in-One
 echo ========================================================
 
-cd /d "C:\Users\Devraj\.gemini\antigravity\scratch\NestCheck"
+cd /d "%~dp0"
 
 set "ADB=%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"
 set "EMU=%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe"
@@ -22,10 +22,10 @@ if errorlevel 1 (
 )
 
 echo [3/5] Checking Android Emulator...
-"%ADB%" devices | findstr /R "emulator.*device$" >nul
+"%ADB%" devices | findstr /R "emulator.*device" >nul
 if errorlevel 1 (
     echo Starting Pixel 8 emulator...
-    start "" "%EMU%" -avd Pixel_8 -no-snapshot-load
+    start "" "%EMU%" -avd Pixel_8 -gpu host
     echo Waiting for emulator to connect...
     "%ADB%" wait-for-device
     echo Waiting for Android to finish booting...
@@ -38,11 +38,12 @@ if errorlevel 1 (
 echo [4/5] Installing NestCheck onto emulator...
 "%ADB%" install -r "app\build\outputs\apk\debug\app-debug.apk"
 
-echo [5/5] Launching NestCheck...
-"%ADB%" shell monkey -p com.nestcheck.app -c android.intent.category.LAUNCHER 1
+echo [5/5] Launching Parent App (NSP)...
+"%ADB%" shell am start -n com.nestcheck.app/.ParentMainActivity
 
 echo.
 echo ========================================================
-echo   SUCCESS! NestCheck is running with all features!
+echo   SUCCESS! NSP & NSC installed and synced!
+echo   Launch NSP for Parent space or NSC for Child space!
 echo ========================================================
 pause

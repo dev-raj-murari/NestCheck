@@ -395,11 +395,11 @@ fun ScreenTimeTab(
                 }
                 item {
                     QuickActionPillCard(
-                        title = "Bedtime",
-                        subtitle = syncState.bedtime,
-                        icon = Icons.Outlined.Bedtime,
-                        color = Color(0xFF2563EB),
-                        onClick = { navController.navigate(Screen.BedtimeSchedule.route) }
+                        title = "Timetable",
+                        subtitle = "PDF & Calendar",
+                        icon = Icons.Outlined.CalendarMonth,
+                        color = Color(0xFF0B57D0),
+                        onClick = { navController.navigate(Screen.Timetable.route) }
                     )
                 }
             }
@@ -434,13 +434,6 @@ fun ScreenTimeTab(
                             fontSize = 13.sp,
                             color = GflTextMuted
                         )
-                    }
-
-                    // 3 Authentic Vertical App Capsule Badges
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        VerticalAppPill(name = "YouTube", color = Color(0xFFFF0000), icon = Icons.Outlined.PlayCircle)
-                        VerticalAppPill(name = "Play Store", color = Color(0xFF01875F), icon = Icons.Outlined.Shop, isTall = true)
-                        VerticalAppPill(name = "Chrome", color = Color(0xFF4285F4), icon = Icons.Outlined.Public)
                     }
                 }
             }
@@ -498,7 +491,7 @@ fun ScreenTimeTab(
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         ProfileMetric(title = "Daily Limit", value = "${syncState.dailyLimitMinutes / 60} hrs")
-                        ProfileMetric(title = "Bedtime", value = syncState.bedtime)
+                        ProfileMetric(title = "School Hours", value = syncState.schoolHours)
                         ProfileMetric(title = "Pairing Code", value = syncState.familyCode)
                     }
                 }
@@ -602,7 +595,7 @@ fun ScreenTimeTab(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Time limits", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
-                        Text("Daily limit: ${syncState.dailyLimitMinutes / 60} hrs • Bedtime: ${syncState.bedtime}", fontSize = 13.sp, color = GflTextMuted)
+                        Text("Daily limit: ${syncState.dailyLimitMinutes / 60} hrs • School: ${syncState.schoolHours}", fontSize = 13.sp, color = GflTextMuted)
                     }
                     Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
                 }
@@ -720,25 +713,6 @@ fun QuickActionPillCard(
     }
 }
 
-@Composable
-fun VerticalAppPill(name: String, color: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, isTall: Boolean = false) {
-    Box(
-        modifier = Modifier
-            .width(36.dp)
-            .height(if (isTall) 74.dp else 58.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(GflBgLight)
-            .border(1.dp, GflBorder, RoundedCornerShape(18.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = name,
-            tint = color,
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
 
 @Composable
 fun ControlsTab(
@@ -810,14 +784,14 @@ fun ControlsTab(
             )
         }
 
-        // Rohit's F6: Bedtime Curfew & Schedules
+        // Child School Timetable & Google Calendar Integration
         item {
             ControlCardItem(
-                title = "Bedtime Curfew & Schedules",
-                subtitle = "Nightly lockdown schedule • Bedtime: ${syncState.bedtime}",
-                icon = Icons.Outlined.Bedtime,
-                iconTint = Color(0xFF4F46E5),
-                onClick = { navController.navigate(Screen.BedtimeSchedule.route) }
+                title = "School Timetable & Google Calendar",
+                subtitle = if (syncState.timetableSyncedToCalendar) "Synced to Google Calendar 📅 • PDF Active" else "Upload PDF timetable & sync events to Calendar",
+                icon = Icons.Outlined.CalendarMonth,
+                iconTint = GflBlue,
+                onClick = { navController.navigate(Screen.Timetable.route) }
             )
         }
 
@@ -900,17 +874,6 @@ fun ControlsTab(
                     )
                 }
             }
-        }
-
-        // YouTube Content Controls
-        item {
-            ControlCardItem(
-                title = "YouTube Content Controls",
-                subtitle = "Restricted Mode ON • Age-appropriate video filter",
-                icon = Icons.Outlined.PlayCircle,
-                iconTint = Color(0xFFFF0000),
-                onClick = { navController.navigate(Screen.ContentFilter.route) }
-            )
         }
 
         // Google Chrome & Web
@@ -1238,16 +1201,6 @@ fun MoreTab(
             }
         }
 
-        // AI Parenting Assistant
-        item {
-            ControlCardItem(
-                title = "AI Parenting Assistant",
-                subtitle = "Instant evidence-based parenting advice & insights",
-                icon = Icons.Outlined.AutoAwesome,
-                iconTint = Color(0xFF7C3AED),
-                onClick = { navController.navigate(Screen.AIAssistant.route) }
-            )
-        }
 
         // Multi-Child Dashboard
         item {
