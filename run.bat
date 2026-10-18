@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ========================================================
-echo       Starting NestCheck (NSP & NSC) - All-in-One
+echo       Starting NestCheck (NSP ^& NSC) - All-in-One
 echo ========================================================
 
 cd /d "%~dp0"
@@ -30,7 +30,7 @@ if errorlevel 1 (
     "%ADB%" wait-for-device
     echo Waiting for Android to finish booting...
     :wait_boot
-    timeout /t 2 /nobreak >nul
+    powershell -Command "Start-Sleep -Seconds 2" >nul
     for /f %%i in ('"%ADB%" shell getprop sys.boot_completed 2^>nul') do set BOOT=%%i
     if not "!BOOT!"=="1" goto wait_boot
 )
