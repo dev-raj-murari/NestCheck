@@ -1,7 +1,8 @@
 package com.nestcheck.app.ui.auth
 
-import android.util.Patterns
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,20 +21,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.nestcheck.app.core.PasswordValidationResult
+import com.nestcheck.app.core.PasswordValidator
+import com.nestcheck.app.data.remote.EmailService
+import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import com.nestcheck.app.navigation.Screen
+import com.nestcheck.app.ui.parent.shell.ParentShellViewModel
+import kotlinx.coroutines.launch
 
 enum class AuthStep {
     WELCOME,
     LOGIN,
     SIGNUP,
     OTP_VERIFICATION,
+    CHILD_SETUP,
     SUCCESS
 }
 
@@ -45,11 +56,16 @@ val AuthTextMuted = Color(0xFF64748B)
 val AuthBorderColor = Color(0xFFE2E8F0)
 val AuthSuccessGreen = Color(0xFF10B981)
 val AuthErrorRed = Color(0xFFEF4444)
+val AuthAmber = Color(0xFFF59E0B)
 
 @Composable
 fun FamilyAuthScreen(
-    navController: NavController
+    navController: NavController,
+    syncManager: RealtimeFamilySyncManager = hiltViewModel<ParentShellViewModel>().syncManager
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var currentStep by remember { mutableStateOf(AuthStep.WELCOME) }
     var emailOrUsername by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -63,8 +79,21 @@ fun FamilyAuthScreen(
     var otpDigit4 by remember { mutableStateOf("") }
     var authError by remember { mutableStateOf<String?>(null) }
     var otpError by remember { mutableStateOf<String?>(null) }
+    var isSendingOtp by remember { mutableStateOf(false) }
 
-    fun sendOtpAndProceed() {
+    // Child Setup Form State
+    var childName by remember { mutableStateOf("Olivia") }
+    var childAgeText by remember { mutableStateOf("11") }
+    var dailyLimitHours by remember { mutableStateOf("3") }
+    var bedtime by remember { mutableStateOf("9:00 PM") }
+    var schoolHours by remember { mutableStateOf("8:30 AM - 3:15 PM") }
+
+    // Gmail Config Dialog State (Safe local storage, never on GitHub!)
+    var showGmailConfigDialog by remember { mutableStateOf(false) }
+    var senderEmailInput by remember { mutableStateOf(EmailService.getSenderEmail(context)) }
+    var secretKeyInput by remember { mutableStateOf(EmailService.getSecretKey(context)) }
+
+    fun sendRealOtp(targetEmail: String) {
         val newCode = (1000..9999).random().toString()
         generatedOtp = newCode
         otpDigit1 = ""
@@ -72,7 +101,26 @@ fun FamilyAuthScreen(
         otpDigit3 = ""
         otpDigit4 = ""
         otpError = null
-        currentStep = AuthStep.OTP_VERIFICATION
+        isSendingOtp = true
+
+        scope.launch {
+            val result = EmailService.sendOtpEmail(context, targetEmail, newCode)
+            isSendingOtp = false
+            if (result.isSuccess) {
+                Toast.makeText(context, "Verification email sent to $targetEmail!", Toast.LENGTH_SHORT).show()
+                currentStep = AuthStep.OTP_VERIFICATION
+            } else {
+                val err = result.exceptionOrNull()?.message ?: "Failed to send email"
+                authError = "Email delivery note: $err"
+                // If credentials are empty, prompt user directly
+                if (EmailService.getSecretKey(context).isBlank()) {
+                    showGmailConfigDialog = true
+                } else {
+                    // Proceed so user can enter or re-attempt
+                    currentStep = AuthStep.OTP_VERIFICATION
+                }
+            }
+        }
     }
 
     Box(
@@ -93,10 +141,8 @@ fun FamilyAuthScreen(
                         authError = null
                         currentStep = AuthStep.SIGNUP
                     },
-                    onGoogleSignInClick = {
-                        emailOrUsername = "parent.google@nestcheck.family"
-                        password = "GoogleSecurePassword"
-                        sendOtpAndProceed()
+                    onConfigureEmailClick = {
+                        showGmailConfigDialog = true
                     }
                 )
             }
@@ -118,28 +164,34 @@ fun FamilyAuthScreen(
                         authError = null
                     },
                     errorMessage = authError,
+                    isLoading = isSendingOtp,
                     onBackClick = { currentStep = AuthStep.WELCOME },
                     onLoginSubmit = {
                         if (isParentRole) {
-                            if (emailOrUsername.isBlank() || !emailOrUsername.contains("@")) {
-                                authError = "Please enter a valid email address (e.g. parent@family.com)"
+                            if (!PasswordValidator.isEmailValid(emailOrUsername)) {
+                                authError = "Please enter a valid email address (e.g. parent@gmail.com)"
                                 return@LoginView
                             }
-                            if (password.length < 6) {
-                                authError = "Password must be at least 6 characters long."
+                            if (password.length < 8) {
+                                authError = "Password must be at least 8 characters long."
                                 return@LoginView
                             }
+                            sendRealOtp(emailOrUsername)
                         } else {
                             if (emailOrUsername.isBlank()) {
-                                authError = "Enter child username or pairing ID."
+                                authError = "Enter child username or household pairing code."
                                 return@LoginView
                             }
                             if (password.length < 4) {
                                 authError = "Enter your 4-digit Child PIN."
                                 return@LoginView
                             }
+                            // Kid login triggers parent approval gate
+                            syncManager.requestChildDeviceApproval("Pixel 9 (${emailOrUsername.trim()})")
+                            navController.navigate(Screen.KidHome.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
                         }
-                        sendOtpAndProceed()
                     },
                     onSignUpNav = {
                         authError = null
@@ -160,17 +212,19 @@ fun FamilyAuthScreen(
                         authError = null
                     },
                     errorMessage = authError,
+                    isLoading = isSendingOtp,
                     onBackClick = { currentStep = AuthStep.WELCOME },
                     onSignUpSubmit = {
-                        if (emailOrUsername.isBlank() || !emailOrUsername.contains("@")) {
-                            authError = "Please enter a valid email address."
+                        if (!PasswordValidator.isEmailValid(emailOrUsername)) {
+                            authError = "Please enter a valid email address (e.g. name@gmail.com)."
                             return@SignUpView
                         }
-                        if (password.length < 6) {
-                            authError = "Master password must be at least 6 characters."
+                        val validation = PasswordValidator.validate(password)
+                        if (!validation.isValid) {
+                            authError = "Password does not meet all security requirements."
                             return@SignUpView
                         }
-                        sendOtpAndProceed()
+                        sendRealOtp(emailOrUsername)
                     },
                     onLoginNav = {
                         authError = null
@@ -181,7 +235,6 @@ fun FamilyAuthScreen(
             AuthStep.OTP_VERIFICATION -> {
                 OtpVerificationView(
                     recipientEmail = emailOrUsername,
-                    generatedCodeForDemo = generatedOtp,
                     digit1 = otpDigit1,
                     onDigit1Change = { if (it.length <= 1) { otpDigit1 = it; otpError = null } },
                     digit2 = otpDigit2,
@@ -191,24 +244,56 @@ fun FamilyAuthScreen(
                     digit4 = otpDigit4,
                     onDigit4Change = { if (it.length <= 1) { otpDigit4 = it; otpError = null } },
                     errorMessage = otpError,
+                    isLoading = isSendingOtp,
                     onBackClick = { currentStep = AuthStep.LOGIN },
-                    onResendCode = { sendOtpAndProceed() },
+                    onResendCode = { sendRealOtp(emailOrUsername) },
                     onVerifyClick = {
                         val entered = "$otpDigit1$otpDigit2$otpDigit3$otpDigit4"
                         if (entered.length < 4) {
                             otpError = "Please enter all 4 digits."
                         } else if (entered != generatedOtp) {
-                            otpError = "Invalid verification code! Please enter the exact 4-digit code."
+                            otpError = "Invalid verification code! Please enter the exact 4-digit code sent to your email."
                         } else {
                             otpError = null
-                            currentStep = AuthStep.SUCCESS
+                            if (isParentRole) {
+                                currentStep = AuthStep.CHILD_SETUP
+                            } else {
+                                currentStep = AuthStep.SUCCESS
+                            }
                         }
+                    }
+                )
+            }
+            AuthStep.CHILD_SETUP -> {
+                ChildSetupView(
+                    childName = childName,
+                    onChildNameChange = { childName = it },
+                    age = childAgeText,
+                    onAgeChange = { childAgeText = it },
+                    dailyLimit = dailyLimitHours,
+                    onDailyLimitChange = { dailyLimitHours = it },
+                    bedtime = bedtime,
+                    onBedtimeChange = { bedtime = it },
+                    schoolHours = schoolHours,
+                    onSchoolHoursChange = { schoolHours = it },
+                    onSaveAndContinue = {
+                        val ageNum = childAgeText.toIntOrNull() ?: 11
+                        val limitMins = (dailyLimitHours.toFloatOrNull() ?: 3f) * 60
+                        syncManager.updateChildProfile(
+                            name = childName.trim().ifBlank { "Olivia" },
+                            age = ageNum,
+                            dailyLimitMinutes = limitMins.toInt(),
+                            bedtime = bedtime,
+                            schoolHours = schoolHours
+                        )
+                        currentStep = AuthStep.SUCCESS
                     }
                 )
             }
             AuthStep.SUCCESS -> {
                 SuccessView(
                     isParent = isParentRole,
+                    childName = childName,
                     onContinueClick = {
                         if (isParentRole) {
                             navController.navigate(Screen.ParentDashboard.route) {
@@ -223,6 +308,63 @@ fun FamilyAuthScreen(
                 )
             }
         }
+
+        // Secure In-App Gmail Key Configuration Modal (Stored Locally Only!)
+        if (showGmailConfigDialog) {
+            AlertDialog(
+                onDismissRequest = { showGmailConfigDialog = false },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Key, contentDescription = null, tint = AuthPrimaryBlue)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Gmail API / App Password", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                },
+                text = {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        Text(
+                            "Configure your Gmail App Password or API Key to send real OTP verification emails. This is saved securely to private device storage and is NEVER published to GitHub.",
+                            color = AuthTextMuted,
+                            fontSize = 13.sp
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        OutlinedTextField(
+                            value = senderEmailInput,
+                            onValueChange = { senderEmailInput = it },
+                            label = { Text("Sender Gmail Address") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        OutlinedTextField(
+                            value = secretKeyInput,
+                            onValueChange = { secretKeyInput = it },
+                            label = { Text("Gmail App Password / API Key") },
+                            placeholder = { Text("16-char app password or key") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            EmailService.saveCredentials(context, senderEmailInput, secretKeyInput)
+                            showGmailConfigDialog = false
+                            Toast.makeText(context, "Gmail credentials saved locally!", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AuthPrimaryBlue)
+                    ) {
+                        Text("Save Privately", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showGmailConfigDialog = false }) {
+                        Text("Cancel", color = AuthTextMuted)
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -230,7 +372,7 @@ fun FamilyAuthScreen(
 fun WelcomeView(
     onLoginClick: () -> Unit,
     onSignUpClick: () -> Unit,
-    onGoogleSignInClick: () -> Unit
+    onConfigureEmailClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -239,7 +381,7 @@ fun WelcomeView(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Shield with Golden Padlock Emblem
         Column(
@@ -247,7 +389,7 @@ fun WelcomeView(
         ) {
             Box(
                 modifier = Modifier
-                    .size(200.dp)
+                    .size(180.dp)
                     .clip(RoundedCornerShape(36.dp))
                     .background(AuthPrimaryBlue),
                 contentAlignment = Alignment.Center
@@ -260,31 +402,31 @@ fun WelcomeView(
                         imageVector = Icons.Outlined.Shield,
                         contentDescription = "Security Shield",
                         tint = Color.White,
-                        modifier = Modifier.size(90.dp)
+                        modifier = Modifier.size(80.dp)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Icon(
                         imageVector = Icons.Outlined.Lock,
                         contentDescription = "Padlock",
                         tint = Color(0xFFFFB703),
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Hello There!",
+                text = "NestCheck",
                 color = AuthTextDark,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Protect your family with Google Family Link style controls, healthy screen time, and school schedule monitoring.",
+                text = "Real-time Google Family Link style controls, healthy screen time, and live child safety sync.",
                 color = AuthTextMuted,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
@@ -323,18 +465,19 @@ fun WelcomeView(
                 Text("Sign up", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(onClick = onGoogleSignInClick)
+                modifier = Modifier.clickable(onClick = onConfigureEmailClick)
             ) {
-                Text("Or continue with ", color = AuthTextMuted, fontSize = 13.sp)
+                Icon(Icons.Outlined.Key, contentDescription = null, tint = AuthTextMuted, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    "Google Sign-In",
+                    "Configure Gmail Key / App Password",
                     color = AuthPrimaryBlue,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -350,11 +493,13 @@ fun LoginView(
     isParent: Boolean,
     onRoleToggle: (Boolean) -> Unit,
     errorMessage: String?,
+    isLoading: Boolean,
     onBackClick: () -> Unit,
     onLoginSubmit: () -> Unit,
     onSignUpNav: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -371,14 +516,14 @@ fun LoginView(
             Text("Back", color = AuthTextDark, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         Text("Log in", color = AuthTextDark, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Text("Login to manage your family account", color = AuthTextMuted, fontSize = 14.sp)
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Role Selector Pill: Parent vs Kid
+        // Role Selector Pill
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -428,7 +573,7 @@ fun LoginView(
             value = email,
             onValueChange = onEmailChange,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(if (isParent) "Email address" else "Child Name / Pairing ID") },
+            label = { Text(if (isParent) "Email address (e.g. name@gmail.com)" else "Child Name / Pairing Code") },
             leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null, tint = AuthTextMuted) },
             shape = RoundedCornerShape(14.dp),
             singleLine = true,
@@ -450,7 +595,16 @@ fun LoginView(
             modifier = Modifier.fillMaxWidth(),
             label = { Text(if (isParent) "Password" else "Child 4-Digit PIN") },
             leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = AuthTextMuted) },
-            visualTransformation = PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                        contentDescription = null,
+                        tint = AuthTextMuted
+                    )
+                }
+            },
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             shape = RoundedCornerShape(14.dp),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
@@ -464,30 +618,43 @@ fun LoginView(
         )
 
         if (errorMessage != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(errorMessage, color = AuthErrorRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Text("Forgot Password?", color = AuthTextMuted, fontSize = 13.sp)
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                color = Color(0xFFFEF2F2),
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFCA5A5))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = AuthErrorRed, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(errorMessage, color = AuthErrorRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(28.dp))
 
         Button(
             onClick = onLoginSubmit,
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = AuthPrimaryBlue, contentColor = Color.White)
         ) {
-            Text("Log in", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("Sending Verification Code...", fontSize = 15.sp)
+            } else {
+                Text(if (isParent) "Send Verification Code" else "Log In to Child Space", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -515,11 +682,14 @@ fun SignUpView(
     password: String,
     onPasswordChange: (String) -> Unit,
     errorMessage: String?,
+    isLoading: Boolean,
     onBackClick: () -> Unit,
     onSignUpSubmit: () -> Unit,
     onLoginNav: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    var passwordVisible by remember { mutableStateOf(false) }
+    val passwordValidation = remember(password) { PasswordValidator.validate(password) }
 
     Column(
         modifier = Modifier
@@ -536,18 +706,18 @@ fun SignUpView(
             Text("Back", color = AuthTextDark, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Sign up", color = AuthTextDark, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text("Create Account", color = AuthTextDark, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Text("Create your master parental account", color = AuthTextMuted, fontSize = 14.sp)
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
             value = email,
             onValueChange = onEmailChange,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Parent Email address") },
+            label = { Text("Parent Email address (e.g. name@gmail.com)") },
             leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null, tint = AuthTextMuted) },
             shape = RoundedCornerShape(14.dp),
             singleLine = true,
@@ -567,9 +737,18 @@ fun SignUpView(
             value = password,
             onValueChange = onPasswordChange,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Create Master Password") },
+            label = { Text("Master Password") },
             leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = AuthTextMuted) },
-            visualTransformation = PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                        contentDescription = null,
+                        tint = AuthTextMuted
+                    )
+                }
+            },
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             shape = RoundedCornerShape(14.dp),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
@@ -582,22 +761,53 @@ fun SignUpView(
             )
         )
 
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Live Password Rules Checklist & Strength Meter
+        PasswordRulesChecklist(validation = passwordValidation)
+
         if (errorMessage != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(errorMessage, color = AuthErrorRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(
+                color = Color(0xFFFEF2F2),
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFCA5A5))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = AuthErrorRed, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(errorMessage, color = AuthErrorRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(28.dp))
 
         Button(
             onClick = onSignUpSubmit,
+            enabled = !isLoading && passwordValidation.isValid,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AuthPrimaryBlue, contentColor = Color.White)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AuthPrimaryBlue,
+                contentColor = Color.White,
+                disabledContainerColor = Color(0xFFCBD5E1)
+            )
         ) {
-            Text("Send Verification OTP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("Sending Verification OTP...", fontSize = 15.sp)
+            } else {
+                Text("Send Verification OTP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -619,9 +829,87 @@ fun SignUpView(
 }
 
 @Composable
+fun PasswordRulesChecklist(validation: PasswordValidationResult) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color(0xFFF8FAFC),
+        border = androidx.compose.foundation.BorderStroke(1.dp, AuthBorderColor),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Password Security Checklist", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = AuthTextDark)
+                val strengthText = when {
+                    validation.strengthScore >= 1f -> "Strong"
+                    validation.strengthScore >= 0.6f -> "Medium"
+                    else -> "Weak"
+                }
+                val strengthColor = when {
+                    validation.strengthScore >= 1f -> AuthSuccessGreen
+                    validation.strengthScore >= 0.6f -> AuthAmber
+                    else -> AuthErrorRed
+                }
+                Text(strengthText, color = strengthColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LinearProgressIndicator(
+                progress = { validation.strengthScore },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = when {
+                    validation.strengthScore >= 1f -> AuthSuccessGreen
+                    validation.strengthScore >= 0.6f -> AuthAmber
+                    else -> AuthErrorRed
+                },
+                trackColor = Color(0xFFE2E8F0)
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            PasswordRequirementRow(label = "At least 8 characters long", met = validation.hasMinLength)
+            PasswordRequirementRow(label = "At least 1 uppercase letter (A-Z)", met = validation.hasUppercase)
+            PasswordRequirementRow(label = "At least 1 lowercase letter (a-z)", met = validation.hasLowercase)
+            PasswordRequirementRow(label = "At least 1 number (0-9)", met = validation.hasDigit)
+            PasswordRequirementRow(label = "At least 1 special symbol (!@#$...)", met = validation.hasSpecialChar)
+        }
+    }
+}
+
+@Composable
+fun PasswordRequirementRow(label: String, met: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = if (met) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+            contentDescription = null,
+            tint = if (met) AuthSuccessGreen else Color(0xFF94A3B8),
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = label,
+            fontSize = 11.5.sp,
+            color = if (met) AuthTextDark else AuthTextMuted,
+            fontWeight = if (met) FontWeight.Medium else FontWeight.Normal
+        )
+    }
+}
+
+@Composable
 fun OtpVerificationView(
     recipientEmail: String,
-    generatedCodeForDemo: String,
     digit1: String,
     onDigit1Change: (String) -> Unit,
     digit2: String,
@@ -631,6 +919,7 @@ fun OtpVerificationView(
     digit4: String,
     onDigit4Change: (String) -> Unit,
     errorMessage: String?,
+    isLoading: Boolean,
     onBackClick: () -> Unit,
     onResendCode: () -> Unit,
     onVerifyClick: () -> Unit
@@ -654,40 +943,22 @@ fun OtpVerificationView(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Verification", color = AuthTextDark, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text("Verify Your Email", color = AuthTextDark, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                if (recipientEmail.isNotBlank()) "Enter 4-digit code sent to $recipientEmail" else "Enter 4-digit security code",
+                text = if (recipientEmail.isNotBlank()) "We sent a 4-digit code to\n$recipientEmail" else "Enter 4-digit verification code",
                 color = AuthTextMuted,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Demo Security OTP Hint Banner
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFEFF6FF),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE))
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Outlined.Security, contentDescription = null, tint = AuthPrimaryBlue, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Security OTP: $generatedCodeForDemo", fontWeight = FontWeight.Bold, color = AuthPrimaryBlue, fontSize = 13.sp)
-                }
-            }
-
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Phone with Checkmark Illustration (Shutterstock Reference)
+            // Phone with Checkmark Illustration
             Box(
                 modifier = Modifier
-                    .size(140.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .size(130.dp)
+                    .clip(RoundedCornerShape(24.dp))
                     .background(Color(0xFFEFF6FF)),
                 contentAlignment = Alignment.Center
             ) {
@@ -695,7 +966,7 @@ fun OtpVerificationView(
                     imageVector = Icons.Outlined.MarkEmailRead,
                     contentDescription = null,
                     tint = AuthPrimaryBlue,
-                    modifier = Modifier.size(68.dp)
+                    modifier = Modifier.size(64.dp)
                 )
             }
 
@@ -713,30 +984,31 @@ fun OtpVerificationView(
             }
 
             if (errorMessage != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(errorMessage, color = AuthErrorRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(errorMessage, color = AuthErrorRed, fontSize = 13.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(onClick = onResendCode)
+                modifier = Modifier.clickable(enabled = !isLoading, onClick = onResendCode)
             ) {
-                Text("Didn't get the code? ", color = AuthTextMuted, fontSize = 13.sp)
-                Text("Resend", color = AuthPrimaryBlue, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("Didn't get the email? ", color = AuthTextMuted, fontSize = 13.sp)
+                Text("Resend Code", color = AuthPrimaryBlue, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Button(
             onClick = onVerifyClick,
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = AuthPrimaryBlue, contentColor = Color.White)
         ) {
-            Text("Verify", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Verify & Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -774,8 +1046,121 @@ fun OtpBox(value: String, onValueChange: (String) -> Unit) {
 }
 
 @Composable
+fun ChildSetupView(
+    childName: String,
+    onChildNameChange: (String) -> Unit,
+    age: String,
+    onAgeChange: (String) -> Unit,
+    dailyLimit: String,
+    onDailyLimitChange: (String) -> Unit,
+    bedtime: String,
+    onBedtimeChange: (String) -> Unit,
+    schoolHours: String,
+    onSchoolHoursChange: (String) -> Unit,
+    onSaveAndContinue: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Child Profile Setup", color = AuthTextDark, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                "Configure safety rules and screen time limits for your child.",
+                color = AuthTextMuted,
+                fontSize = 14.sp
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OutlinedTextField(
+                value = childName,
+                onValueChange = onChildNameChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Child's First Name") },
+                leadingIcon = { Icon(Icons.Outlined.Face, contentDescription = null, tint = AuthTextMuted) },
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            OutlinedTextField(
+                value = age,
+                onValueChange = onAgeChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Age (Years)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                leadingIcon = { Icon(Icons.Outlined.Cake, contentDescription = null, tint = AuthTextMuted) },
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            OutlinedTextField(
+                value = dailyLimit,
+                onValueChange = onDailyLimitChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Daily Screen Time Allowance (Hours)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                leadingIcon = { Icon(Icons.Outlined.HourglassEmpty, contentDescription = null, tint = AuthTextMuted) },
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            OutlinedTextField(
+                value = bedtime,
+                onValueChange = onBedtimeChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Bedtime Schedule") },
+                leadingIcon = { Icon(Icons.Outlined.Bedtime, contentDescription = null, tint = AuthTextMuted) },
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            OutlinedTextField(
+                value = schoolHours,
+                onValueChange = onSchoolHoursChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("School Downtime Hours") },
+                leadingIcon = { Icon(Icons.Outlined.School, contentDescription = null, tint = AuthTextMuted) },
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true
+            )
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Button(
+            onClick = onSaveAndContinue,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(26.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AuthPrimaryBlue, contentColor = Color.White)
+        ) {
+            Text("Complete Setup & Enter Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
 fun SuccessView(
     isParent: Boolean,
+    childName: String,
     onContinueClick: () -> Unit
 ) {
     Column(
@@ -788,7 +1173,6 @@ fun SuccessView(
         Spacer(modifier = Modifier.height(40.dp))
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Green Checkmark Scalloped Badge (Shutterstock Reference Screen 4)
             Box(
                 modifier = Modifier
                     .size(160.dp)
@@ -814,12 +1198,13 @@ fun SuccessView(
 
             Spacer(modifier = Modifier.height(36.dp))
 
-            Text("Success!", color = AuthTextDark, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text("Setup Complete!", color = AuthTextDark, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                if (isParent) "You are now logged into Parent Controls" else "Connected to Household Family Space",
+                if (isParent) "Parent Controls active for $childName" else "Connected to Household Family Space",
                 color = AuthTextMuted,
-                fontSize = 15.sp
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center
             )
         }
 
@@ -831,7 +1216,7 @@ fun SuccessView(
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = AuthPrimaryBlue, contentColor = Color.White)
         ) {
-            Text("Continue to App", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Launch NestCheck", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -2,11 +2,13 @@ package com.nestcheck.app.ui.parent.shell
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,6 +28,7 @@ import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import com.nestcheck.app.data.sync.DeviceApprovalStatus
 import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import com.nestcheck.app.navigation.Screen
 
@@ -60,7 +63,7 @@ fun ParentShellScreen(
         topBar = {
             FamilyLinkTopBar(
                 childName = syncState.activeChildName,
-                onAlertsClick = { navController.navigate(Screen.NotificationsHub.route) },
+                onAlertsClick = { navController.navigate(Screen.NotificationHistory.route) },
                 onProfileClick = { navController.navigate(Screen.ChildProfile.route) }
             )
         },
@@ -139,7 +142,6 @@ fun FamilyLinkTopBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Child Switcher Pill Button (Like Family Link)
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = GflCardWhite,
@@ -193,9 +195,9 @@ fun FamilyLinkTopBar(
                     .background(GflCardWhite)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Alerts",
-                    tint = GflTextDark,
+                    imageVector = Icons.Outlined.NotificationsActive,
+                    contentDescription = "Notification History",
+                    tint = GflBlue,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -220,6 +222,13 @@ fun ScreenTimeTab(
     syncState: com.nestcheck.app.data.sync.FamilySyncState,
     syncManager: RealtimeFamilySyncManager
 ) {
+    var showEditChildDialog by remember { mutableStateOf(false) }
+    var editName by remember { mutableStateOf(syncState.activeChildName) }
+    var editAge by remember { mutableStateOf(syncState.childAge.toString()) }
+    var editLimit by remember { mutableStateOf((syncState.dailyLimitMinutes / 60f).toString()) }
+    var editBedtime by remember { mutableStateOf(syncState.bedtime) }
+    var editSchoolHours by remember { mutableStateOf(syncState.schoolHours) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -263,6 +272,109 @@ fun ScreenTimeTab(
             }
         }
 
+        // Child Device Approval Gate Request Card (Parent Approval Gate)
+        if (syncState.deviceApprovalStatus == DeviceApprovalStatus.PENDING) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF59E0B))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.DevicesOther, contentDescription = null, tint = Color(0xFFD97706))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("NEW DEVICE PAIRING REQUEST", color = Color(0xFFB45309), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            "${syncState.pendingDeviceName} is requesting approval to join ${syncState.activeChildName}'s space.",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF78350F)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Button(
+                                onClick = { syncManager.approveChildDevice() },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Approve Device", fontWeight = FontWeight.Bold)
+                            }
+                            OutlinedButton(
+                                onClick = { syncManager.rejectChildDevice() },
+                                shape = RoundedCornerShape(20.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDC2626)),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626))
+                            ) {
+                                Text("Decline")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fancy Horizontal Quick-Actions Carousel
+        item {
+            Text("Quick Family Actions", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = GflTextDark)
+            Spacer(modifier = Modifier.height(6.dp))
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                item {
+                    QuickActionPillCard(
+                        title = "Live Map",
+                        subtitle = "Track GPS & Geofence",
+                        icon = Icons.Outlined.LocationOn,
+                        color = Color(0xFF0B57D0),
+                        onClick = { navController.navigate(Screen.LiveMap.route) }
+                    )
+                }
+                item {
+                    QuickActionPillCard(
+                        title = "App Alerts",
+                        subtitle = "Notification History",
+                        icon = Icons.Outlined.NotificationsActive,
+                        color = Color(0xFF7C3AED),
+                        onClick = { navController.navigate(Screen.NotificationHistory.route) }
+                    )
+                }
+                item {
+                    QuickActionPillCard(
+                        title = if (syncState.isDeviceLocked) "Device Locked" else "Unlocked",
+                        subtitle = "Tap to toggle",
+                        icon = if (syncState.isDeviceLocked) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
+                        color = if (syncState.isDeviceLocked) Color(0xFFDC2626) else Color(0xFF16A34A),
+                        onClick = { syncManager.setDeviceLocked(!syncState.isDeviceLocked) }
+                    )
+                }
+                item {
+                    QuickActionPillCard(
+                        title = "App Limits",
+                        subtitle = "Quotas & Locks",
+                        icon = Icons.Outlined.Apps,
+                        color = Color(0xFFEA580C),
+                        onClick = { navController.navigate(Screen.AppControl.route) }
+                    )
+                }
+                item {
+                    QuickActionPillCard(
+                        title = "Bedtime",
+                        subtitle = syncState.bedtime,
+                        icon = Icons.Outlined.Bedtime,
+                        color = Color(0xFF2563EB),
+                        onClick = { navController.navigate(Screen.BedtimeSchedule.route) }
+                    )
+                }
+            }
+        }
+
         // 1. Google Family Link Screen Time Card with Vertical App Capsules
         item {
             Card(
@@ -279,8 +391,8 @@ fun ScreenTimeTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        val hours = (180 - syncState.remainingMinutes) / 60
-                        val mins = (180 - syncState.remainingMinutes) % 60
+                        val hours = (syncState.dailyLimitMinutes - syncState.remainingMinutes).coerceAtLeast(0) / 60
+                        val mins = (syncState.dailyLimitMinutes - syncState.remainingMinutes).coerceAtLeast(0) % 60
                         Text(
                             text = "${hours}h ${mins}m",
                             fontSize = 32.sp,
@@ -288,8 +400,8 @@ fun ScreenTimeTab(
                             color = GflTextDark
                         )
                         Text(
-                            text = "Time spent today",
-                            fontSize = 14.sp,
+                            text = "Time spent today (Limit: ${syncState.dailyLimitMinutes / 60}h)",
+                            fontSize = 13.sp,
                             color = GflTextMuted
                         )
                     }
@@ -304,7 +416,66 @@ fun ScreenTimeTab(
             }
         }
 
-        // 2. Device Card with Instant Remote Lock Button
+        // 2. Child Profile Card with Setup / Edit Section (Requested Feature)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(CircleShape)
+                                    .background(GflBlueContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(syncState.activeChildName.take(1), fontWeight = FontWeight.Bold, color = GflBlue, fontSize = 20.sp)
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(syncState.activeChildName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GflTextDark)
+                                Text("${syncState.childAge} years old • ${syncState.schoolHours}", fontSize = 12.sp, color = GflTextMuted)
+                            }
+                        }
+
+                        IconButton(onClick = {
+                            editName = syncState.activeChildName
+                            editAge = syncState.childAge.toString()
+                            editLimit = (syncState.dailyLimitMinutes / 60f).toString()
+                            editBedtime = syncState.bedtime
+                            editSchoolHours = syncState.schoolHours
+                            showEditChildDialog = true
+                        }) {
+                            Icon(Icons.Outlined.Edit, contentDescription = "Edit Child Profile", tint = GflBlue)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        ProfileMetric(title = "Daily Limit", value = "${syncState.dailyLimitMinutes / 60} hrs")
+                        ProfileMetric(title = "Bedtime", value = syncState.bedtime)
+                        ProfileMetric(title = "Pairing Code", value = syncState.familyCode)
+                    }
+                }
+            }
+        }
+
+        // 3. Device Card with Instant Remote Lock Button
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -330,7 +501,7 @@ fun ScreenTimeTab(
                             }
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
-                                Text("Google Pixel 9", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = GflTextDark)
+                                Text(syncState.pendingDeviceName, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = GflTextDark)
                                 Text(
                                     text = if (syncState.isDeviceLocked) "Locked by parent" else "Unlocked",
                                     color = if (syncState.isDeviceLocked) GflRed else GflBlue,
@@ -344,7 +515,6 @@ fun ScreenTimeTab(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Authentic Lock / Unlock Pill Button
                     Button(
                         onClick = {
                             syncManager.setDeviceLocked(!syncState.isDeviceLocked)
@@ -365,7 +535,7 @@ fun ScreenTimeTab(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (syncState.isDeviceLocked) "Unlock device" else "Lock",
+                            text = if (syncState.isDeviceLocked) "Unlock device" else "Lock device",
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp
                         )
@@ -374,7 +544,7 @@ fun ScreenTimeTab(
             }
         }
 
-        // 3. Time Limits Card
+        // 4. Time Limits Card
         item {
             Card(
                 modifier = Modifier
@@ -402,75 +572,121 @@ fun ScreenTimeTab(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Time limits", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
-                        Text("Daily limit: 3 hrs • Bedtime off", fontSize = 13.sp, color = GflTextMuted)
+                        Text("Daily limit: ${syncState.dailyLimitMinutes / 60} hrs • Bedtime: ${syncState.bedtime}", fontSize = 13.sp, color = GflTextMuted)
                     }
                     Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
-                }
-            }
-        }
-
-        // 4. Schedules Card
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { navController.navigate(Screen.BedtimeSchedule.route) },
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
-                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(GflBgLight),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = GflTextDark)
-                    }
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Schedules", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
-                        Text("Downtime & school time off", fontSize = 13.sp, color = GflTextMuted)
-                    }
-                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
-                }
-            }
-        }
-
-        // 5. School Schedule & Exam Countdown Banner (Requested Feature)
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBF7D0))
-            ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("SCHOOL & EXAM COUNTDOWN", color = GflGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text("Term 2", color = GflTextMuted, fontSize = 12.sp)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("📐 Mathematics Finals in 4 days ⏳", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GflTextDark)
-                    Text("Mon-Fri: 8:30 AM - 3:15 PM • Oakridge High", fontSize = 13.sp, color = GflTextMuted)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text("🏖️ Summer Vacation begins in 18 days", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = GflGreen)
                 }
             }
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
+
+    if (showEditChildDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditChildDialog = false },
+            title = { Text("Edit Child Profile", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = editName,
+                        onValueChange = { editName = it },
+                        label = { Text("Child Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = editAge,
+                        onValueChange = { editAge = it },
+                        label = { Text("Age (Years)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = editLimit,
+                        onValueChange = { editLimit = it },
+                        label = { Text("Daily Limit (Hours)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = editBedtime,
+                        onValueChange = { editBedtime = it },
+                        label = { Text("Bedtime") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val ageNum = editAge.toIntOrNull() ?: 11
+                        val limitMins = ((editLimit.toFloatOrNull() ?: 3f) * 60).toInt()
+                        syncManager.updateChildProfile(
+                            name = editName.trim().ifBlank { "Olivia" },
+                            age = ageNum,
+                            dailyLimitMinutes = limitMins,
+                            bedtime = editBedtime,
+                            schoolHours = editSchoolHours
+                        )
+                        showEditChildDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GflBlue)
+                ) {
+                    Text("Save Changes", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditChildDialog = false }) {
+                    Text("Cancel", color = GflTextMuted)
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun ProfileMetric(title: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
+        Text(title, fontSize = 11.sp, color = GflTextMuted)
+    }
+}
+
+@Composable
+fun QuickActionPillCard(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    color: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(150.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(color.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = GflTextDark, maxLines = 1)
+            Text(subtitle, fontSize = 11.sp, color = GflTextMuted, maxLines = 1)
+        }
     }
 }
 
@@ -534,25 +750,32 @@ fun ControlsTab(
                     fontSize = 14.sp,
                     color = GflTextMuted
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = GflCardWhite,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("G", fontWeight = FontWeight.Bold, color = GflBlue, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Account settings", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = GflTextDark)
-                    }
-                }
             }
         }
 
-        // 1. Google Play & In-App Purchases Lock (User's Critical Request)
+        // Dedicated Live Map & Location Tracking Card
+        item {
+            ControlCardItem(
+                title = "Live Location & Safe Geofences",
+                subtitle = "Google Maps full view • ${syncState.locationAddress}",
+                icon = Icons.Outlined.LocationOn,
+                iconTint = GflBlue,
+                onClick = { navController.navigate(Screen.LiveMap.route) }
+            )
+        }
+
+        // Dedicated Notification History Tracker Card
+        item {
+            ControlCardItem(
+                title = "App Notification History",
+                subtitle = "Track messages & alerts received by child's apps",
+                icon = Icons.Outlined.NotificationsActive,
+                iconTint = Color(0xFF7C3AED),
+                onClick = { navController.navigate(Screen.NotificationHistory.route) }
+            )
+        }
+
+        // Google Play & In-App Purchases Lock
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -589,40 +812,29 @@ fun ControlsTab(
             }
         }
 
-        // 2. YouTube Content Controls
+        // YouTube Content Controls
         item {
             ControlCardItem(
                 title = "YouTube",
-                subtitle = "Tools for parents, kids & teens • Restricted Mode ON",
+                subtitle = "Restricted Mode ON • Age appropriate content",
                 icon = Icons.Outlined.PlayCircle,
                 iconTint = Color(0xFFFF0000),
                 onClick = { navController.navigate(Screen.ContentFilter.route) }
             )
         }
 
-        // 3. Google Chrome & Web
+        // Google Chrome & Web
         item {
             ControlCardItem(
                 title = "Google Chrome and Web",
-                subtitle = "Website & browser restrictions • Explicit sites blocked",
+                subtitle = "Explicit websites blocked • Safe browsing active",
                 icon = Icons.Outlined.Public,
                 iconTint = Color(0xFF4285F4),
                 onClick = { navController.navigate(Screen.BlockedUrl.route) }
             )
         }
 
-        // 4. Google Search & SafeSearch
-        item {
-            ControlCardItem(
-                title = "Google Search",
-                subtitle = "SafeSearch Lock ON",
-                icon = Icons.Outlined.Search,
-                iconTint = GflAmber,
-                onClick = { navController.navigate(Screen.SafeSearch.route) }
-            )
-        }
-
-        // 5. App Quota & Restrictions
+        // App Quota & Restrictions
         item {
             ControlCardItem(
                 title = "App Management & Limits",
@@ -705,7 +917,28 @@ fun LocationMapTab(
             )
         }
 
-        // Bottom Child Location Sheet (Like Google Family Link)
+        // Top button to expand into Dedicated Live Map Screen
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = Color.White,
+            shadowElevation = 6.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .clickable { navController.navigate(Screen.LiveMap.route) }
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Outlined.Fullscreen, contentDescription = null, tint = GflBlue, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Full Map View", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = GflBlue)
+            }
+        }
+
+        // Bottom Child Location Sheet
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -716,38 +949,6 @@ fun LocationMapTab(
             shadowElevation = 8.dp
         ) {
             Column(modifier = Modifier.padding(18.dp)) {
-                // Segmented Pill: [ Kids ] [ Family places ]
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(GflBgLight)
-                        .padding(4.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(GflCardWhite)
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Kids", fontWeight = FontWeight.Bold, color = GflTextDark, fontSize = 13.sp)
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(16.dp))
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Family places", fontWeight = FontWeight.Medium, color = GflTextMuted, fontSize = 13.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Olivia Location Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -767,13 +968,13 @@ fun LocationMapTab(
                         Column {
                             Text(syncState.activeChildName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
                             Text(syncState.locationAddress, fontSize = 13.sp, color = GflTextMuted)
-                            Text("${syncState.kidBattery}% ⚡ • Updated live", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
+                            Text("${syncState.kidBattery}% ⚡ • Live geofence safe", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
                         }
                     }
                     IconButton(onClick = {
-                        cameraPositionState.position = CameraPosition.fromLatLngZoom(childLocation, 16f)
+                        navController.navigate(Screen.LiveMap.route)
                     }) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = "Refresh", tint = GflBlue)
+                        Icon(Icons.Outlined.Navigation, contentDescription = "Navigate", tint = GflBlue)
                     }
                 }
             }

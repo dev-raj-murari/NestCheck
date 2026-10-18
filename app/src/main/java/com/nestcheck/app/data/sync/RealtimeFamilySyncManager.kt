@@ -15,6 +15,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
+enum class DeviceApprovalStatus {
+    PENDING,
+    APPROVED,
+    REJECTED
+}
+
 data class FamilySyncState(
     val familyCode: String = "NC-8294",
     val activeChildName: String = "Olivia",
@@ -32,7 +38,12 @@ data class FamilySyncState(
     val sosLocation: String = "",
     val lockedApps: List<String> = listOf("com.instagram.android", "com.zhiliaoapp.musically"),
     val inAppPurchasesBlocked: Boolean = true, // Google Play Payment Block
-    val appApprovalsRequired: Boolean = true
+    val appApprovalsRequired: Boolean = true,
+    val deviceApprovalStatus: DeviceApprovalStatus = DeviceApprovalStatus.APPROVED,
+    val pendingDeviceName: String = "Google Pixel 9",
+    val childAge: Int = 11,
+    val bedtime: String = "9:00 PM",
+    val schoolHours: String = "8:30 AM - 3:15 PM"
 )
 
 @Singleton
@@ -232,4 +243,76 @@ class RealtimeFamilySyncManager @Inject constructor(
             } catch (e: Exception) {}
         }
     }
+
+    fun approveChildDevice() {
+        _syncState.value = _syncState.value.copy(deviceApprovalStatus = DeviceApprovalStatus.APPROVED)
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(mapOf("deviceApprovalStatus" to "APPROVED"), com.google.firebase.firestore.SetOptions.merge())
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun rejectChildDevice() {
+        _syncState.value = _syncState.value.copy(deviceApprovalStatus = DeviceApprovalStatus.REJECTED)
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(mapOf("deviceApprovalStatus" to "REJECTED"), com.google.firebase.firestore.SetOptions.merge())
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun requestChildDeviceApproval(deviceName: String) {
+        _syncState.value = _syncState.value.copy(
+            deviceApprovalStatus = DeviceApprovalStatus.PENDING,
+            pendingDeviceName = deviceName
+        )
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf(
+                            "deviceApprovalStatus" to "PENDING",
+                            "pendingDeviceName" to deviceName
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun updateChildProfile(name: String, age: Int, dailyLimitMinutes: Int, bedtime: String, schoolHours: String) {
+        _syncState.value = _syncState.value.copy(
+            activeChildName = name,
+            childAge = age,
+            dailyLimitMinutes = dailyLimitMinutes,
+            bedtime = bedtime,
+            schoolHours = schoolHours
+        )
+        preferences.activeChildName = name
+        preferences.dailyLimitMinutes = dailyLimitMinutes
+
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf(
+                            "activeChildName" to name,
+                            "childAge" to age,
+                            "dailyLimitMinutes" to dailyLimitMinutes,
+                            "bedtime" to bedtime,
+                            "schoolHours" to schoolHours
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
 }
+

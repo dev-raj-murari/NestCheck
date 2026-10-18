@@ -54,6 +54,30 @@ fun KidShellScreen(
     var enteredPin by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf(false) }
 
+    // Real-Time Parent Approval Gate (Kid cannot enter until parent approves)
+    if (syncState.deviceApprovalStatus == com.nestcheck.app.data.sync.DeviceApprovalStatus.PENDING) {
+        WaitingForParentApprovalScreen(
+            deviceName = syncState.pendingDeviceName,
+            onBackToLogin = {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.KidHome.route) { inclusive = true }
+                }
+            }
+        )
+        return
+    }
+
+    if (syncState.deviceApprovalStatus == com.nestcheck.app.data.sync.DeviceApprovalStatus.REJECTED) {
+        DeviceRejectedScreen(
+            onBackToLogin = {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.KidHome.route) { inclusive = true }
+                }
+            }
+        )
+        return
+    }
+
     // Real-Time Full Screen Lockout Overlay if Device is Locked
     if (syncState.isDeviceLocked) {
         DeviceLockedOverlay(
@@ -542,3 +566,143 @@ fun DeviceLockedOverlay(onUnlockAttempt: (String) -> Boolean) {
         }
     }
 }
+
+@Composable
+fun WaitingForParentApprovalScreen(
+    deviceName: String,
+    onBackToLogin: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F172A))
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(130.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF1E293B))
+                    .border(2.dp, Color(0xFF38BDF8), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.HourglassTop,
+                    contentDescription = null,
+                    tint = Color(0xFF38BDF8),
+                    modifier = Modifier.size(60.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = "Waiting for Parent Approval",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Device '$deviceName' has requested to pair with your household family space.",
+                color = Color(0xFF94A3B8),
+                fontSize = 14.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                lineHeight = 22.sp
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFF1E293B),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color(0xFF38BDF8),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Listening for parent approval signal...",
+                        color = Color(0xFFE2E8F0),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+
+        OutlinedButton(
+            onClick = onBackToLogin,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(25.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF94A3B8)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155))
+        ) {
+            Text("Cancel & Return to Login", fontSize = 14.sp)
+        }
+    }
+}
+
+@Composable
+fun DeviceRejectedScreen(
+    onBackToLogin: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F172A))
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFEF4444).copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Outlined.Cancel, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(54.dp))
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("Device Request Declined", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Your parent declined access for this device.",
+            color = Color(0xFF94A3B8),
+            fontSize = 14.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onBackToLogin,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+            shape = RoundedCornerShape(25.dp),
+            modifier = Modifier.fillMaxWidth().height(50.dp)
+        ) {
+            Text("Back to Login", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+

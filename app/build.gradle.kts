@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("com.google.devtools.ksp")
@@ -21,6 +23,18 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localPropsFile.inputStream().use { stream ->
+                localProps.load(stream)
+            }
+        }
+        val gmailSender = localProps.getProperty("gmail.sender") ?: "workwithdevraj@gmail.com"
+        val gmailApiKey = localProps.getProperty("gmail.apiKey") ?: ""
+        buildConfigField("String", "GMAIL_SENDER", "\"$gmailSender\"")
+        buildConfigField("String", "GMAIL_API_KEY", "\"$gmailApiKey\"")
     }
 
     flavorDimensions += "role"

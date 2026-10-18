@@ -38,7 +38,8 @@ import com.nestcheck.app.ui.parent.ai.AIParentingAssistantScreen
 import com.nestcheck.app.ui.parent.family.FamilySharingScreen
 import com.nestcheck.app.ui.parent.settings.LanguageSettingsScreen
 import com.nestcheck.app.ui.sinan.TrustedContactsScreen
-import com.nestcheck.app.ui.sinan.ToxicTextMonitorScreen
+import com.nestcheck.app.ui.parent.location.LiveLocationMapScreen
+import com.nestcheck.app.ui.parent.notifications.AppNotificationHistoryScreen
 import com.nestcheck.app.ui.sinan.SafeSearchScreen
 import com.nestcheck.app.ui.sinan.LowBatteryPingScreen
 import com.nestcheck.app.ui.sinan.PermissionAuditorScreen
@@ -116,7 +117,8 @@ fun NestCheckApp() {
         composable(Screen.BlockedUrl.route) { BlockedUrlLandingScreen(navController) }
         composable(Screen.ChildCheckIn.route) { ChildCheckInScreen(navController) }
         composable(Screen.TrustedContacts.route) { TrustedContactsScreen(navController) }
-        composable(Screen.ToxicTextMonitor.route) { ToxicTextMonitorScreen(navController) }
+        composable(Screen.NotificationHistory.route) { AppNotificationHistoryScreen(navController) }
+        composable(Screen.LiveMap.route) { LiveLocationMapScreen(navController) }
         composable(Screen.SafeSearch.route) { SafeSearchScreen(navController) }
         composable(Screen.LowBatteryPing.route) { LowBatteryPingScreen(navController) }
         composable(Screen.PermissionAuditor.route) { PermissionAuditorScreen(navController) }
