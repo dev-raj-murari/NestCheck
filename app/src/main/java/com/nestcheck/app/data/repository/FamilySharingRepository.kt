@@ -60,10 +60,12 @@ class FamilySharingRepository @Inject constructor() {
     val activeInvite: StateFlow<HouseholdInviteCode?> = _activeInvite.asStateFlow()
 
     fun generateNewInviteCode(role: CoParentRole): HouseholdInviteCode {
-        val randomNum = Random.nextInt(1000, 9999)
+        val chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ" // non-ambiguous chars
+        val random = java.security.SecureRandom()
+        val codeString = (1..6).map { chars[random.nextInt(chars.length)] }.joinToString("")
         val invite = HouseholdInviteCode(
-            code = "NC-$randomNum",
-            expiresAtFormatted = "Expires in 48 hours",
+            code = "NC-$codeString",
+            expiresAtFormatted = "Expires in 15 minutes",
             targetRole = role
         )
         _activeInvite.value = invite

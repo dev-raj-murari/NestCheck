@@ -15,7 +15,7 @@ class AIParentingRepository @Inject constructor() {
         listOf(
             AiParentingMessage(
                 id = "init_1",
-                text = "Hello Dev Raj! I am your NestCheck AI Parenting Assistant. I synthesize real-time device telemetry with child developmental psychology to help you navigate screen time, digital safety, and healthy family boundaries.\n\nHow can I support your household today?",
+                text = "Hello! I am your NestCheck AI Parenting Assistant. I synthesize real-time device telemetry with child developmental psychology to help you navigate screen time, digital safety, and healthy family boundaries.\n\nHow can I support your household today?",
                 isFromUser = false,
                 timestamp = System.currentTimeMillis() - 1000 * 60 * 10,
                 category = "Welcome",
@@ -26,7 +26,7 @@ class AIParentingRepository @Inject constructor() {
                 ),
                 suggestedFollowUps = listOf(
                     "How to handle screentime bedtime resistance?",
-                    "What daily limit is recommended for a 10-year-old?",
+                    "What daily limit is recommended for children?",
                     "How to praise chores without just giving screen tokens?"
                 )
             )
@@ -55,12 +55,12 @@ class AIParentingRepository @Inject constructor() {
             lower.contains("bedtime") || lower.contains("sleep") || lower.contains("night") -> {
                 AiParentingMessage(
                     id = UUID.randomUUID().toString(),
-                    text = "Screen blue light delays melatonin secretion by up to 90 minutes in adolescents. For Maya and Leo, the most effective approach is a 'Predictable Digital Sunset' rather than an abrupt shutdown.",
+                    text = "Screen blue light delays melatonin secretion by up to 90 minutes in adolescents. For your children, the most effective approach is a 'Predictable Digital Sunset' rather than an abrupt shutdown.",
                     isFromUser = false,
                     category = "Sleep Hygiene & Circadian Health",
                     actionPoints = listOf(
                         "Enforce a 45-minute zero-screen buffer before target lights-out (e.g., 08:30 PM for 09:15 PM sleep).",
-                        "Use the NestCheck Bedtime Curfew (F6) with the dim warm amber lock screen.",
+                        "Use the NestCheck Bedtime Curfew with the dim warm amber lock screen.",
                         "Substitute evening scrolling with a 15-minute physical book or family recap."
                     ),
                     suggestedFollowUps = listOf(
@@ -72,12 +72,12 @@ class AIParentingRepository @Inject constructor() {
             lower.contains("limit") || lower.contains("hours") || lower.contains("how much") -> {
                 AiParentingMessage(
                     id = UUID.randomUUID().toString(),
-                    text = "According to the American Academy of Pediatrics (AAP), recommended recreational screen time balances are:\n• Ages 5–8: 1.0 to 1.5 hours/day\n• Ages 9–12: 1.5 to 2.0 hours/day\n• Teens 13+: 2.0 to 3.0 hours/day with mandatory physical & study breaks.",
+                    text = "Pediatric clinical guidelines recommend balanced recreational screen time limits:\n• Ages 5–8: 1.0 to 1.5 hours/day\n• Ages 9–12: 1.5 to 2.0 hours/day\n• Teens 13+: 2.0 to 3.0 hours/day with mandatory physical & study breaks.",
                     isFromUser = false,
                     category = "Screen Quota Strategy",
                     actionPoints = listOf(
-                        "Leo (Age 10): Keep recreational apps capped at 2h daily, separating educational apps.",
-                        "Maya (Age 14): Involve her in co-setting app category quotas (F27) to build autonomy.",
+                        "Keep recreational apps capped at 2h daily, separating educational apps.",
+                        "Involve children in co-setting app category quotas to build autonomy.",
                         "Use 'Bonus Time' earned through chores or reading rather than default open allowances."
                     ),
                     suggestedFollowUps = listOf(

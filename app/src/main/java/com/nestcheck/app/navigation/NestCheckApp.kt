@@ -5,8 +5,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nestcheck.app.ui.common.LoginScreen
+import com.nestcheck.app.ui.auth.FamilyAuthScreen
 import com.nestcheck.app.ui.common.SplashScreen
 import com.nestcheck.app.ui.parent.dashboard.ParentDashboardScreen
+import com.nestcheck.app.ui.parent.shell.ParentShellScreen
+import com.nestcheck.app.ui.child.shell.KidShellScreen
 import com.nestcheck.app.ui.parent.screentime.ScreenTimeScreen
 import com.nestcheck.app.ui.parent.screentime.TimeLimitScreen
 import com.nestcheck.app.ui.parent.appcontrol.AppControlScreen
@@ -61,8 +64,8 @@ fun NestCheckApp() {
     
     NavHost(navController = navController, startDestination = Screen.Splash.route) {
         composable(Screen.Splash.route) { SplashScreen(navController) }
-        composable(Screen.Login.route) { LoginScreen(navController) }
-        composable(Screen.ParentDashboard.route) { ParentDashboardScreen(navController) }
+        composable(Screen.Login.route) { FamilyAuthScreen(navController) }
+        composable(Screen.ParentDashboard.route) { ParentShellScreen(navController) }
         
         // Rohit's Feature Routes (F1-F6, F21-F28, F40)
         composable(Screen.ScreenTime.route) { ScreenTimeScreen(navController) }
@@ -102,7 +105,7 @@ fun NestCheckApp() {
         composable(Screen.LanguageSettings.route) { LanguageSettingsScreen(navController) }
 
         // Kid Core Routes
-        composable(Screen.KidHome.route) { KidHomeScreen(navController) }
+        composable(Screen.KidHome.route) { KidShellScreen(navController) }
         composable(Screen.KidProfile.route) { KidProfileScreen(navController) }
         composable(Screen.MyCredits.route) { MyCreditsScreen(navController) }
 

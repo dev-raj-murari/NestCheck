@@ -51,6 +51,17 @@
         <service
             android:name=".service.MediaScannerService"
             android:exported="false" />
+
+        <!-- Anti-Tamper & Bypass Monitor Receiver -->
+        <receiver
+            android:name=".core.TamperMonitorReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.AIRPLANE_MODE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

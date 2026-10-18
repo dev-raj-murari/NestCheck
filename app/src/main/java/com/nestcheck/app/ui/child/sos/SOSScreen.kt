@@ -26,6 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.nestcheck.app.ui.theme.*
@@ -35,6 +38,7 @@ fun SOSScreen(
     navController: NavController,
     viewModel: SOSViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val sosState by viewModel.sosState.collectAsState()
     val countdown by viewModel.countdownSeconds.collectAsState()
     val isHolding by viewModel.isHolding.collectAsState()
@@ -266,18 +270,25 @@ fun SOSScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                Text("Emergency Contacts Notified:", color = CyberTextDim, fontSize = 12.sp)
+                Text("Emergency Contacts (Tap to Fast-Dial):", color = CyberTextDim, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 sosState.notifiedContacts.forEach { contact ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 3.dp),
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable {
+                                val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))
+                                context.startActivity(dialIntent)
+                            }
+                            .padding(vertical = 6.dp, horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Outlined.Call, contentDescription = "Call", tint = SuccessGreen, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Outlined.Call, contentDescription = "Call", tint = SuccessGreen, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(contact, color = CyberTextBright, fontSize = 12.sp)
+                        Text(contact, color = CyberTextBright, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("DIAL NOW", color = SuccessGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

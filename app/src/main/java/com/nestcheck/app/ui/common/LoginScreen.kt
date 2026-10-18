@@ -57,6 +57,16 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        LaunchedEffect(uiState.isLoggedIn) {
+            if (uiState.isLoggedIn) {
+                if (uiState.loggedInUserType == UserType.PARENT) {
+                    navController.navigate(Screen.ParentDashboard.route)
+                } else {
+                    navController.navigate(Screen.KidHome.route)
+                }
+            }
+        }
+
         // If authenticated: Show clean session card (no dashboard)
         if (uiState.isLoggedIn) {
             Box(
@@ -113,327 +123,40 @@ fun LoginScreen(
                         Text(text = "Status: Connected", color = SuccessGreen, fontSize = 14.sp, fontWeight = FontWeight.Bold)
 
                         Spacer(modifier = Modifier.height(16.dp))
-
                         Button(
-                            onClick = { navController.navigate(Screen.MyCredits.route) },
-                            modifier = Modifier.fillMaxWidth().height(42.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
+                            onClick = { navController.navigate(Screen.KidHome.route) },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = Black)
                         ) {
-                            Text("My Credits & Rewards", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.StepCounter.route) },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = SuccessGreen)
-                            ) {
-                                Text("Step Counter", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.MoodCheckIn.route) },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Mood Check-In", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.FocusMode.route) },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Focus Mode", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.HabitChallenges.route) },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Streaks", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.KidChores.route) },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("My Chores", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.KidHomework.route) },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("My Homework", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.WaterReminder.route) },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Hydration & Sleep", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.RewardShop.route) },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = WarningAmber)
-                            ) {
-                                Text("Reward Shop", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { navController.navigate(Screen.ChildCheckIn.route) },
-                            modifier = Modifier.fillMaxWidth().height(42.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = SuccessGreen)
-                        ) {
-                            Text("📍 \"I'm Here\" Arrival Check-In (F36)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { navController.navigate(Screen.SOS.route) },
-                            modifier = Modifier.fillMaxWidth().height(42.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = AlertRed, contentColor = White)
-                        ) {
-                            Text("Emergency SOS", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text("Open Kid Space", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
                     }
 
-                    if (uiState.userType == UserType.PARENT) {
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(text = "Active Modules:", color = CyberTextDim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.ScreenTime.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Screen Time", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.TimeLimits.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Time Limits", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.AppControl.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("App Control", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.Credits.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Credits Ledger", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
+                    if (uiState.loggedInUserType == UserType.PARENT) {
+                        Spacer(modifier = Modifier.height(16.dp))
                         Button(
-                            onClick = { navController.navigate(Screen.ParentSecurity.route) },
-                            modifier = Modifier.fillMaxWidth().height(40.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = White)
+                            onClick = { navController.navigate(Screen.ParentDashboard.route) },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = Black)
                         ) {
-                            Text("Parent PIN & Biometrics", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.BatteryMonitor.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = SuccessGreen)
-                            ) {
-                                Text("Battery Telemetry", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.NotificationsHub.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Notification Hub", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.Reports.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Weekly Reports", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.OfflineSync.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = WarningAmber)
-                            ) {
-                                Text("Offline Sync", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { navController.navigate(Screen.AIDigest.route) },
-                            modifier = Modifier.fillMaxWidth().height(40.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
-                        ) {
-                            Text("✨ AI Daily Digest Synthesis", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.Location.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AccentBlue)
-                            ) {
-                                Text("📍 Location & Safety", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.ContentFilter.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("Web & NSFW Filter", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { navController.navigate(Screen.AppQuarantine.route) },
-                            modifier = Modifier.fillMaxWidth().height(40.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AlertRed)
-                        ) {
-                            Text("🛡️ App Quarantine Guard (F9)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.RemoteLock.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AlertRed)
-                            ) {
-                                Text("🔒 Remote Lock (F19)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.MultiChild.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = AccentBlue)
-                            ) {
-                                Text("👨‍👧‍👦 Multi-Child (F20)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { navController.navigate(Screen.AIAssistant.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("💡 AI Advisor (F39)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(
-                                onClick = { navController.navigate(Screen.FamilySharing.route) },
-                                modifier = Modifier.weight(1f).height(40.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = CyberTextBright)
-                            ) {
-                                Text("🤝 Co-Parents (F42)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { navController.navigate(Screen.LanguageSettings.route) },
-                            modifier = Modifier.fillMaxWidth().height(40.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CyberBlack, contentColor = WarningAmber)
-                        ) {
-                            Text("🌐 Multi-Language & Region (F43)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Open Parent Dashboard", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Button(
+                    OutlinedButton(
                         onClick = viewModel::logout,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(6.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = CyberTextDim),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
                     ) {
-                        Text("Log Out", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text("Log Out", fontSize = 13.sp)
                     }
                 }
             }
