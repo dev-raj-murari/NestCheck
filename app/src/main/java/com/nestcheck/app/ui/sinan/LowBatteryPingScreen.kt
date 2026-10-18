@@ -42,14 +42,15 @@ fun LowBatteryPingScreen(
     val simulatedLevel by viewModel.simulatedLevel
     val lastPing by viewModel.lastTriggeredPing
 
-    val bgColor = Color(0xFF0A0D14)
-    val cardColor = Color(0xFF121824)
-    val cyanAccent = Color(0xFF00E5FF)
-    val greenSuccess = Color(0xFF00E676)
-    val redCritical = Color(0xFFFF5252)
-    val amberWarning = Color(0xFFFFAB00)
-    val textMuted = Color(0xFF94A3B8)
-    val borderStroke = Color(0xFF1E293B)
+    val bgColor = Color(0xFFF8FAFC)
+    val cardColor = Color(0xFFFFFFFF)
+    val cyanAccent = Color(0xFF0B57D0)
+    val greenSuccess = Color(0xFF10B981)
+    val redCritical = Color(0xFFEF4444)
+    val amberWarning = Color(0xFFF59E0B)
+    val textMuted = Color(0xFF64748B)
+    val borderStroke = Color(0xFFE2E8F0)
+    val textDark = Color(0xFF0F172A)
 
     val latest = pings.firstOrNull()
 
@@ -61,7 +62,7 @@ fun LowBatteryPingScreen(
                         Text(
                             text = "Low-Battery Last Ping",
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = textDark,
                             fontSize = 18.sp
                         )
                         Text(
@@ -76,7 +77,7 @@ fun LowBatteryPingScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White
+                            tint = textDark
                         )
                     }
                 },
@@ -145,7 +146,7 @@ fun LowBatteryPingScreen(
                                     Text(
                                         text = "Last Known Location Fix",
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
+                                        color = textDark,
                                         fontSize = 15.sp
                                     )
                                     Surface(
@@ -182,7 +183,7 @@ fun LowBatteryPingScreen(
                                 Text(
                                     text = "${String.format(Locale.US, "%.4f", latest?.latitude ?: 19.1054)}°N, ${String.format(Locale.US, "%.4f", latest?.longitude ?: 72.8362)}°E",
                                     fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = FontFamily.SansSerif,
                                     color = cyanAccent,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -225,7 +226,7 @@ fun LowBatteryPingScreen(
                         Text(
                             text = "Autonomous Ping Thresholds",
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = textDark,
                             fontSize = 14.sp
                         )
 
@@ -238,7 +239,7 @@ fun LowBatteryPingScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "First Warning Ping Threshold",
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -271,7 +272,7 @@ fun LowBatteryPingScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Critical Shutdown Fix",
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -306,7 +307,7 @@ fun LowBatteryPingScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Auto-Dispatch Emergency SMS",
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -323,7 +324,7 @@ fun LowBatteryPingScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = cyanAccent,
                                     uncheckedThumbColor = textMuted,
-                                    uncheckedTrackColor = Color(0xFF1E293B)
+                                    uncheckedTrackColor = Color(0xFFCBD5E1)
                                 )
                             )
                         }
@@ -339,7 +340,7 @@ fun LowBatteryPingScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Burst High-Power GNSS Mode",
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -356,7 +357,7 @@ fun LowBatteryPingScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = cyanAccent,
                                     uncheckedThumbColor = textMuted,
-                                    uncheckedTrackColor = Color(0xFF1E293B)
+                                    uncheckedTrackColor = Color(0xFFCBD5E1)
                                 )
                             )
                         }
@@ -389,7 +390,7 @@ fun LowBatteryPingScreen(
                             Text(
                                 text = "Battery Drain Event Simulator",
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = textDark,
                                 fontSize = 14.sp
                             )
                         }
@@ -412,7 +413,7 @@ fun LowBatteryPingScreen(
                             )
                             presets.forEach { (label, lvl, color) ->
                                 Surface(
-                                    color = Color(0xFF1E293B),
+                                    color = Color(0xFFF1F5F9),
                                     shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier
                                         .weight(1f)
@@ -454,7 +455,7 @@ fun LowBatteryPingScreen(
                                 colors = SliderDefaults.colors(
                                     thumbColor = cyanAccent,
                                     activeTrackColor = cyanAccent,
-                                    inactiveTrackColor = Color(0xFF1E293B)
+                                    inactiveTrackColor = Color(0xFFCBD5E1)
                                 )
                             )
                         }
@@ -468,13 +469,13 @@ fun LowBatteryPingScreen(
                             Icon(
                                 imageVector = Icons.Default.Send,
                                 contentDescription = null,
-                                tint = Color.Black,
+                                tint = Color.White,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Dispatch Emergency Telemetry Snapshot",
-                                color = Color.Black,
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )
@@ -483,7 +484,7 @@ fun LowBatteryPingScreen(
                         // Display last ping response
                         lastPing?.let { ping ->
                             Surface(
-                                color = Color(0xFF0F172A),
+                                color = Color(0xFFF8FAFC),
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -502,12 +503,12 @@ fun LowBatteryPingScreen(
                                     Text(
                                         text = "Location: ${ping.addressName}",
                                         fontSize = 11.sp,
-                                        color = Color.White
+                                        color = textDark
                                     )
                                     Text(
                                         text = "Lat/Lng: ${ping.latitude}, ${ping.longitude} (±${ping.accuracyMeters}m)",
                                         fontSize = 10.sp,
-                                        fontFamily = FontFamily.Monospace,
+                                        fontFamily = FontFamily.SansSerif,
                                         color = cyanAccent
                                     )
                                     Text(
@@ -527,7 +528,7 @@ fun LowBatteryPingScreen(
                 Text(
                     text = "Emergency Ping Audit Log",
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = textDark,
                     fontSize = 14.sp
                 )
             }
@@ -567,7 +568,7 @@ fun LowBatteryPingScreen(
                                 Text(
                                     text = if (ping.isCriticalShutdown) "Critical Shutdown Fix" else "Low-Battery Warning Ping",
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp
                                 )
                             }
@@ -582,7 +583,7 @@ fun LowBatteryPingScreen(
                             Text(
                                 text = "${String.format(Locale.US, "%.4f", ping.latitude)}, ${String.format(Locale.US, "%.4f", ping.longitude)} • ${ping.networkType}",
                                 fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = FontFamily.SansSerif,
                                 color = cyanAccent.copy(alpha = 0.8f)
                             )
                         }

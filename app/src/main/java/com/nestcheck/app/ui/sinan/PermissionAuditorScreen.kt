@@ -42,14 +42,15 @@ fun PermissionAuditorScreen(
     val selectedFilter by viewModel.selectedFilter
     val isScanning by viewModel.isScanning
 
-    val bgColor = Color(0xFF0A0D14)
-    val cardColor = Color(0xFF121824)
-    val cyanAccent = Color(0xFF00E5FF)
-    val greenSuccess = Color(0xFF00E676)
-    val redCritical = Color(0xFFFF5252)
-    val amberWarning = Color(0xFFFFAB00)
-    val textMuted = Color(0xFF94A3B8)
-    val borderStroke = Color(0xFF1E293B)
+    val bgColor = Color(0xFFF8FAFC)
+    val cardColor = Color(0xFFFFFFFF)
+    val cyanAccent = Color(0xFF0B57D0)
+    val greenSuccess = Color(0xFF10B981)
+    val redCritical = Color(0xFFEF4444)
+    val amberWarning = Color(0xFFF59E0B)
+    val textMuted = Color(0xFF64748B)
+    val borderStroke = Color(0xFFE2E8F0)
+    val textDark = Color(0xFF0F172A)
 
     val filteredApps = apps.filter { app ->
         selectedFilter == null || app.overallRisk == selectedFilter
@@ -63,7 +64,7 @@ fun PermissionAuditorScreen(
                         Text(
                             text = "App Permission Auditor",
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = textDark,
                             fontSize = 18.sp
                         )
                         Text(
@@ -78,7 +79,7 @@ fun PermissionAuditorScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White
+                            tint = textDark
                         )
                     }
                 },
@@ -129,7 +130,7 @@ fun PermissionAuditorScreen(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(text = "CRITICAL", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = redCritical)
-                            Text(text = "${summary.criticalRiskAppsCount}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = "${summary.criticalRiskAppsCount}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = textDark)
                             Text(text = "Excessive access", fontSize = 10.sp, color = textMuted)
                         }
                     }
@@ -148,7 +149,7 @@ fun PermissionAuditorScreen(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(text = "ELEVATED", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = amberWarning)
-                            Text(text = "${summary.elevatedRiskAppsCount}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = "${summary.elevatedRiskAppsCount}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = textDark)
                             Text(text = "Monitor closely", fontSize = 10.sp, color = textMuted)
                         }
                     }
@@ -167,7 +168,7 @@ fun PermissionAuditorScreen(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(text = "CLEAN", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = greenSuccess)
-                            Text(text = "${summary.safeAppsCount}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = "${summary.safeAppsCount}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = textDark)
                             Text(text = "Healthy apps", fontSize = 10.sp, color = textMuted)
                         }
                     }
@@ -228,7 +229,7 @@ fun PermissionAuditorScreen(
                     filters.forEach { (label, risk, color) ->
                         val isSelected = selectedFilter == risk
                         Surface(
-                            color = if (isSelected) color.copy(alpha = 0.2f) else Color(0xFF1E293B),
+                            color = if (isSelected) color.copy(alpha = 0.15f) else Color(0xFFF1F5F9),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .clickable { viewModel.setFilter(risk) }
@@ -277,7 +278,7 @@ fun PermissionAuditorScreen(
                                 modifier = Modifier
                                     .size(42.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF1E293B)),
+                                    .background(Color(0xFFD3E3FD)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -296,7 +297,7 @@ fun PermissionAuditorScreen(
                                     Text(
                                         text = app.appName,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
+                                        color = textDark,
                                         fontSize = 14.sp
                                     )
                                     if (app.isQuarantined) {
@@ -317,7 +318,7 @@ fun PermissionAuditorScreen(
                                 Text(
                                     text = "${app.category} • ${app.packageName}",
                                     fontSize = 11.sp,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = FontFamily.SansSerif,
                                     color = textMuted,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis

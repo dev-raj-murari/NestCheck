@@ -104,10 +104,10 @@ fun ChildCheckInScreen(
             modifier = Modifier
                 .size(200.dp)
                 .clip(CircleShape)
-                .background(if (lastSent != null) SuccessGreen else CyberCard)
+                .background(if (lastSent != null) SuccessGreen else Color(0xFFD3E3FD))
                 .border(
                     width = 4.dp,
-                    color = if (lastSent != null) White else Color(0xFF00E5FF),
+                    color = if (lastSent != null) SuccessGreen else Color(0xFF0B57D0),
                     shape = CircleShape
                 )
                 .clickable {
@@ -119,20 +119,20 @@ fun ChildCheckInScreen(
                 Icon(
                     imageVector = if (lastSent != null) Icons.Outlined.CheckCircle else Icons.Outlined.NearMe,
                     contentDescription = null,
-                    tint = if (lastSent != null) Black else Color(0xFF00E5FF),
+                    tint = if (lastSent != null) Color.White else Color(0xFF0B57D0),
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = if (isSubmitting) "SENDING..." else if (lastSent != null) "CHECKED IN!" else "I'M HERE!",
-                    color = if (lastSent != null) Black else White,
+                    color = if (lastSent != null) Color.White else Color(0xFF0B57D0),
                     fontSize = 22.sp,
                     fontFamily = TechMono,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = if (lastSent != null) "Dispatched to Parent" else "TAP FOR 1-TAP DISPATCH",
-                    color = if (lastSent != null) Black.copy(alpha = 0.8f) else CyberTextDim,
+                    color = if (lastSent != null) Color.White.copy(alpha = 0.9f) else Color(0xFF0842A0),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -295,7 +295,7 @@ fun ChildCheckInScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Current Coordinates", color = CyberTextDim, fontSize = 11.sp)
-                    Text("${liveLoc.latitude}° N, ${liveLoc.longitude}° E", color = White, fontSize = 11.sp, fontFamily = TechMono, fontWeight = FontWeight.Bold)
+                    Text("${liveLoc.latitude}° N, ${liveLoc.longitude}° E", color = CyberTextBright, fontSize = 11.sp, fontFamily = TechMono, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(

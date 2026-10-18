@@ -76,7 +76,7 @@ fun TrustedContactsScreen(
                 Icon(
                     imageVector = Icons.Outlined.PersonAdd,
                     contentDescription = "Add Contact",
-                    tint = Color(0xFF00E5FF)
+                    tint = Color(0xFF0B57D0)
                 )
             }
         }
@@ -157,7 +157,7 @@ fun TrustedContactsScreen(
                             }
                             Column {
                                 Text("SMS Allowed", color = CyberTextDim, fontSize = 11.sp)
-                                Text("${contacts.count { it.isSmsAllowed }} active", color = Color(0xFF00E5FF), fontSize = 14.sp, fontFamily = TechMono, fontWeight = FontWeight.Bold)
+                                Text("${contacts.count { it.isSmsAllowed }} active", color = Color(0xFF0B57D0), fontSize = 14.sp, fontFamily = TechMono, fontWeight = FontWeight.Bold)
                             }
                             Column {
                                 Text("Interceptions", color = CyberTextDim, fontSize = 11.sp)
@@ -320,13 +320,13 @@ private fun TrustedContactCard(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF00E5FF).copy(alpha = 0.15f)),
+                            .background(Color(0xFF0B57D0).copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Person,
                             contentDescription = null,
-                            tint = Color(0xFF00E5FF),
+                            tint = Color(0xFF0B57D0),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -387,7 +387,7 @@ private fun TrustedContactCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.Chat, contentDescription = null, tint = if (contact.isSmsAllowed) Color(0xFF00E5FF) else CyberTextDim, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Outlined.Chat, contentDescription = null, tint = if (contact.isSmsAllowed) Color(0xFF0B57D0) else CyberTextDim, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("SMS", color = CyberTextBright, fontSize = 12.sp)
                     Spacer(modifier = Modifier.width(6.dp))
@@ -396,7 +396,7 @@ private fun TrustedContactCard(
                         onCheckedChange = { onToggleSms() },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Black,
-                            checkedTrackColor = Color(0xFF00E5FF),
+                            checkedTrackColor = Color(0xFF0B57D0),
                             uncheckedThumbColor = CyberTextDim,
                             uncheckedTrackColor = CyberBlack
                         ),
@@ -582,7 +582,7 @@ private fun ApproveUnknownDialog(
         title = { Text("Whitelist Intercepted Caller", color = CyberTextBright, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Sender: ${alert.senderAddress}", color = Color(0xFF00E5FF), fontSize = 13.sp, fontFamily = TechMono)
+                Text("Sender: ${alert.senderAddress}", color = Color(0xFF0B57D0), fontSize = 13.sp, fontFamily = TechMono)
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },

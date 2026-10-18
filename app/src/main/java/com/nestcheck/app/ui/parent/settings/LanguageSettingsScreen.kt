@@ -26,14 +26,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 
-private val CyberBg = Color(0xFF0A0D14)
-private val CyberCardBg = Color(0xFF121824)
-private val CyberBorderColor = Color(0xFF1E293B)
-private val NeonCyan = Color(0xFF00E5FF)
-private val SafeGreen = Color(0xFF00E676)
-private val Amber = Color(0xFFFFB300)
-private val TextWhite = Color(0xFFFFFFFF)
-private val TextMuted = Color(0xFF94A3B8)
+private val CyberBg = Color(0xFFF8FAFC)
+private val CyberCardBg = Color(0xFFFFFFFF)
+private val CyberBorderColor = Color(0xFFE2E8F0)
+private val NeonCyan = Color(0xFF0B57D0)
+private val SafeGreen = Color(0xFF10B981)
+private val Amber = Color(0xFFF59E0B)
+private val TextWhite = Color(0xFF0F172A)
+private val TextMuted = Color(0xFF64748B)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -45,12 +45,13 @@ fun SafeSearchScreen(
     val selectedEngine by viewModel.selectedEngine
     val lastResult by viewModel.lastResult
 
-    val bgColor = Color(0xFF0A0D14)
-    val cardColor = Color(0xFF121824)
-    val cyanAccent = Color(0xFF00E5FF)
-    val greenSuccess = Color(0xFF00E676)
-    val textMuted = Color(0xFF94A3B8)
-    val borderStroke = Color(0xFF1E293B)
+    val bgColor = Color(0xFFF8FAFC)
+    val cardColor = Color(0xFFFFFFFF)
+    val cyanAccent = Color(0xFF0B57D0)
+    val greenSuccess = Color(0xFF10B981)
+    val textMuted = Color(0xFF64748B)
+    val borderStroke = Color(0xFFE2E8F0)
+    val textDark = Color(0xFF0F172A)
 
     Scaffold(
         topBar = {
@@ -60,7 +61,7 @@ fun SafeSearchScreen(
                         Text(
                             text = "SafeSearch Lock",
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = textDark,
                             fontSize = 18.sp
                         )
                         Text(
@@ -75,7 +76,7 @@ fun SafeSearchScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White
+                            tint = textDark
                         )
                     }
                 },
@@ -218,7 +219,7 @@ fun SafeSearchScreen(
                         Text(
                             text = "Hardware & System Controls",
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = textDark,
                             fontSize = 14.sp
                         )
 
@@ -231,7 +232,7 @@ fun SafeSearchScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Tamper-Proof Lock",
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -248,7 +249,7 @@ fun SafeSearchScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = cyanAccent,
                                     uncheckedThumbColor = textMuted,
-                                    uncheckedTrackColor = Color(0xFF1E293B)
+                                    uncheckedTrackColor = Color(0xFFCBD5E1)
                                 )
                             )
                         }
@@ -264,7 +265,7 @@ fun SafeSearchScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Block Incognito / Private Browsing",
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -281,7 +282,7 @@ fun SafeSearchScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = cyanAccent,
                                     uncheckedThumbColor = textMuted,
-                                    uncheckedTrackColor = Color(0xFF1E293B)
+                                    uncheckedTrackColor = Color(0xFFCBD5E1)
                                 )
                             )
                         }
@@ -297,7 +298,7 @@ fun SafeSearchScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Strict YouTube Restricted Mode",
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -314,7 +315,7 @@ fun SafeSearchScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = cyanAccent,
                                     uncheckedThumbColor = textMuted,
-                                    uncheckedTrackColor = Color(0xFF1E293B)
+                                    uncheckedTrackColor = Color(0xFFCBD5E1)
                                 )
                             )
                         }
@@ -327,7 +328,7 @@ fun SafeSearchScreen(
                 Text(
                     text = "Enforced Search Engines",
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = textDark,
                     fontSize = 14.sp
                 )
             }
@@ -354,11 +355,11 @@ fun SafeSearchScreen(
                                 Text(
                                     text = rule.engine.displayName,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 14.sp
                                 )
                                 Surface(
-                                    color = Color(0xFF1E293B),
+                                    color = Color(0xFFF1F5F9),
                                     shape = RoundedCornerShape(6.dp)
                                 ) {
                                     Text(
@@ -373,7 +374,7 @@ fun SafeSearchScreen(
                             Text(
                                 text = "Rule: ${rule.engine.safeParam}=${rule.engine.safeValue} on ${rule.engine.hostDomain}",
                                 fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = FontFamily.SansSerif,
                                 color = textMuted
                             )
                         }
@@ -385,7 +386,7 @@ fun SafeSearchScreen(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = cyanAccent,
                                 uncheckedThumbColor = textMuted,
-                                uncheckedTrackColor = Color(0xFF1E293B)
+                                uncheckedTrackColor = Color(0xFFCBD5E1)
                             )
                         )
                     }
@@ -417,7 +418,7 @@ fun SafeSearchScreen(
                             Text(
                                 text = "Live SafeSearch URL Rewriter Simulator",
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = textDark,
                                 fontSize = 14.sp
                             )
                         }
@@ -444,7 +445,7 @@ fun SafeSearchScreen(
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(presets) { preset ->
                                 Surface(
-                                    color = Color(0xFF1E293B),
+                                    color = Color(0xFFF1F5F9),
                                     shape = RoundedCornerShape(16.dp),
                                     modifier = Modifier.clickable {
                                         viewModel.simulateSearch(preset)
@@ -471,7 +472,7 @@ fun SafeSearchScreen(
                             items(SearchEngineType.values()) { eng ->
                                 val isSelected = eng == selectedEngine
                                 Surface(
-                                    color = if (isSelected) cyanAccent.copy(alpha = 0.2f) else Color(0xFF1E293B),
+                                    color = if (isSelected) cyanAccent.copy(alpha = 0.15f) else Color(0xFFF1F5F9),
                                     shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier
                                         .clickable { viewModel.onSelectEngine(eng) }
@@ -484,7 +485,7 @@ fun SafeSearchScreen(
                                     Text(
                                         text = eng.displayName,
                                         fontSize = 11.sp,
-                                        color = if (isSelected) cyanAccent else Color.White,
+                                        color = if (isSelected) cyanAccent else textDark,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                                     )
@@ -503,8 +504,8 @@ fun SafeSearchScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = cyanAccent,
                                 unfocusedBorderColor = borderStroke,
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
+                                focusedTextColor = textDark,
+                                unfocusedTextColor = textDark,
                                 cursorColor = cyanAccent
                             )
                         )
@@ -518,13 +519,13 @@ fun SafeSearchScreen(
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
                                 contentDescription = null,
-                                tint = Color.Black,
+                                tint = Color.White,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Simulate & Intercept URL",
-                                color = Color.Black,
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -532,7 +533,7 @@ fun SafeSearchScreen(
                         // Simulation Result Box
                         lastResult?.let { res ->
                             Surface(
-                                color = Color(0xFF0F172A),
+                                color = Color(0xFFF8FAFC),
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -568,8 +569,8 @@ fun SafeSearchScreen(
                                     Text(
                                         text = res.originalUrl,
                                         fontSize = 11.sp,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = Color.White.copy(alpha = 0.8f),
+                                        fontFamily = FontFamily.SansSerif,
+                                        color = textDark,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -585,7 +586,7 @@ fun SafeSearchScreen(
                                     Text(
                                         text = res.rewrittenUrl,
                                         fontSize = 11.sp,
-                                        fontFamily = FontFamily.Monospace,
+                                        fontFamily = FontFamily.SansSerif,
                                         color = cyanAccent,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis
@@ -602,7 +603,7 @@ fun SafeSearchScreen(
                 Text(
                     text = "Recent Interception Audit Trail",
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = textDark,
                     fontSize = 14.sp
                 )
             }
@@ -643,7 +644,7 @@ fun SafeSearchScreen(
                                 Text(
                                     text = "\"${log.query}\"",
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 13.sp
                                 )
                             }
@@ -657,7 +658,7 @@ fun SafeSearchScreen(
                         Text(
                             text = log.rewrittenUrl,
                             fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
                             color = textMuted,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis

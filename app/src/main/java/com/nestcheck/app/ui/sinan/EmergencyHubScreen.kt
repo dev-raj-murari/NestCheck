@@ -47,14 +47,15 @@ fun EmergencyHubScreen(
     val secondsLeft by viewModel.countdownSeconds
     val lastDispatched by viewModel.lastDispatched
 
-    val bgColor = Color(0xFF0A0D14)
-    val cardColor = Color(0xFF121824)
-    val cyanAccent = Color(0xFF00E5FF)
-    val redEmergency = Color(0xFFFF5252)
-    val greenSuccess = Color(0xFF00E676)
-    val amberWarning = Color(0xFFFFAB00)
-    val textMuted = Color(0xFF94A3B8)
-    val borderStroke = Color(0xFF1E293B)
+    val bgColor = Color(0xFFF8FAFC)
+    val cardColor = Color(0xFFFFFFFF)
+    val cyanAccent = Color(0xFF0B57D0)
+    val redEmergency = Color(0xFFEF4444)
+    val greenSuccess = Color(0xFF10B981)
+    val amberWarning = Color(0xFFF59E0B)
+    val textMuted = Color(0xFF64748B)
+    val borderStroke = Color(0xFFE2E8F0)
+    val textDark = Color(0xFF0F172A)
 
     val caregivers = contacts.filter { it.category == EmergencyCategory.FAMILY }
     val nationalServices = contacts.filter { it.category != EmergencyCategory.FAMILY }
@@ -67,7 +68,7 @@ fun EmergencyHubScreen(
                         Text(
                             text = "Emergency Hub",
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = textDark,
                             fontSize = 18.sp
                         )
                         Text(
@@ -82,13 +83,13 @@ fun EmergencyHubScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White
+                            tint = textDark
                         )
                     }
                 },
                 actions = {
                     Surface(
-                        color = redEmergency.copy(alpha = 0.2f),
+                        color = redEmergency.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.padding(end = 12.dp)
                     ) {
@@ -150,7 +151,7 @@ fun EmergencyHubScreen(
                                 Text(
                                     text = "TAP FOR IMMEDIATE EMERGENCY SOS",
                                     fontWeight = FontWeight.Black,
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 14.sp,
                                     textAlign = TextAlign.Center
                                 )
@@ -170,7 +171,7 @@ fun EmergencyHubScreen(
                     Text(
                         text = "Primary Caregivers & Guardians",
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = textDark,
                         fontSize = 14.sp
                     )
                 }
@@ -216,7 +217,7 @@ fun EmergencyHubScreen(
                                         Text(
                                             text = contact.name,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color.White,
+                                            color = textDark,
                                             fontSize = 14.sp
                                         )
                                         if (contact.isPrimary) {
@@ -237,7 +238,7 @@ fun EmergencyHubScreen(
                                     Text(
                                         text = "${contact.roleTitle} • ${contact.phoneNumber}",
                                         fontSize = 11.sp,
-                                        fontFamily = FontFamily.Monospace,
+                                        fontFamily = FontFamily.SansSerif,
                                         color = textMuted
                                     )
                                 }
@@ -272,7 +273,7 @@ fun EmergencyHubScreen(
                     Text(
                         text = "National Emergency Helplines (Toll-Free 24x7)",
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = textDark,
                         fontSize = 14.sp
                     )
                 }
@@ -306,7 +307,7 @@ fun EmergencyHubScreen(
                                     Text(
                                         text = contact.name,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
+                                        color = textDark,
                                         fontSize = 14.sp
                                     )
                                     Surface(
@@ -325,7 +326,7 @@ fun EmergencyHubScreen(
                                 Text(
                                     text = "${contact.roleTitle} • Dial: ${contact.phoneNumber}",
                                     fontSize = 11.sp,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = FontFamily.SansSerif,
                                     color = textMuted
                                 )
                             }
@@ -369,7 +370,7 @@ fun EmergencyHubScreen(
                             Text(
                                 text = "Emergency Dial Protection Settings",
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = textDark,
                                 fontSize = 14.sp
                             )
 
@@ -382,7 +383,7 @@ fun EmergencyHubScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "3-Second Accidental Dial Safeguard",
-                                        color = Color.White,
+                                        color = textDark,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -399,7 +400,7 @@ fun EmergencyHubScreen(
                                         checkedThumbColor = Color.White,
                                         checkedTrackColor = cyanAccent,
                                         uncheckedThumbColor = textMuted,
-                                        uncheckedTrackColor = Color(0xFF1E293B)
+                                        uncheckedTrackColor = Color(0xFFCBD5E1)
                                     )
                                 )
                             }
@@ -415,7 +416,7 @@ fun EmergencyHubScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "Auto-Send GPS Coordinates with Call",
-                                        color = Color.White,
+                                        color = textDark,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -432,7 +433,7 @@ fun EmergencyHubScreen(
                                         checkedThumbColor = Color.White,
                                         checkedTrackColor = cyanAccent,
                                         uncheckedThumbColor = textMuted,
-                                        uncheckedTrackColor = Color(0xFF1E293B)
+                                        uncheckedTrackColor = Color(0xFFCBD5E1)
                                     )
                                 )
                             }
@@ -445,7 +446,7 @@ fun EmergencyHubScreen(
                     Text(
                         text = "Emergency Dispatch Audit Trail",
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = textDark,
                         fontSize = 14.sp
                     )
                 }
@@ -480,7 +481,7 @@ fun EmergencyHubScreen(
                                     Text(
                                         text = log.contactName,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
+                                        color = textDark,
                                         fontSize = 13.sp
                                     )
                                 }
@@ -507,7 +508,7 @@ fun EmergencyHubScreen(
             // Countdown Overlay Dialog
             countdownContact?.let { contact ->
                 Surface(
-                    color = Color.Black.copy(alpha = 0.85f),
+                    color = Color.Black.copy(alpha = 0.5f),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Box(
@@ -519,7 +520,7 @@ fun EmergencyHubScreen(
                                 .fillMaxWidth()
                                 .padding(24.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
                             border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(redEmergency))
                         ) {
                             Column(
@@ -537,7 +538,7 @@ fun EmergencyHubScreen(
                                 Text(
                                     text = contact.name,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White,
+                                    color = textDark,
                                     fontSize = 18.sp
                                 )
 
@@ -563,8 +564,8 @@ fun EmergencyHubScreen(
                                         onClick = { viewModel.cancelCountdown() },
                                         modifier = Modifier.weight(1f),
                                         shape = RoundedCornerShape(8.dp),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White)
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = textDark),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1))
                                     ) {
                                         Text(text = "CANCEL", fontWeight = FontWeight.Bold)
                                     }

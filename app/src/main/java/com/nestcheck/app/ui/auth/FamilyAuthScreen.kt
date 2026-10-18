@@ -426,7 +426,7 @@ fun WelcomeView(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Real-time Google Family Link style controls, healthy screen time, and live child safety sync.",
+                text = "Smart parenting, healthy screen time, and real-time family safety.",
                 color = AuthTextMuted,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,

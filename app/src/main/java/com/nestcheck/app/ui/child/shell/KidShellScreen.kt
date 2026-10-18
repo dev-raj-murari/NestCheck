@@ -462,7 +462,7 @@ fun DeviceLockedOverlay(onUnlockAttempt: (String) -> Boolean) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(Color.White)
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -474,19 +474,19 @@ fun DeviceLockedOverlay(onUnlockAttempt: (String) -> Boolean) {
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF334155)),
+                    .background(Color(0xFFFEE2E2)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Outlined.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(48.dp))
+                Icon(Icons.Outlined.Lock, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(48.dp))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text("Device Paused", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            Text("Device Paused", color = Color(0xFF0F172A), fontSize = 26.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Your parent paused this device or your daily screen time is up.",
-                color = Color(0xFF94A3B8),
+                color = Color(0xFF64748B),
                 fontSize = 15.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
@@ -517,7 +517,8 @@ fun DeviceLockedOverlay(onUnlockAttempt: (String) -> Boolean) {
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF0B57D0)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF0B57D0))
             ) {
                 Text("Parent Unlock", fontWeight = FontWeight.SemiBold)
             }
@@ -530,7 +531,7 @@ fun DeviceLockedOverlay(onUnlockAttempt: (String) -> Boolean) {
                     pin = ""
                     error = false
                 },
-                title = { Text("Parent PIN") },
+                title = { Text("Parent PIN", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold) },
                 text = {
                     Column {
                         OutlinedTextField(
@@ -542,24 +543,27 @@ fun DeviceLockedOverlay(onUnlockAttempt: (String) -> Boolean) {
                             isError = error
                         )
                         if (error) {
-                            Text("Wrong PIN", color = Color.Red, fontSize = 12.sp)
+                            Text("Wrong PIN", color = Color(0xFFDC2626), fontSize = 12.sp)
                         }
                     }
                 },
                 confirmButton = {
-                    Button(onClick = {
-                        if (onUnlockAttempt(pin)) {
-                            showDialog = false
-                        } else {
-                            error = true
-                        }
-                    }) {
+                    Button(
+                        onClick = {
+                            if (onUnlockAttempt(pin)) {
+                                showDialog = false
+                            } else {
+                                error = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B57D0))
+                    ) {
                         Text("Unlock")
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDialog = false }) {
-                        Text("Cancel")
+                        Text("Cancel", color = Color(0xFF64748B))
                     }
                 }
             )
@@ -575,7 +579,7 @@ fun WaitingForParentApprovalScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(Color.White)
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
@@ -589,14 +593,14 @@ fun WaitingForParentApprovalScreen(
                 modifier = Modifier
                     .size(130.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF1E293B))
-                    .border(2.dp, Color(0xFF38BDF8), CircleShape),
+                    .background(Color(0xFFD3E3FD))
+                    .border(2.dp, Color(0xFF0B57D0), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Outlined.HourglassTop,
                     contentDescription = null,
-                    tint = Color(0xFF38BDF8),
+                    tint = Color(0xFF0B57D0),
                     modifier = Modifier.size(60.dp)
                 )
             }
@@ -605,7 +609,7 @@ fun WaitingForParentApprovalScreen(
 
             Text(
                 text = "Waiting for Parent Approval",
-                color = Color.White,
+                color = Color(0xFF0F172A),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -615,7 +619,7 @@ fun WaitingForParentApprovalScreen(
 
             Text(
                 text = "Device '$deviceName' has requested to pair with your household family space.",
-                color = Color(0xFF94A3B8),
+                color = Color(0xFF64748B),
                 fontSize = 14.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 lineHeight = 22.sp
@@ -625,8 +629,8 @@ fun WaitingForParentApprovalScreen(
 
             Surface(
                 shape = RoundedCornerShape(14.dp),
-                color = Color(0xFF1E293B),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155))
+                color = Color(0xFFF8FAFC),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -634,13 +638,13 @@ fun WaitingForParentApprovalScreen(
                 ) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color(0xFF38BDF8),
+                        color = Color(0xFF0B57D0),
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         "Listening for parent approval signal...",
-                        color = Color(0xFFE2E8F0),
+                        color = Color(0xFF0F172A),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -652,10 +656,10 @@ fun WaitingForParentApprovalScreen(
             onClick = onBackToLogin,
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF94A3B8)),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155))
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF0B57D0)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF0B57D0))
         ) {
-            Text("Cancel & Return to Login", fontSize = 14.sp)
+            Text("Cancel & Return to Login", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -667,7 +671,7 @@ fun DeviceRejectedScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(Color.White)
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -684,11 +688,11 @@ fun DeviceRejectedScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Device Request Declined", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("Device Request Declined", color = Color(0xFF0F172A), fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Your parent declined access for this device.",
-            color = Color(0xFF94A3B8),
+            color = Color(0xFF64748B),
             fontSize = 14.sp,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
@@ -697,7 +701,7 @@ fun DeviceRejectedScreen(
 
         Button(
             onClick = onBackToLogin,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B57D0)),
             shape = RoundedCornerShape(25.dp),
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {

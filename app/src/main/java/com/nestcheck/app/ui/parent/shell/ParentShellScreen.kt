@@ -494,10 +494,10 @@ fun ScreenTimeTab(
                                 modifier = Modifier
                                     .size(42.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF202124)),
+                                    .background(Color(0xFFD3E3FD)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Outlined.Smartphone, contentDescription = null, tint = Color.White)
+                                Icon(Icons.Outlined.Smartphone, contentDescription = null, tint = Color(0xFF0B57D0))
                             }
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
