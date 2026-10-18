@@ -43,7 +43,7 @@ echo [5/5] Launching Parent App (NSP)...
 
 echo.
 echo ========================================================
-echo   SUCCESS! NSP & NSC installed and synced!
+echo   SUCCESS! NSP ^& NSC installed and synced!
 echo   Launch NSP for Parent space or NSC for Child space!
 echo ========================================================
 pause
