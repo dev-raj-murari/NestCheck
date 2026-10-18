@@ -103,6 +103,10 @@ fun FamilyAuthScreen(
         otpError = null
         isSendingOtp = true
 
+        android.util.Log.i("FamilyAuth", "==================================================")
+        android.util.Log.i("FamilyAuth", "VERIFICATION OTP CODE FOR $targetEmail: $newCode")
+        android.util.Log.i("FamilyAuth", "==================================================")
+
         scope.launch {
             val result = EmailService.sendOtpEmail(context, targetEmail, newCode)
             isSendingOtp = false
@@ -112,13 +116,8 @@ fun FamilyAuthScreen(
             } else {
                 val err = result.exceptionOrNull()?.message ?: "Failed to send email"
                 authError = "Email delivery note: $err"
-                // If credentials are empty, prompt user directly
-                if (EmailService.getSecretKey(context).isBlank()) {
-                    showGmailConfigDialog = true
-                } else {
-                    // Proceed so user can enter or re-attempt
-                    currentStep = AuthStep.OTP_VERIFICATION
-                }
+                // Proceed so user can enter OTP or view helper code
+                currentStep = AuthStep.OTP_VERIFICATION
             }
         }
     }
@@ -245,6 +244,16 @@ fun FamilyAuthScreen(
                     onDigit4Change = { if (it.length <= 1) { otpDigit4 = it; otpError = null } },
                     errorMessage = otpError,
                     isLoading = isSendingOtp,
+                    debugOtpCode = generatedOtp,
+                    onAutofillCode = { code ->
+                        if (code.length == 4) {
+                            otpDigit1 = code[0].toString()
+                            otpDigit2 = code[1].toString()
+                            otpDigit3 = code[2].toString()
+                            otpDigit4 = code[3].toString()
+                            otpError = null
+                        }
+                    },
                     onBackClick = { currentStep = AuthStep.LOGIN },
                     onResendCode = { sendRealOtp(emailOrUsername) },
                     onVerifyClick = {
@@ -920,6 +929,8 @@ fun OtpVerificationView(
     onDigit4Change: (String) -> Unit,
     errorMessage: String?,
     isLoading: Boolean,
+    debugOtpCode: String? = null,
+    onAutofillCode: ((String) -> Unit)? = null,
     onBackClick: () -> Unit,
     onResendCode: () -> Unit,
     onVerifyClick: () -> Unit
@@ -988,7 +999,39 @@ fun OtpVerificationView(
                 Text(errorMessage, color = AuthErrorRed, fontSize = 13.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            if (!debugOtpCode.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF1F5F9),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.Info, contentDescription = null, tint = AuthPrimaryBlue, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Testing Code: ", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AuthTextDark)
+                            Text(debugOtpCode, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = AuthPrimaryBlue)
+                        }
+                        if (onAutofillCode != null) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Tap here to autofill",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AuthPrimaryBlue,
+                                modifier = Modifier.clickable { onAutofillCode(debugOtpCode) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
