@@ -15,6 +15,12 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object ChildProfile : Screen("child_profile")
     object TimeLimits : Screen("time_limits")
+    object Homework : Screen("homework")
+    object BedtimeSchedule : Screen("bedtime_schedule")
+    object Chores : Screen("chores")
+    object AgePresets : Screen("age_presets")
+    object CategoryQuotas : Screen("category_quotas")
+    object TimeRequests : Screen("time_requests")
     
     // Kid routes
     object KidHome : Screen("kid_home")
@@ -22,4 +28,12 @@ sealed class Screen(val route: String) {
     object MyCredits : Screen("my_credits")
     object SOS : Screen("sos")
     object KidProfile : Screen("kid_profile")
+    object FocusMode : Screen("focus_mode")
+    object KidChores : Screen("kid_chores")
+    object KidHomework : Screen("kid_homework")
+    object RewardShop : Screen("reward_shop")
+    object BedtimeLock : Screen("bedtime_lock")
+    object DevicePaused : Screen("device_paused")
+    object HabitChallenges : Screen("habit_challenges")
+    object WaterReminder : Screen("water_reminder")
 }
