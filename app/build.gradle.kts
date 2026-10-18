@@ -35,24 +35,7 @@ android {
         val gmailApiKey = localProps.getProperty("gmail.apiKey") ?: ""
         buildConfigField("String", "GMAIL_SENDER", "\"$gmailSender\"")
         buildConfigField("String", "GMAIL_API_KEY", "\"$gmailApiKey\"")
-    }
-
-    flavorDimensions += "role"
-    productFlavors {
-        create("parent") {
-            dimension = "role"
-            applicationIdSuffix = ".parent"
-            versionNameSuffix = "-parent"
-            manifestPlaceholders["appLabel"] = "NestCheck Parent"
-            buildConfigField("String", "APP_ROLE", "\"PARENT\"")
-        }
-        create("kid") {
-            dimension = "role"
-            applicationIdSuffix = ".kid"
-            versionNameSuffix = "-kid"
-            manifestPlaceholders["appLabel"] = "NestCheck Kids"
-            buildConfigField("String", "APP_ROLE", "\"KID\"")
-        }
+        manifestPlaceholders["appLabel"] = "NestCheck"
     }
 
     buildTypes {
