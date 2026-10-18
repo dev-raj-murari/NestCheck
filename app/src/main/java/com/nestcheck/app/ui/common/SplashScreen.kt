@@ -18,8 +18,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun SplashScreen(navController: NavController) {
     LaunchedEffect(Unit) {
-        delay(1000L)
-        navController.navigate(Screen.Login.route) {
+        delay(800L)
+        val targetRoute = if (com.nestcheck.app.BuildConfig.APP_ROLE == "KID") {
+            Screen.KidHome.route
+        } else {
+            Screen.Login.route
+        }
+        navController.navigate(targetRoute) {
             popUpTo(Screen.Splash.route) { inclusive = true }
         }
     }

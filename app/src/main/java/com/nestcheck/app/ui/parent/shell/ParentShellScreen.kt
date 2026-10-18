@@ -1,12 +1,12 @@
 package com.nestcheck.app.ui.parent.shell
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,65 +17,97 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.nestcheck.app.data.model.ChildProfile
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
+import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import com.nestcheck.app.navigation.Screen
-import com.nestcheck.app.ui.parent.dashboard.ParentDashboardViewModel
-import com.nestcheck.app.ui.theme.*
 
-enum class ParentTab(val label: String, val icon: ImageVector) {
-    TODAY("Today", Icons.Outlined.Dashboard),
-    CONTROLS("Controls", Icons.Outlined.Tune),
-    SAFETY("Safety", Icons.Outlined.Shield),
-    REWARDS("Rewards", Icons.Outlined.Stars),
-    MORE("More", Icons.Outlined.MoreHoriz)
+// Authentic Google Family Link Color Palette
+val GflBgLight = Color(0xFFF8F9FA)
+val GflCardWhite = Color(0xFFFFFFFF)
+val GflTextDark = Color(0xFF1F1F1F)
+val GflTextMuted = Color(0xFF5E5E5E)
+val GflBorder = Color(0xFFE0E2EC)
+val GflBlue = Color(0xFF0B57D0)
+val GflBlueContainer = Color(0xFFD3E3FD)
+val GflGreen = Color(0xFF1E8E3E)
+val GflRed = Color(0xFFD93025)
+val GflAmber = Color(0xFFF9AB00)
+
+enum class FamilyLinkTab(val label: String) {
+    SCREEN_TIME("Screen time"),
+    CONTROLS("Controls"),
+    LOCATION("Location")
 }
 
 @Composable
 fun ParentShellScreen(
     navController: NavController,
-    viewModel: ParentDashboardViewModel = hiltViewModel()
+    syncManager: RealtimeFamilySyncManager = hiltViewModel<ParentShellViewModel>().syncManager
 ) {
-    val child by viewModel.childProfile.collectAsState()
-    var selectedTab by remember { mutableStateOf(ParentTab.TODAY) }
+    val syncState by syncManager.syncState.collectAsState()
+    var selectedTab by remember { mutableStateOf(FamilyLinkTab.SCREEN_TIME) }
 
     Scaffold(
-        containerColor = CyberBlack,
+        containerColor = GflBgLight,
+        topBar = {
+            FamilyLinkTopBar(
+                childName = syncState.activeChildName,
+                onAlertsClick = { navController.navigate(Screen.NotificationsHub.route) },
+                onProfileClick = { navController.navigate(Screen.ChildProfile.route) }
+            )
+        },
         bottomBar = {
             NavigationBar(
-                containerColor = CyberCard,
-                contentColor = CyberTextBright,
-                tonalElevation = 8.dp
+                containerColor = GflCardWhite,
+                tonalElevation = 3.dp
             ) {
-                ParentTab.values().forEach { tab ->
-                    NavigationBarItem(
-                        selected = selectedTab == tab,
-                        onClick = { selectedTab = tab },
-                        icon = {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = tab.label,
-                                tint = if (selectedTab == tab) NeonCyan else CyberTextDim
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = tab.label,
-                                color = if (selectedTab == tab) NeonCyan else CyberTextDim,
-                                fontSize = 11.sp,
-                                fontWeight = if (selectedTab == tab) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = CyberBorder
-                        )
+                NavigationBarItem(
+                    selected = selectedTab == FamilyLinkTab.SCREEN_TIME,
+                    onClick = { selectedTab = FamilyLinkTab.SCREEN_TIME },
+                    icon = { Icon(Icons.Outlined.BarChart, contentDescription = "Screen time") },
+                    label = { Text("Screen time", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = GflBlue,
+                        indicatorColor = GflBlueContainer,
+                        selectedTextColor = GflBlue,
+                        unselectedIconColor = GflTextMuted,
+                        unselectedTextColor = GflTextMuted
                     )
-                }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == FamilyLinkTab.CONTROLS,
+                    onClick = { selectedTab = FamilyLinkTab.CONTROLS },
+                    icon = { Icon(Icons.Outlined.Tune, contentDescription = "Controls") },
+                    label = { Text("Controls", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = GflBlue,
+                        indicatorColor = GflBlueContainer,
+                        selectedTextColor = GflBlue,
+                        unselectedIconColor = GflTextMuted,
+                        unselectedTextColor = GflTextMuted
+                    )
+                )
+                NavigationBarItem(
+                    selected = selectedTab == FamilyLinkTab.LOCATION,
+                    onClick = { selectedTab = FamilyLinkTab.LOCATION },
+                    icon = { Icon(Icons.Outlined.LocationOn, contentDescription = "Location") },
+                    label = { Text("Location", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = GflBlue,
+                        indicatorColor = GflBlueContainer,
+                        selectedTextColor = GflBlue,
+                        unselectedIconColor = GflTextMuted,
+                        unselectedTextColor = GflTextMuted
+                    )
+                )
             }
         }
     ) { innerPadding ->
@@ -85,419 +117,665 @@ fun ParentShellScreen(
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                ParentTab.TODAY -> TodayOverviewTab(navController, child)
-                ParentTab.CONTROLS -> ControlsTab(navController)
-                ParentTab.SAFETY -> SafetyTab(navController)
-                ParentTab.REWARDS -> RewardsTab(navController)
-                ParentTab.MORE -> MoreSettingsTab(navController)
+                FamilyLinkTab.SCREEN_TIME -> ScreenTimeTab(navController, syncState, syncManager)
+                FamilyLinkTab.CONTROLS -> ControlsTab(navController, syncState, syncManager)
+                FamilyLinkTab.LOCATION -> LocationMapTab(navController, syncState)
             }
         }
     }
 }
 
 @Composable
-fun TodayOverviewTab(navController: NavController, child: ChildProfile) {
-    var selectedChild by remember { mutableStateOf("Leo") }
-    val children = listOf("Leo (Age 10)", "Maya (Age 14)")
+fun FamilyLinkTopBar(
+    childName: String,
+    onAlertsClick: () -> Unit,
+    onProfileClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Child Switcher Pill Button (Like Family Link)
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = GflCardWhite,
+            border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder),
+            modifier = Modifier.clickable(onClick = onProfileClick)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(GflBlueContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = childName.take(1),
+                        fontWeight = FontWeight.Bold,
+                        color = GflBlue,
+                        fontSize = 14.sp
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = childName,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GflTextDark
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Outlined.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = GflTextMuted,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
 
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            IconButton(
+                onClick = onAlertsClick,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(GflCardWhite)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Alerts",
+                    tint = GflTextDark,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(GflBlue)
+                    .clickable(onClick = onProfileClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("P", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun ScreenTimeTab(
+    navController: NavController,
+    syncState: com.nestcheck.app.data.sync.FamilySyncState,
+    syncManager: RealtimeFamilySyncManager
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Top Header
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("NestCheck Parent", color = CyberTextBright, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text("Household Live Monitoring", color = CyberTextDim, fontSize = 12.sp)
-                }
-                IconButton(onClick = { navController.navigate(Screen.NotificationsHub.route) }) {
-                    Icon(Icons.Outlined.Notifications, contentDescription = "Alerts", tint = NeonCyan)
-                }
-            }
-        }
-
-        // Child Switcher Chips
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                children.forEach { name ->
-                    val isSelected = selectedChild == name.split(" ")[0]
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (isSelected) NeonCyan.copy(alpha = 0.2f) else CyberCard)
-                            .border(1.dp, if (isSelected) NeonCyan else CyberBorder, RoundedCornerShape(20.dp))
-                            .clickable { selectedChild = name.split(" ")[0] }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                    ) {
+        // Critical SOS Banner if Active
+        if (syncState.sosActive) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = GflRed)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.Warning, contentDescription = null, tint = Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("EMERGENCY SOS ACTIVE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = name,
-                            color = if (isSelected) NeonCyan else CyberTextBright,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
+                            "${syncState.activeChildName} pressed emergency button at ${syncState.locationAddress}",
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 13.sp
                         )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        val context = LocalContext.current
+                        Button(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))
+                                context.startActivity(intent)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = GflRed),
+                            shape = RoundedCornerShape(20.dp)
+                        ) {
+                            Text("Call 112 Emergency", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
-                IconButton(onClick = { navController.navigate(Screen.MultiChild.route) }) {
-                    Icon(Icons.Outlined.Add, contentDescription = "Add Child", tint = CyberTextDim)
-                }
             }
         }
 
-        // Screen Time Dial / Ring Summary Card
+        // 1. Google Family Link Screen Time Card with Vertical App Capsules
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = CyberCard),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        val hours = (180 - syncState.remainingMinutes) / 60
+                        val mins = (180 - syncState.remainingMinutes) % 60
+                        Text(
+                            text = "${hours}h ${mins}m",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GflTextDark
+                        )
+                        Text(
+                            text = "Time spent today",
+                            fontSize = 14.sp,
+                            color = GflTextMuted
+                        )
+                    }
+
+                    // 3 Authentic Vertical App Capsule Badges
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        VerticalAppPill(name = "YouTube", color = Color(0xFFFF0000), icon = Icons.Outlined.PlayCircle)
+                        VerticalAppPill(name = "Play Store", color = Color(0xFF01875F), icon = Icons.Outlined.Shop, isTall = true)
+                        VerticalAppPill(name = "Chrome", color = Color(0xFF4285F4), icon = Icons.Outlined.Public)
+                    }
+                }
+            }
+        }
+
+        // 2. Device Card with Instant Remote Lock Button
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("TODAY'S SCREEN TIME", color = CyberTextDim, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        Text("Limit: 3h 00m", color = CyberTextDim, fontSize = 12.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF202124)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Outlined.Smartphone, contentDescription = null, tint = Color.White)
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text("Google Pixel 9", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = GflTextDark)
+                                Text(
+                                    text = if (syncState.isDeviceLocked) "Locked by parent" else "Unlocked",
+                                    color = if (syncState.isDeviceLocked) GflRed else GflBlue,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                        Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Authentic Lock / Unlock Pill Button
+                    Button(
+                        onClick = {
+                            syncManager.setDeviceLocked(!syncState.isDeviceLocked)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (syncState.isDeviceLocked) Color(0xFFFEE7E6) else GflBlueContainer,
+                            contentColor = if (syncState.isDeviceLocked) GflRed else GflBlue
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (syncState.isDeviceLocked) Icons.Outlined.LockOpen else Icons.Outlined.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (syncState.isDeviceLocked) "Unlock device" else "Lock",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // 3. Time Limits Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate(Screen.TimeLimits.route) },
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(GflBgLight),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Outlined.HourglassEmpty, contentDescription = null, tint = GflTextDark)
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Time limits", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
+                        Text("Daily limit: 3 hrs • Bedtime off", fontSize = 13.sp, color = GflTextMuted)
+                    }
+                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
+                }
+            }
+        }
+
+        // 4. Schedules Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate(Screen.BedtimeSchedule.route) },
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(GflBgLight),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = GflTextDark)
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Schedules", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
+                        Text("Downtime & school time off", fontSize = 13.sp, color = GflTextMuted)
+                    }
+                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
+                }
+            }
+        }
+
+        // 5. School Schedule & Exam Countdown Banner (Requested Feature)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBF7D0))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Text("SCHOOL & EXAM COUNTDOWN", color = GflGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("Term 2", color = GflTextMuted, fontSize = 12.sp)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("📐 Mathematics Finals in 4 days ⏳", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GflTextDark)
+                    Text("Mon-Fri: 8:30 AM - 3:15 PM • Oakridge High", fontSize = 13.sp, color = GflTextMuted)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text("🏖️ Summer Vacation begins in 18 days", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = GflGreen)
+                }
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
+}
+
+@Composable
+fun VerticalAppPill(name: String, color: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, isTall: Boolean = false) {
+    Box(
+        modifier = Modifier
+            .width(36.dp)
+            .height(if (isTall) 74.dp else 58.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(GflBgLight)
+            .border(1.dp, GflBorder, RoundedCornerShape(18.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = name,
+            tint = color,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+@Composable
+fun ControlsTab(
+    navController: NavController,
+    syncState: com.nestcheck.app.data.sync.FamilySyncState,
+    syncManager: RealtimeFamilySyncManager
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // Child Profile Flower Card
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(GflBlueContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = syncState.activeChildName.take(1),
+                        fontWeight = FontWeight.Bold,
+                        color = GflBlue,
+                        fontSize = 32.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${syncState.activeChildName.lowercase()}@nestcheck.family",
+                    fontSize = 14.sp,
+                    color = GflTextMuted
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = GflCardWhite,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("G", fontWeight = FontWeight.Bold, color = GflBlue, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Account settings", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = GflTextDark)
+                    }
+                }
+            }
+        }
+
+        // 1. Google Play & In-App Purchases Lock (User's Critical Request)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Shop, contentDescription = null, tint = Color(0xFF01875F), modifier = Modifier.size(28.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
                         Column {
-                            Text("1h 45m", color = CyberTextBright, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                            Text("Used today", color = CyberTextDim, fontSize = 12.sp)
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(SuccessGreen.copy(alpha = 0.15f))
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        ) {
-                            Text("1h 15m remaining", color = SuccessGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("Google Play Purchases", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
+                            Text(
+                                if (syncState.inAppPurchasesBlocked) "In-app purchases BLOCKED 🔒" else "Purchases allowed",
+                                fontSize = 13.sp,
+                                color = if (syncState.inAppPurchasesBlocked) GflRed else GflTextMuted,
+                                fontWeight = if (syncState.inAppPurchasesBlocked) FontWeight.Bold else FontWeight.Normal
+                            )
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LinearProgressIndicator(
-                        progress = { 1.75f / 3.0f },
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                        color = NeonCyan,
-                        trackColor = CyberBorder
+                    Switch(
+                        checked = syncState.inAppPurchasesBlocked,
+                        onCheckedChange = { syncManager.setInAppPurchasesBlocked(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = GflRed, checkedTrackColor = Color(0xFFFEE7E6))
                     )
                 }
             }
         }
 
-        // Live Device Status Card
+        // 2. YouTube Content Controls
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = CyberCard),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("ACTIVE DEVICE TELEMETRY", color = CyberTextDim, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+            ControlCardItem(
+                title = "YouTube",
+                subtitle = "Tools for parents, kids & teens • Restricted Mode ON",
+                icon = Icons.Outlined.PlayCircle,
+                iconTint = Color(0xFFFF0000),
+                onClick = { navController.navigate(Screen.ContentFilter.route) }
+            )
+        }
+
+        // 3. Google Chrome & Web
+        item {
+            ControlCardItem(
+                title = "Google Chrome and Web",
+                subtitle = "Website & browser restrictions • Explicit sites blocked",
+                icon = Icons.Outlined.Public,
+                iconTint = Color(0xFF4285F4),
+                onClick = { navController.navigate(Screen.BlockedUrl.route) }
+            )
+        }
+
+        // 4. Google Search & SafeSearch
+        item {
+            ControlCardItem(
+                title = "Google Search",
+                subtitle = "SafeSearch Lock ON",
+                icon = Icons.Outlined.Search,
+                iconTint = GflAmber,
+                onClick = { navController.navigate(Screen.SafeSearch.route) }
+            )
+        }
+
+        // 5. App Quota & Restrictions
+        item {
+            ControlCardItem(
+                title = "App Management & Limits",
+                subtitle = "Configure daily quotas for individual apps",
+                icon = Icons.Outlined.Apps,
+                iconTint = GflBlue,
+                onClick = { navController.navigate(Screen.AppControl.route) }
+            )
+        }
+
+        item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
+}
+
+@Composable
+fun ControlCardItem(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(26.dp))
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
+                Text(subtitle, fontSize = 13.sp, color = GflTextMuted)
+            }
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
+        }
+    }
+}
+
+@Composable
+fun LocationMapTab(
+    navController: NavController,
+    syncState: com.nestcheck.app.data.sync.FamilySyncState
+) {
+    val childLocation = LatLng(syncState.kidLatitude, syncState.kidLongitude)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(childLocation, 15f)
+    }
+
+    LaunchedEffect(syncState.kidLatitude, syncState.kidLongitude) {
+        cameraPositionState.position = CameraPosition.fromLatLngZoom(childLocation, 15f)
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Real Google Maps View
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = true)
+        ) {
+            Marker(
+                state = MarkerState(position = childLocation),
+                title = syncState.activeChildName,
+                snippet = "${syncState.kidBattery}% battery • ${syncState.locationAddress}"
+            )
+            Circle(
+                center = childLocation,
+                radius = 350.0,
+                fillColor = Color(0x224285F4),
+                strokeColor = Color(0xFF4285F4),
+                strokeWidth = 3f
+            )
+        }
+
+        // Bottom Child Location Sheet (Like Google Family Link)
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = GflCardWhite,
+            shadowElevation = 8.dp
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                // Segmented Pill: [ Kids ] [ Family places ]
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(GflBgLight)
+                        .padding(4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(GflCardWhite)
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.Smartphone, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Google Pixel 7a", color = CyberTextBright, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.BatteryChargingFull, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("82% ⚡", color = SuccessGreen, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        }
+                        Text("Kids", fontWeight = FontWeight.Bold, color = GflTextDark, fontSize = 13.sp)
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Family places", fontWeight = FontWeight.Medium, color = GflTextMuted, fontSize = 13.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Olivia Location Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Oakridge School (Safe Zone)", color = CyberTextBright, fontSize = 12.sp)
-                    }
-                }
-            }
-        }
-
-        // Quick Action Grid
-        item {
-            Text("Quick Actions", color = CyberTextBright, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = { navController.navigate(Screen.RemoteLock.route) },
-                    modifier = Modifier.weight(1f).height(46.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberBorder, contentColor = AlertRed),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(Icons.Outlined.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Lock Device", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = { navController.navigate(Screen.Location.route) },
-                    modifier = Modifier.weight(1f).height(46.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = CyberBorder, contentColor = NeonCyan),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(Icons.Outlined.NearMe, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Locate", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        // Pending Decisions & Approvals
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = CyberCard),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("PENDING REQUESTS", color = CyberTextDim, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        Text("1 New", color = WarningAmber, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Maya requested +30m screen time for Khan Academy homework.", color = CyberTextBright, fontSize = 13.sp)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { navController.navigate(Screen.TimeRequests.route) },
-                            modifier = Modifier.weight(1f).height(38.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = Black),
-                            shape = RoundedCornerShape(6.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(GflBlueContainer),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text("Review Request", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(syncState.activeChildName.take(1), fontWeight = FontWeight.Bold, color = GflBlue)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(syncState.activeChildName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
+                            Text(syncState.locationAddress, fontSize = 13.sp, color = GflTextMuted)
+                            Text("${syncState.kidBattery}% ⚡ • Updated live", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ControlsTab(navController: NavController) {
-    val items = listOf(
-        Pair("Screen Time & Limits", Screen.ScreenTime.route),
-        Pair("App Usage & Blocking", Screen.AppControl.route),
-        Pair("Bedtime Curfew & Schedules", Screen.BedtimeSchedule.route),
-        Pair("App Quarantine Guard", Screen.AppQuarantine.route),
-        Pair("Remote Device Lockout", Screen.RemoteLock.route),
-        Pair("Category Quotas & App Caps", Screen.CategoryQuotas.route),
-        Pair("Age-Based Safety Presets", Screen.AgePresets.route)
-    )
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            Text("Device & Time Controls", color = CyberTextBright, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("Set daily schedules, app access, and instantaneous lockouts", color = CyberTextDim, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        items(items) { (title, route) ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { navController.navigate(route) },
-                colors = CardDefaults.cardColors(containerColor = CyberCard),
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(title, color = CyberTextBright, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = CyberTextDim)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SafetyTab(navController: NavController) {
-    val items = listOf(
-        Pair("Live Location & Geofencing", Screen.Location.route),
-        Pair("Content & Web Filtering", Screen.ContentFilter.route),
-        Pair("SafeSearch Lock Enforcement", Screen.SafeSearch.route),
-        Pair("Toxic Text & Cyberbullying Monitor", Screen.ToxicTextMonitor.route),
-        Pair("Sensitive Permissions Auditor", Screen.PermissionAuditor.route),
-        Pair("Trusted Contacts Directory", Screen.TrustedContacts.route),
-        Pair("Emergency Contacts & Fast Dial", Screen.EmergencyHub.route),
-        Pair("Low Battery Emergency Ping", Screen.LowBatteryPing.route)
-    )
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            Text("Child Safety & Protection", color = CyberTextBright, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("Geofence boundaries, content shields, and communication guards", color = CyberTextDim, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        items(items) { (title, route) ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { navController.navigate(route) },
-                colors = CardDefaults.cardColors(containerColor = CyberCard),
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(title, color = CyberTextBright, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = CyberTextDim)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun RewardsTab(navController: NavController) {
-    val items = listOf(
-        Pair("Homework Review & Approvals", Screen.Homework.route),
-        Pair("Chores & Task Management", Screen.Chores.route),
-        Pair("Screen-Time Credit Ledger", Screen.Credits.route),
-        Pair("Habit Streaks & Goals", Screen.HabitChallenges.route),
-        Pair("Child Time Requests Queue", Screen.TimeRequests.route)
-    )
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            Text("Tasks, Chores & Rewards", color = CyberTextBright, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("Incentivize study habits and household chores with bonus minutes", color = CyberTextDim, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        items(items) { (title, route) ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { navController.navigate(route) },
-                colors = CardDefaults.cardColors(containerColor = CyberCard),
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(title, color = CyberTextBright, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = CyberTextDim)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MoreSettingsTab(navController: NavController) {
-    val items = listOf(
-        Pair("Multi-Child Family Profiles", Screen.MultiChild.route),
-        Pair("AI Parenting Assistant", Screen.AIAssistant.route),
-        Pair("Weekly & Daily Reports", Screen.Reports.route),
-        Pair("AI Daily Telemetry Digest", Screen.AIDigest.route),
-        Pair("Family Sharing & Co-Parents", Screen.FamilySharing.route),
-        Pair("Parent Security PIN & Biometrics", Screen.ParentSecurity.route),
-        Pair("Hardware Battery Telemetry", Screen.BatteryMonitor.route),
-        Pair("Notification & Incident Feed", Screen.NotificationsHub.route),
-        Pair("Language & Regional Settings", Screen.LanguageSettings.route),
-        Pair("Offline Sync Queue", Screen.OfflineSync.route)
-    )
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            Text("More & Family Settings", color = CyberTextBright, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("Household configuration, analytics, AI assistant, and security", color = CyberTextDim, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        items(items) { (title, route) ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { navController.navigate(route) },
-                colors = CardDefaults.cardColors(containerColor = CyberCard),
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, CyberBorder)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(title, color = CyberTextBright, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = CyberTextDim)
-                }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                    IconButton(onClick = {
+                        cameraPositionState.position = CameraPosition.fromLatLngZoom(childLocation, 16f)
+                    }) {
+                        Icon(Icons.Outlined.Refresh, contentDescription = "Refresh", tint = GflBlue)
                     }
-                },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AlertRed.copy(alpha = 0.2f), contentColor = AlertRed),
-                shape = RoundedCornerShape(8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, AlertRed.copy(alpha = 0.4f))
-            ) {
-                Text("Log Out of Parent Portal", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
             }
         }
     }

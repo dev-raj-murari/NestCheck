@@ -23,6 +23,24 @@ android {
         }
     }
 
+    flavorDimensions += "role"
+    productFlavors {
+        create("parent") {
+            dimension = "role"
+            applicationIdSuffix = ".parent"
+            versionNameSuffix = "-parent"
+            manifestPlaceholders["appLabel"] = "NestCheck Parent"
+            buildConfigField("String", "APP_ROLE", "\"PARENT\"")
+        }
+        create("kid") {
+            dimension = "role"
+            applicationIdSuffix = ".kid"
+            versionNameSuffix = "-kid"
+            manifestPlaceholders["appLabel"] = "NestCheck Kids"
+            buildConfigField("String", "APP_ROLE", "\"KID\"")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -89,6 +107,7 @@ dependencies {
     // Google Maps & Location
     implementation("com.google.android.gms:play-services-maps:19.1.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.maps.android:maps-compose:4.4.1")
 
     // TensorFlow Lite
     implementation("org.tensorflow:tensorflow-lite:2.17.0")

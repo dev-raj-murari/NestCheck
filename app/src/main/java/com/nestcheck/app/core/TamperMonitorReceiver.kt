@@ -14,10 +14,12 @@ class TamperMonitorReceiver : BroadcastReceiver() {
                 val isAirplaneMode = intent.getBooleanExtra("state", false)
                 if (isAirplaneMode) {
                     Log.w("NestCheckTamper", "TAMPER ALERT: Airplane mode enabled on monitored child device")
+                    NestCheckNotificationManager(context).showTamperAlert("Airplane mode was enabled on monitored child device.")
                 }
             }
             Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> {
                 Log.w("NestCheckTamper", "TAMPER ALERT: System clock manipulated on monitored child device")
+                NestCheckNotificationManager(context).showTamperAlert("Device system clock or timezone was manipulated.")
             }
         }
     }

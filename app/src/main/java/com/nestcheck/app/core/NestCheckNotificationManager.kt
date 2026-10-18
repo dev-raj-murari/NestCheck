@@ -1,0 +1,175 @@
+package com.nestcheck.app.core
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import com.nestcheck.app.MainActivity
+import com.nestcheck.app.R
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class NestCheckNotificationManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    private val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    init {
+        createNotificationChannels()
+    }
+
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .build()
+
+            // 1. SOS Critical Channel
+            val sosChannel = NotificationChannel(
+                CHANNEL_SOS,
+                "Critical SOS Safety Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "High-priority alarms when child triggers SOS"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500, 200, 500, 200, 500)
+                setSound(alarmSound, audioAttributes)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+            }
+
+            // 2. Lock & Controls Channel
+            val controlsChannel = NotificationChannel(
+                CHANNEL_CONTROLS,
+                "Device Lock & Bedtime Rules",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifies when device is remotely locked or curfew begins"
+                enableVibration(true)
+            }
+
+            // 3. Anti-Tamper Security Channel
+            val tamperChannel = NotificationChannel(
+                CHANNEL_TAMPER,
+                "Anti-Tamper & Security Guards",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifies when clock changes or offline airplane mode is detected"
+                enableVibration(true)
+            }
+
+            notificationManager.createNotificationChannel(sosChannel)
+            notificationManager.createNotificationChannel(controlsChannel)
+            notificationManager.createNotificationChannel(tamperChannel)
+        }
+    }
+
+    fun showSosAlert(childName: String, locationText: String, lat: Double, lng: Double) {
+        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val appPendingIntent = PendingIntent.getActivity(
+            context,
+            1001,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Real Dial 112 Intent
+        val dialIntent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.parse("tel:112")
+        }
+        val dialPendingIntent = PendingIntent.getActivity(
+            context,
+            1002,
+            dialIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Real Google Maps Navigation Intent
+        val mapIntent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("geo:$lat,$lng?q=$lat,$lng($childName+Emergency)")
+        }
+        val mapPendingIntent = PendingIntent.getActivity(
+            context,
+            1003,
+            mapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_SOS)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle("🚨 EMERGENCY SOS: $childName")
+            .setContentText("Emergency triggered! Last seen: $locationText")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText("🚨 EMERGENCY SOS: $childName activated emergency broadcast!\nLocation: $locationText\nBattery: Active • Immediate parental attention required.")
+            )
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setColor(0xFFD93025.toInt()) // Google Red
+            .setContentIntent(appPendingIntent)
+            .addAction(android.R.drawable.ic_menu_call, "Call 112", dialPendingIntent)
+            .addAction(android.R.drawable.ic_dialog_map, "Open in Maps", mapPendingIntent)
+            .setAutoCancel(false)
+            .setOngoing(true)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID_SOS, notification)
+    }
+
+    fun showDeviceLockNotification(childName: String, isLocked: Boolean) {
+        val title = if (isLocked) "🔒 Device Locked: $childName" else "🔓 Device Unlocked: $childName"
+        val message = if (isLocked) {
+            "Parent remote lockout is active. Applications and Play Store purchases are restricted."
+        } else {
+            "Device access resumed. Standard time limits apply."
+        }
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_CONTROLS)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID_CONTROLS, notification)
+    }
+
+    fun showTamperAlert(reason: String) {
+        val notification = NotificationCompat.Builder(context, CHANNEL_TAMPER)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle("⚠️ Security Tamper Alert")
+            .setContentText(reason)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setColor(0xFFF9AB00.toInt()) // Google Amber
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID_TAMPER, notification)
+    }
+
+    companion object {
+        const val CHANNEL_SOS = "critical_sos_alerts"
+        const val CHANNEL_CONTROLS = "parental_device_locks"
+        const val CHANNEL_TAMPER = "tamper_security_alerts"
+
+        const val NOTIFICATION_ID_SOS = 9001
+        const val NOTIFICATION_ID_CONTROLS = 9002
+        const val NOTIFICATION_ID_TAMPER = 9003
+    }
+}
