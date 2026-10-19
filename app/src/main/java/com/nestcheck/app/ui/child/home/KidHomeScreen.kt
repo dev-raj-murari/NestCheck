@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,6 +24,10 @@ import androidx.navigation.NavController
 import com.nestcheck.app.data.model.ChildProfile
 import com.nestcheck.app.data.repository.ProfileRepository
 import com.nestcheck.app.navigation.Screen
+import com.nestcheck.app.ui.child.credits.CreditRequestHistoryCard
+import com.nestcheck.app.ui.child.credits.CreditRequestViewModel
+import com.nestcheck.app.ui.child.credits.RequestCreditsDialog
+import com.nestcheck.app.ui.child.home.components.*
 import com.nestcheck.app.ui.theme.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -36,14 +43,21 @@ class KidHomeViewModel @Inject constructor(
 @Composable
 fun KidHomeScreen(
     navController: NavController,
-    viewModel: KidHomeViewModel = hiltViewModel()
+    viewModel: ChildDashboardViewModel = hiltViewModel(),
+    creditRequestViewModel: CreditRequestViewModel = hiltViewModel()
 ) {
     val child by viewModel.childProfile.collectAsState()
-    val scrollState = rememberScrollState()
+    val wallet by viewModel.wallet.collectAsState()
+    val pendingTasks by viewModel.pendingTasks.collectAsState()
+    val upcomingExams by viewModel.upcomingExams.collectAsState()
+    val appUsageStats by viewModel.appUsageStats.collectAsState()
+    val calendarEvents by viewModel.calendarEvents.collectAsState()
+    val creditRequests by creditRequestViewModel.requests.collectAsState()
 
-    var remainingMins by remember { mutableIntStateOf(15) }
-    var choreDone by remember { mutableStateOf(false) }
-    var readingDone by remember { mutableStateOf(false) }
+    val geofenceBreach by viewModel.geofenceBreach
+    val isRequestCreditsDialogOpen by viewModel.isRequestCreditsDialogOpen
+
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
@@ -51,279 +65,119 @@ fun KidHomeScreen(
             .background(CyberBlack)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 18.dp, vertical = 12.dp)
-            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // TOP BAR
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "NestCheck Kid",
-                color = CyberTextBright,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+        // 1. TOP HEADER & PROFILE STRIP
+        ChildDashboardHeader(
+            profile = child,
+            isCurfewLocked = wallet.isCurfewLocked || wallet.activeRemainingSeconds <= 0L,
+            onSwitchRoleClick = { navController.navigate(Screen.Login.route) },
+            onSosClick = { navController.navigate(Screen.SOS.route) }
+        )
+
+        // 2. GEOFENCE BREACH ALERT (DYNAMICALLY SHOWN WHEN BREACH IS SIMULATED)
+        geofenceBreach?.let { breach ->
+            GeofenceBreachAlertBanner(
+                breachResult = breach,
+                onDismiss = { viewModel.dismissGeofenceAlert() }
             )
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .border(1.dp, CyberBorder, RoundedCornerShape(4.dp))
-                    .clickable { navController.navigate(Screen.Login.route) }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = "Switch Role",
-                    color = CyberTextDim,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        // 3. CREDIT-TO-SCREEN TIME HERO CARD (STRICT 2 CREDITS = 1 MIN RULE)
+        CreditScreenTimeHeroCard(
+            wallet = wallet,
+            onRedeemCredits = { credits -> viewModel.quickConvertCredits(credits) },
+            onRequestMoreTime = { viewModel.openRequestCreditsDialog() }
+        )
 
-        // REMAINING SCREEN TIME HERO CARD
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(CyberCard)
-                .border(1.dp, CyberBorder, RoundedCornerShape(8.dp))
-                .padding(20.dp)
-        ) {
-            Column {
-                Text(
-                    text = "Screen Time Remaining",
-                    color = CyberTextDim,
-                    fontSize = 12.sp
-                )
+        // 4. QUICK TIME CONTROLS WIDGET (+15m, -10m, Lock Now)
+        QuickTimeControlsWidget(
+            onAddFifteenMinutes = { viewModel.quickAddMinutes(15) },
+            onDeductTenMinutes = { viewModel.quickConvertCredits(20) },
+            onLockDevice = { viewModel.lockDeviceImmediately() }
+        )
 
-                Spacer(modifier = Modifier.height(10.dp))
+        // 5. GEOFENCE PERIMETER CROSSING SIMULATOR
+        GeofenceCrossingSimulator(
+            onSimulateCrossing = { viewModel.simulateCrossingGeofence() }
+        )
 
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = "$remainingMins",
-                        color = CyberTextBright,
-                        fontSize = 54.sp,
-                        fontFamily = TechMono,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 54.sp
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "mins left today",
-                        color = CyberTextBright,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
+        // 6. PENDING TASKS & CHORES CARD
+        PendingTasksCard(
+            tasks = pendingTasks,
+            onTaskToggle = { taskId -> viewModel.toggleTask(taskId) },
+            onRequestCreditsClick = { viewModel.openRequestCreditsDialog() }
+        )
 
-                Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = CyberBorder, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(10.dp))
+        // 7. UPCOMING SCHOOL EXAMS & PREPARATION SCHEDULE
+        UpcomingExamsCard(
+            exams = upcomingExams,
+            onExamClick = { /* Exam detail or study timer */ }
+        )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Device status:", color = CyberTextDim, fontSize = 12.sp)
-                    Text("Active", color = SuccessGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
+        // 8. APP USAGE METERS & BLOCKED QUARANTINE APPS
+        AppUsageMonitorCard(
+            apps = appUsageStats
+        )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        // 9. INTERACTIVE WEEKLY STUDY & EXAM CALENDAR
+        ChildCalendarCard(
+            events = calendarEvents
+        )
 
-        // 2-COLUMN CARDS: STEPS & CREDITS
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // Steps
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(CyberCard)
-                    .border(1.dp, CyberBorder, RoundedCornerShape(8.dp))
-                    .padding(14.dp)
-            ) {
-                Column {
-                    Text("Daily Steps", color = CyberTextDim, fontSize = 11.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("3,420", color = CyberTextBright, fontSize = 22.sp, fontFamily = TechMono, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text("Goal: ${child.dailyStepGoal}", color = CyberTextDim, fontSize = 11.sp)
-                }
-            }
+        // 10. CREDIT REQUEST STATUS AUDIT HISTORY
+        CreditRequestHistoryCard(
+            requests = creditRequests
+        )
 
-            // Credits
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(CyberCard)
-                    .border(1.dp, CyberBorder, RoundedCornerShape(8.dp))
-                    .padding(14.dp)
-            ) {
-                Column {
-                    Text("Credits Earned", color = CyberTextDim, fontSize = 11.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("150 pts", color = CyberTextBright, fontSize = 22.sp, fontFamily = TechMono, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text("+20 min bonus", color = CyberTextDim, fontSize = 11.sp)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // TASKS TO EARN TIME
-        Text("Tasks & Activities", color = CyberTextDim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Task 1
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(6.dp))
-                .background(CyberCard)
-                .border(1.dp, CyberBorder, RoundedCornerShape(6.dp))
-                .clickable {
-                    choreDone = !choreDone
-                    if (choreDone) remainingMins += 15
-                }
-                .padding(horizontal = 14.dp, vertical = 12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Clean up study room", color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                Text(
-                    text = if (choreDone) "Done (+15m)" else "Mark Done",
-                    color = if (choreDone) SuccessGreen else CyberTextBright,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Task 2
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(6.dp))
-                .background(CyberCard)
-                .border(1.dp, CyberBorder, RoundedCornerShape(6.dp))
-                .clickable {
-                    readingDone = !readingDone
-                    if (readingDone) remainingMins += 20
-                }
-                .padding(horizontal = 14.dp, vertical = 12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Read 15 pages of book", color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                Text(
-                    text = if (readingDone) "Done (+20m)" else "Mark Done",
-                    color = if (readingDone) SuccessGreen else CyberTextBright,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // QUICK TIME CONTROLS
-        Text("Quick Controls", color = CyberTextDim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(White)
-                    .clickable { remainingMins += 15 },
-                contentAlignment = Alignment.Center
-            ) {
-                Text("+15 Mins", color = Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(CyberCard)
-                    .border(1.dp, CyberBorder, RoundedCornerShape(4.dp))
-                    .clickable { remainingMins = (remainingMins - 10).coerceAtLeast(0) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text("-10 Mins", color = CyberTextBright, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(CyberCard)
-                    .border(1.dp, CyberBorder, RoundedCornerShape(4.dp))
-                    .clickable { remainingMins = 0 },
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Lock Now", color = AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // SOS EMERGENCY BUTTON
+        // 11. EMERGENCY SOS BUTTON
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .border(1.5.dp, AlertRed, RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(8.dp))
+                .border(1.5.dp, AlertRed, RoundedCornerShape(8.dp))
                 .background(AlertRed.copy(alpha = 0.12f))
                 .clickable { navController.navigate(Screen.SOS.route) },
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "Emergency SOS",
-                color = AlertRed,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Emergency SOS",
+                    tint = AlertRed,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = "Emergency SOS • Notify Parents Instantly",
+                    color = AlertRed,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         // FOOTER
         Text(
-            text = "Profile: ${child.name} • ${child.age} yrs • BMI %.1f".format(child.bmi),
+            text = "NestCheck Real-Time Guardian • 2 Credits = 1 Min Screen Time Active",
             color = CyberTextDim,
             fontSize = 11.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(vertical = 8.dp)
         )
+    }
 
-        Spacer(modifier = Modifier.height(10.dp))
+    // MODAL DIALOG: REQUEST EXTRA CREDITS FROM PARENTS
+    if (isRequestCreditsDialogOpen) {
+        RequestCreditsDialog(
+            viewModel = creditRequestViewModel,
+            onDismiss = { viewModel.closeRequestCreditsDialog() }
+        )
     }
 }
