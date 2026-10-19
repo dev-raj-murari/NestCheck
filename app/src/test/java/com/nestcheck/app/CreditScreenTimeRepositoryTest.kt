@@ -41,8 +41,8 @@ class CreditScreenTimeRepositoryTest {
         val initialBalance = creditRepository.wallet.value.creditBalance
 
         // Redeem 30 credits (should yield 15 minutes = 900 seconds)
-        val success = creditRepository.redeemCreditsForScreenTime(30)
-        assertTrue("Redeeming valid credits should succeed", success)
+        val addedMinutes = creditRepository.redeemCreditsForScreenTime(30)
+        assertEquals(15, addedMinutes)
 
         val updatedWallet = creditRepository.wallet.value
         assertEquals("Balance should decrease by 30 credits", initialBalance - 30, updatedWallet.creditBalance)
@@ -93,8 +93,8 @@ class CreditScreenTimeRepositoryTest {
         assertEquals(initialCredits + 40, updatedCredits)
 
         // Verify transaction logged in ledger
-        val lastTx = creditRepository.wallet.value.transactionHistory.first()
-        assertEquals(40, lastTx.creditsDelta)
-        assertEquals(CreditTransactionType.PARENT_GRANTED, lastTx.type)
+        val lastTx = creditRepository.ledger.value.first()
+        assertEquals(40, lastTx.amount)
+        assertEquals(CreditTransactionType.PARENT_GRANTED, lastTx.transactionType)
     }
 }

@@ -26,6 +26,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private val ElectricCyan = Color(0xFF00E5FF)
+private val CyberSurface = Color(0xFF16181D)
+private val CyberTextMuted = Color(0xFF8B949E)
+private val CoralRed = Color(0xFFFF5252)
+
 @Composable
 fun ParentCreditRequestCard(
     request: CreditRequest,

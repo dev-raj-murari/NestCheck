@@ -14,7 +14,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,62 +76,53 @@ fun KidHomeScreen(
             onSosClick = { navController.navigate(Screen.SOS.route) }
         )
 
-        // 2. GEOFENCE BREACH ALERT (DYNAMICALLY SHOWN WHEN BREACH IS SIMULATED)
-        geofenceBreach?.let { breach ->
-            GeofenceBreachAlertBanner(
-                breachResult = breach,
-                onDismiss = { viewModel.dismissGeofenceAlert() }
-            )
-        }
-
-        // 3. CREDIT-TO-SCREEN TIME HERO CARD (STRICT 2 CREDITS = 1 MIN RULE)
+        // 2. CREDIT-TO-SCREEN TIME HERO CARD (STRICT 2 CREDITS = 1 MIN RULE)
         CreditScreenTimeHeroCard(
-            wallet = wallet,
-            onRedeemCredits = { credits -> viewModel.quickConvertCredits(credits) },
-            onRequestMoreTime = { viewModel.openRequestCreditsDialog() }
+            wallet = wallet
         )
 
-        // 4. QUICK TIME CONTROLS WIDGET (+15m, -10m, Lock Now)
+        // 3. QUICK TIME CONTROLS WIDGET (+15m, -10m, Lock Now)
         QuickTimeControlsWidget(
-            onAddFifteenMinutes = { viewModel.quickAddMinutes(15) },
-            onDeductTenMinutes = { viewModel.quickConvertCredits(20) },
-            onLockDevice = { viewModel.lockDeviceImmediately() }
+            onSpendCreditsForMinutes = { credits -> viewModel.quickConvertCredits(credits) },
+            onQuickAddMinutes = { mins -> viewModel.quickAddMinutes(mins) },
+            onLockNow = { viewModel.lockDeviceImmediately() }
         )
 
-        // 5. GEOFENCE PERIMETER CROSSING SIMULATOR
+        // 4. GEOFENCE PERIMETER CROSSING SIMULATOR (WITH REAL-TIME PARENT NOTIFICATION)
         GeofenceCrossingSimulator(
-            onSimulateCrossing = { viewModel.simulateCrossingGeofence() }
+            breachResult = geofenceBreach,
+            onSimulateBreach = { viewModel.simulateCrossingGeofence() },
+            onDismissBreach = { viewModel.dismissGeofenceAlert() }
         )
 
-        // 6. PENDING TASKS & CHORES CARD
+        // 5. PENDING TASKS & CHORES CARD
         PendingTasksCard(
             tasks = pendingTasks,
-            onTaskToggle = { taskId -> viewModel.toggleTask(taskId) },
+            onToggleTask = { taskId -> viewModel.toggleTask(taskId) },
             onRequestCreditsClick = { viewModel.openRequestCreditsDialog() }
         )
 
-        // 7. UPCOMING SCHOOL EXAMS & PREPARATION SCHEDULE
+        // 6. UPCOMING SCHOOL EXAMS & PREPARATION SCHEDULE
         UpcomingExamsCard(
-            exams = upcomingExams,
-            onExamClick = { /* Exam detail or study timer */ }
+            exams = upcomingExams
         )
 
-        // 8. APP USAGE METERS & BLOCKED QUARANTINE APPS
+        // 7. APP USAGE METERS & BLOCKED QUARANTINE APPS
         AppUsageMonitorCard(
-            apps = appUsageStats
+            appStats = appUsageStats
         )
 
-        // 9. INTERACTIVE WEEKLY STUDY & EXAM CALENDAR
+        // 8. INTERACTIVE WEEKLY STUDY & EXAM CALENDAR
         ChildCalendarCard(
             events = calendarEvents
         )
 
-        // 10. CREDIT REQUEST STATUS AUDIT HISTORY
+        // 9. CREDIT REQUEST STATUS AUDIT HISTORY
         CreditRequestHistoryCard(
             requests = creditRequests
         )
 
-        // 11. EMERGENCY SOS BUTTON
+        // 10. EMERGENCY SOS BUTTON
         Box(
             modifier = Modifier
                 .fillMaxWidth()

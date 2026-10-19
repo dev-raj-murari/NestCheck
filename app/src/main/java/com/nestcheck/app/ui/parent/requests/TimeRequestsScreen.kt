@@ -30,6 +30,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private val ElectricCyan = Color(0xFF00E5FF)
+private val CoralRed = Color(0xFFFF5252)
+
 @Composable
 fun TimeRequestsScreen(
     navController: NavController,

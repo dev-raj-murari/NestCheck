@@ -45,4 +45,20 @@ data class CreditScreenTimeWallet(
 
     val equivalentScreenTimeFormatted: String
         get() = "${remainingMinutes / 60}h ${remainingMinutes % 60}m"
+
+    val isCurfewLocked: Boolean
+        get() = activeRemainingSeconds <= 0L
+
+    val creditBalance: Int
+        get() = totalCredits
+
+    val totalEarnedCredits: Int
+        get() = totalCredits
+
+    val screenTimeMinutesEquivalent: Int
+        get() = totalCredits / conversionRateCreditsPerMin
+
+    companion object {
+        const val CREDITS_PER_MINUTE = 2
+    }
 }
