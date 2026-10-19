@@ -84,6 +84,12 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <!-- Sinan's Realtime Screen Time & Credit Tracking Service -->
+        <service
+            android:name=".service.ScreenTimeService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
     </application>
 
 </manifest>
