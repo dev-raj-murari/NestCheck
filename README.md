@@ -6,7 +6,7 @@
 
 **NestCheck** is a modern, cyber-minimalist Android parental telemetry and child wellbeing monitoring platform built with Jetpack Compose, Kotlin Coroutines, and MVVM Clean Architecture.
 
-**Team**: Dev Raj Murari, Rohit, Sinan
+**Team**: Dev Raj Murari, Rohit ([@Rohit-Patil768](https://github.com/Rohit-Patil768)), Sinan
 
 ---
 
