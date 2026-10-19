@@ -274,6 +274,21 @@ class LocationRepository @Inject constructor() {
         _transitionAlerts.value = listOf(alert) + _transitionAlerts.value
     }
 
+    fun simulateChildPerimeterBreach(zoneName: String = "Oakridge High School"): GeofenceTransitionAlert {
+        val alert = GeofenceTransitionAlert(
+            id = UUID.randomUUID().toString(),
+            zoneName = zoneName,
+            transitionType = TransitionType.EXITED,
+            zoneType = ZoneType.SAFE_ZONE,
+            timestamp = System.currentTimeMillis(),
+            latitude = 19.1085,
+            longitude = 72.8375,
+            address = "Crossing perimeter: Outside $zoneName, SV Road"
+        )
+        _transitionAlerts.value = listOf(alert) + _transitionAlerts.value
+        return alert
+    }
+
     // ========================================================================
     // F30: HIGH-VELOCITY TRAVEL & SPEEDING TRIGGER ALERT
     // ========================================================================
