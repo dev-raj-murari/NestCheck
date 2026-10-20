@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,11 +36,12 @@ fun RequestCreditsDialog(
     val justification by viewModel.justification
     val isSubmittedSuccess by viewModel.isSubmittedSuccess
 
-    val cardBg = Color(0xFF121824)
-    val cyanAccent = Color(0xFF00E5FF)
-    val greenSuccess = Color(0xFF00E676)
-    val borderStroke = Color(0xFF1E293B)
-    val textMuted = Color(0xFF94A3B8)
+    val cardBg = Color(0xFFFFFFFF)
+    val borderStroke = Color(0xFFE2E8F0)
+    val textDark = Color(0xFF1E293B)
+    val textMuted = Color(0xFF64748B)
+    val primaryBlue = Color(0xFF0B57D0)
+    val greenSuccess = Color(0xFF10B981)
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -49,7 +49,7 @@ fun RequestCreditsDialog(
             onDismiss()
         },
         containerColor = cardBg,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = borderStroke) }
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFFCBD5E1)) }
     ) {
         Column(
             modifier = Modifier
@@ -71,13 +71,13 @@ fun RequestCreditsDialog(
                     Icon(
                         imageVector = Icons.Default.Stars,
                         contentDescription = null,
-                        tint = cyanAccent,
+                        tint = primaryBlue,
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
                         text = "Request Extra Task Credits",
-                        color = Color.White,
-                        fontSize = 16.sp,
+                        color = textDark,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -97,187 +97,156 @@ fun RequestCreditsDialog(
             if (isSubmittedSuccess) {
                 // Success Message
                 Surface(
-                    color = greenSuccess.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(10.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, greenSuccess.copy(alpha = 0.4f)),
+                    color = Color(0xFFE6F4EA),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA7F3D0)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
+                            contentDescription = "Success",
                             tint = greenSuccess,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(24.dp)
                         )
-                        Text(
-                            text = "Credit Request Sent to Parents!",
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Once approved, $creditsRequested credits (${creditsRequested / 2} mins screen time) will be instantly added to your wallet.",
-                            color = textMuted,
-                            fontSize = 12.sp,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                        Button(
-                            onClick = {
-                                viewModel.resetForm()
-                                onDismiss()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = greenSuccess),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(text = "Done", color = Color.Black, fontWeight = FontWeight.Bold)
+                        Column {
+                            Text(
+                                text = "Request Sent to Parent!",
+                                color = textDark,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Your parent will receive a notification to approve your credits.",
+                                color = textMuted,
+                                fontSize = 12.sp
+                            )
                         }
                     }
+                }
+
+                Button(
+                    onClick = {
+                        viewModel.resetForm()
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryBlue)
+                ) {
+                    Text("Done", fontWeight = FontWeight.Bold)
                 }
             } else {
                 // Form Fields
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = "Task or Accomplishment:",
+                        text = "Category",
                         color = textMuted,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold
                     )
-
-                    OutlinedTextField(
-                        value = taskTitle,
-                        onValueChange = { viewModel.onTitleChange(it) },
-                        placeholder = { Text("e.g., Cleaned bicycle & organized bedroom", color = textMuted) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = cyanAccent,
-                            unfocusedBorderColor = borderStroke,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = cyanAccent
-                        )
-                    )
-
-                    // Conversion Calculator & Slider
-                    Surface(
-                        color = Color(0xFF1E293B),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Points Requested:",
-                                    color = textMuted,
-                                    fontSize = 12.sp
-                                )
-                                Text(
-                                    text = "$creditsRequested credits = ${creditsRequested / 2} mins",
-                                    color = cyanAccent,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
-                            Slider(
-                                value = creditsRequested.toFloat(),
-                                onValueChange = { viewModel.onCreditsChange(it.toInt()) },
-                                valueRange = 10f..120f,
-                                steps = 10,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = cyanAccent,
-                                    activeTrackColor = cyanAccent,
-                                    inactiveTrackColor = Color(0xFF0F172A)
-                                )
-                            )
-                        }
-                    }
-
-                    // Category Selector
-                    Text(
-                        text = "Reason Category:",
-                        color = textMuted,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(CreditReasonCategory.values()) { category ->
-                            val isSelected = category == selectedCategory
+                            val isSelected = selectedCategory == category
                             Surface(
-                                color = if (isSelected) cyanAccent.copy(alpha = 0.2f) else Color(0xFF1E293B),
-                                shape = RoundedCornerShape(6.dp),
+                                color = if (isSelected) Color(0xFFE8F0FE) else Color(0xFFF8FAFC),
+                                shape = RoundedCornerShape(10.dp),
                                 border = androidx.compose.foundation.BorderStroke(
-                                    width = 1.dp,
-                                    color = if (isSelected) cyanAccent else Color.Transparent
+                                    1.dp,
+                                    if (isSelected) primaryBlue else borderStroke
                                 ),
                                 modifier = Modifier.clickable { viewModel.onCategoryChange(category) }
                             ) {
                                 Text(
                                     text = category.title,
-                                    color = if (isSelected) cyanAccent else textMuted,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    color = if (isSelected) primaryBlue else textMuted,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                 )
                             }
                         }
                     }
 
-                    // Justification
-                    Text(
-                        text = "Why do you deserve these extra points? (Optional):",
-                        color = textMuted,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
                     OutlinedTextField(
-                        value = justification,
-                        onValueChange = { viewModel.onJustificationChange(it) },
-                        placeholder = { Text("Details for mom & dad to review...", color = textMuted) },
+                        value = taskTitle,
+                        onValueChange = { viewModel.onTitleChange(it) },
+                        label = { Text("What did you accomplish?") },
+                        placeholder = { Text("e.g. Cleaned my study table & folded laundry") },
                         modifier = Modifier.fillMaxWidth(),
-                        maxLines = 2,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = cyanAccent,
+                            focusedBorderColor = primaryBlue,
                             unfocusedBorderColor = borderStroke,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = cyanAccent
+                            focusedTextColor = textDark,
+                            unfocusedTextColor = textDark
                         )
                     )
 
-                    // Submit Button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Credits Requested: $creditsRequested pts (+${creditsRequested / 2}m screen time)",
+                            color = primaryBlue,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Slider(
+                        value = creditsRequested.toFloat(),
+                        onValueChange = { viewModel.onCreditsChange(it.toInt()) },
+                        valueRange = 10f..100f,
+                        steps = 8,
+                        colors = SliderDefaults.colors(
+                            thumbColor = primaryBlue,
+                            activeTrackColor = primaryBlue,
+                            inactiveTrackColor = Color(0xFFE2E8F0)
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = justification,
+                        onValueChange = { viewModel.onJustificationChange(it) },
+                        label = { Text("Parent Note (Optional)") },
+                        placeholder = { Text("Add extra notes for Mom & Dad") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        maxLines = 2,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = primaryBlue,
+                            unfocusedBorderColor = borderStroke,
+                            focusedTextColor = textDark,
+                            unfocusedTextColor = textDark
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
                     Button(
                         onClick = { viewModel.submitRequest() },
                         enabled = taskTitle.isNotBlank(),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = cyanAccent)
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryBlue)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Send,
                             contentDescription = null,
-                            tint = Color.Black,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Submit Request to Parents",
-                            color = Color.Black,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Send Request to Parent", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }

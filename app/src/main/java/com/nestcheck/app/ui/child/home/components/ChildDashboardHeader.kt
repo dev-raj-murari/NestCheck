@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,127 +28,31 @@ import java.util.Locale
 fun ChildDashboardHeader(
     profile: ChildProfile,
     isCurfewLocked: Boolean,
-    onSwitchRoleClick: () -> Unit,
     onSosClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onParentPinClick: (() -> Unit)? = null
 ) {
-    val cyanAccent = Color(0xFF00E5FF)
-    val cardBg = Color(0xFF121824)
-    val borderStroke = Color(0xFF1E293B)
-    val textMuted = Color(0xFF94A3B8)
-    val greenActive = Color(0xFF00E676)
-    val alertRed = Color(0xFFFF5252)
+    val cardBg = Color(0xFFFFFFFF)
+    val borderStroke = Color(0xFFE2E8F0)
+    val textDark = Color(0xFF1E293B)
+    val textMuted = Color(0xFF64748B)
+    val primaryBlue = Color(0xFF0B57D0)
+    val greenActive = Color(0xFF10B981)
+    val alertRed = Color(0xFFEF4444)
 
     val timeString = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
     val dateString = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(Date())
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(cardBg)
+            .border(1.dp, borderStroke, RoundedCornerShape(20.dp))
+            .padding(16.dp)
     ) {
-        // Top Navigation Bar Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(cyanAccent.copy(alpha = 0.15f))
-                        .border(1.dp, cyanAccent.copy(alpha = 0.4f), RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Shield,
-                        contentDescription = "Safe Shield",
-                        tint = cyanAccent,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = "NestCheck Kid",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "$dateString • $timeString",
-                        color = textMuted,
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // SOS Mini Pill
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(alertRed.copy(alpha = 0.15f))
-                        .border(1.dp, alertRed.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                        .clickable { onSosClick() }
-                        .padding(horizontal = 8.dp, vertical = 5.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = "SOS",
-                            tint = alertRed,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = "SOS",
-                            color = alertRed,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                // Switch Role Pill
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(cardBg)
-                        .border(1.dp, borderStroke, RoundedCornerShape(6.dp))
-                        .clickable { onSwitchRoleClick() }
-                        .padding(horizontal = 10.dp, vertical = 5.dp)
-                ) {
-                    Text(
-                        text = "Switch Role",
-                        color = textMuted,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-        }
-
-        // Child Profile Strip & Device Status Pill
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(cardBg)
-                .border(1.dp, borderStroke, RoundedCornerShape(10.dp))
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Top Row: Avatar + Greeting + SOS + Pin Lock (Strictly NO switch role)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -157,66 +60,128 @@ fun ChildDashboardHeader(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Avatar circle with initial
+                    // Avatar circle with initial in soft blue
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
-                            .background(cyanAccent.copy(alpha = 0.2f))
-                            .border(1.5.dp, cyanAccent, CircleShape),
+                            .background(Color(0xFFE8F0FE)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = profile.name.firstOrNull()?.toString() ?: "A",
-                            color = cyanAccent,
-                            fontSize = 14.sp,
+                            text = profile.name.firstOrNull()?.toString() ?: "S",
+                            color = primaryBlue,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
 
                     Column {
                         Text(
-                            text = "Hello, ${profile.name}!",
-                            color = Color.White,
-                            fontSize = 14.sp,
+                            text = "Hey, ${profile.name}! 👋",
+                            color = textDark,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Age ${profile.age} • Daily Goal: ${profile.dailyStepGoal} steps",
+                            text = "$dateString • $timeString",
                             color = textMuted,
-                            fontSize = 11.sp
+                            fontSize = 12.sp
                         )
                     }
                 }
 
-                // Live Status Pill
-                val statusBg = if (isCurfewLocked) alertRed else greenActive
-                val statusText = if (isCurfewLocked) "TIME EXPIRED" else "ACTIVE • ONLINE"
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // SOS Pill
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFFEE2E2))
+                            .clickable { onSosClick() }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "SOS",
+                                tint = alertRed,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = "SOS",
+                                color = alertRed,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Optional Parent Exit PIN Lock (Safe gate for child app, NO switch role)
+                    onParentPinClick?.let { onClick ->
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFF1F5F9))
+                                .clickable { onClick() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Lock,
+                                contentDescription = "Parent Gate",
+                                tint = textMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Bottom Strip: Status & Daily Goal
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Age ${profile.age} • Daily Goal: ${profile.dailyStepGoal} steps",
+                    color = textMuted,
+                    fontSize = 12.sp
+                )
+
+                val statusBg = if (isCurfewLocked) Color(0xFFFEE2E2) else Color(0xFFE6F4EA)
+                val statusColor = if (isCurfewLocked) alertRed else greenActive
+                val statusText = if (isCurfewLocked) "TIME EXPIRED" else "SAFE MODE • ONLINE"
 
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(statusBg.copy(alpha = 0.15f))
-                        .border(1.dp, statusBg.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(statusBg)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(statusBg)
+                                .background(statusColor)
                         )
                         Text(
                             text = statusText,
-                            color = statusBg,
-                            fontSize = 9.sp,
-                            fontFamily = FontFamily.Monospace,
+                            color = statusColor,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }

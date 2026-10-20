@@ -28,23 +28,24 @@ fun PendingTasksCard(
     onRequestCreditsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardBg = Color(0xFF121824)
-    val cyanAccent = Color(0xFF00E5FF)
-    val greenSuccess = Color(0xFF00E676)
-    val borderStroke = Color(0xFF1E293B)
-    val textMuted = Color(0xFF94A3B8)
+    val cardBg = Color(0xFFFFFFFF)
+    val borderStroke = Color(0xFFE2E8F0)
+    val textDark = Color(0xFF1E293B)
+    val textMuted = Color(0xFF64748B)
+    val primaryBlue = Color(0xFF0B57D0)
+    val greenSuccess = Color(0xFF10B981)
 
     val pendingCount = tasks.count { !it.isCompleted }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(cardBg)
-            .border(1.dp, borderStroke, RoundedCornerShape(12.dp))
-            .padding(16.dp)
+            .border(1.dp, borderStroke, RoundedCornerShape(20.dp))
+            .padding(18.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -53,30 +54,38 @@ fun PendingTasksCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.TaskAlt,
-                        contentDescription = null,
-                        tint = cyanAccent,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE6F4EA)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.TaskAlt,
+                            contentDescription = null,
+                            tint = greenSuccess,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                     Text(
-                        text = "Tasks Pending",
-                        color = Color.White,
-                        fontSize = 14.sp,
+                        text = "Pending Tasks & Quests",
+                        color = textDark,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Surface(
-                        color = cyanAccent.copy(alpha = 0.15f),
+                        color = Color(0xFFE8F0FE),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = "$pendingCount left",
-                            color = cyanAccent,
+                            color = primaryBlue,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
                 }
@@ -91,8 +100,9 @@ fun PendingTasksCard(
             // Task Items List
             tasks.forEach { task ->
                 Surface(
-                    color = if (task.isCompleted) Color(0xFF0F172A).copy(alpha = 0.5f) else Color(0xFF1E293B),
-                    shape = RoundedCornerShape(8.dp),
+                    color = if (task.isCompleted) Color(0xFFF8FAFC) else Color.White,
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onToggleTask(task.id) }
@@ -100,13 +110,13 @@ fun PendingTasksCard(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .padding(14.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.weight(1f)
                         ) {
                             Box(
@@ -116,7 +126,7 @@ fun PendingTasksCard(
                                     .background(if (task.isCompleted) greenSuccess else Color.Transparent)
                                     .border(
                                         width = 1.5.dp,
-                                        color = if (task.isCompleted) greenSuccess else textMuted,
+                                        color = if (task.isCompleted) greenSuccess else Color(0xFFCBD5E1),
                                         shape = CircleShape
                                     ),
                                 contentAlignment = Alignment.Center
@@ -125,7 +135,7 @@ fun PendingTasksCard(
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = "Done",
-                                        tint = Color.Black,
+                                        tint = Color.White,
                                         modifier = Modifier.size(14.dp)
                                     )
                                 }
@@ -134,7 +144,7 @@ fun PendingTasksCard(
                             Column {
                                 Text(
                                     text = task.title,
-                                    color = if (task.isCompleted) textMuted else Color.White,
+                                    color = if (task.isCompleted) textMuted else textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     style = if (task.isCompleted) androidx.compose.ui.text.TextStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough) else androidx.compose.ui.text.TextStyle()
@@ -142,21 +152,21 @@ fun PendingTasksCard(
                                 Text(
                                     text = "${task.category.label} • Due ${task.dueDate}",
                                     color = textMuted,
-                                    fontSize = 10.sp
+                                    fontSize = 11.sp
                                 )
                             }
                         }
 
                         Surface(
-                            color = if (task.isCompleted) greenSuccess.copy(alpha = 0.15f) else cyanAccent.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(6.dp)
+                            color = if (task.isCompleted) Color(0xFFE6F4EA) else Color(0xFFE8F0FE),
+                            shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(
                                 text = if (task.isCompleted) "+${task.creditsReward} pts EARNED" else "+${task.creditsReward} pts (+${task.screenTimeBonusMinutes}m)",
-                                color = if (task.isCompleted) greenSuccess else cyanAccent,
-                                fontSize = 10.sp,
+                                color = if (task.isCompleted) greenSuccess else primaryBlue,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
@@ -169,22 +179,22 @@ fun PendingTasksCard(
             OutlinedButton(
                 onClick = onRequestCreditsClick,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = cyanAccent),
-                border = androidx.compose.foundation.BorderStroke(1.dp, cyanAccent.copy(alpha = 0.5f))
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = primaryBlue),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE))
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    tint = cyanAccent,
+                    tint = primaryBlue,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Request Extra Credits for a Custom Task",
-                    fontSize = 12.sp,
+                    text = "Request Extra Credits for a Task",
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = cyanAccent
+                    color = primaryBlue
                 )
             }
         }

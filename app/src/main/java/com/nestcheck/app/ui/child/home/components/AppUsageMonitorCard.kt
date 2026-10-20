@@ -3,6 +3,7 @@ package com.nestcheck.app.ui.child.home.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
@@ -17,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,11 +28,12 @@ fun AppUsageMonitorCard(
     appStats: List<AppUsageInfo>,
     modifier: Modifier = Modifier
 ) {
-    val cardBg = Color(0xFF121824)
-    val cyanAccent = Color(0xFF00E5FF)
-    val redCritical = Color(0xFFFF5252)
-    val borderStroke = Color(0xFF1E293B)
-    val textMuted = Color(0xFF94A3B8)
+    val cardBg = Color(0xFFFFFFFF)
+    val borderStroke = Color(0xFFE2E8F0)
+    val textDark = Color(0xFF1E293B)
+    val textMuted = Color(0xFF64748B)
+    val primaryBlue = Color(0xFF0B57D0)
+    val redCritical = Color(0xFFEF4444)
 
     val activeApps = appStats.filter { !it.isBlocked }
     val blockedApps = appStats.filter { it.isBlocked }
@@ -40,12 +41,12 @@ fun AppUsageMonitorCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(cardBg)
-            .border(1.dp, borderStroke, RoundedCornerShape(12.dp))
-            .padding(16.dp)
+            .border(1.dp, borderStroke, RoundedCornerShape(20.dp))
+            .padding(18.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -54,42 +55,50 @@ fun AppUsageMonitorCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Apps,
-                        contentDescription = null,
-                        tint = cyanAccent,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE8F0FE)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Apps,
+                            contentDescription = null,
+                            tint = primaryBlue,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                     Text(
-                        text = "App Usage & Blocked Apps",
-                        color = Color.White,
-                        fontSize = 14.sp,
+                        text = "App Usage & Screen Limits",
+                        color = textDark,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
                 Surface(
-                    color = Color(0xFF1E293B),
-                    shape = RoundedCornerShape(6.dp)
+                    color = Color(0xFFFEE2E2),
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
                         text = "${blockedApps.size} Locked",
                         color = redCritical,
-                        fontSize = 10.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
 
             // Allowed Apps Progress
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Active Allowed Apps Today",
+                    text = "Active Apps Today",
                     color = textMuted,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
 
@@ -101,76 +110,77 @@ fun AppUsageMonitorCard(
                         ) {
                             Text(
                                 text = app.appName,
-                                color = Color.White,
-                                fontSize = 12.sp,
+                                color = textDark,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
                                 text = "${app.timeSpentMinutes}m / ${app.limitMinutes}m",
                                 color = textMuted,
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace
+                                fontSize = 12.sp
                             )
                         }
                         LinearProgressIndicator(
-                            progress = { app.usagePercentage },
+                            progress = { app.usagePercentage.coerceIn(0f, 1f) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(6.dp)
                                 .clip(RoundedCornerShape(3.dp)),
-                            color = cyanAccent,
-                            trackColor = Color(0xFF1E293B),
+                            color = primaryBlue,
+                            trackColor = Color(0xFFE2E8F0),
                         )
                     }
                 }
             }
 
-            HorizontalDivider(color = borderStroke)
+            if (blockedApps.isNotEmpty()) {
+                HorizontalDivider(color = borderStroke)
 
-            // Blocked / Quarantined Apps Section
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Restricted & Blocked by Parents",
-                    color = redCritical,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                // Blocked / Quarantined Apps Section
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Blocked by Parent",
+                        color = redCritical,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    blockedApps.forEach { blocked ->
-                        Surface(
-                            color = redCritical.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(8.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, redCritical.copy(alpha = 0.3f)),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(8.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        blockedApps.forEach { blocked ->
+                            Surface(
+                                color = Color(0xFFFEF2F2),
+                                shape = RoundedCornerShape(12.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFECACA)),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = "Locked",
-                                    tint = redCritical,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Text(
-                                    text = blocked.appName,
-                                    color = Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1
-                                )
-                                Text(
-                                    text = "Blocked",
-                                    color = redCritical,
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                Column(
+                                    modifier = Modifier.padding(10.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = "Locked",
+                                        tint = redCritical,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = blocked.appName,
+                                        color = textDark,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        text = "Locked",
+                                        color = redCritical,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
                         }
                     }

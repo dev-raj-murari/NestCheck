@@ -25,8 +25,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.nestcheck.app.data.model.AppUsageInfo
+import com.nestcheck.app.data.model.CalendarEventItem
+import com.nestcheck.app.data.model.CreditRequest
+import com.nestcheck.app.data.model.CreditScreenTimeWallet
+import com.nestcheck.app.data.model.GeofenceBreachSimResult
+import com.nestcheck.app.data.model.PendingTaskItem
+import com.nestcheck.app.data.model.UpcomingExam
 import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import com.nestcheck.app.navigation.Screen
+import com.nestcheck.app.ui.child.credits.CreditRequestHistoryCard
+import com.nestcheck.app.ui.child.credits.CreditRequestViewModel
+import com.nestcheck.app.ui.child.credits.RequestCreditsDialog
+import com.nestcheck.app.ui.child.home.ChildDashboardViewModel
+import com.nestcheck.app.ui.child.home.components.*
 
 enum class KidTab(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Outlined.Home),
@@ -39,16 +51,28 @@ val KidCardWhite = Color(0xFFFFFFFF)
 val KidTextDark = Color(0xFF1E293B)
 val KidTextMuted = Color(0xFF64748B)
 val KidBorder = Color(0xFFE2E8F0)
-val KidBlue = Color(0xFF2563EB)
+val KidBlue = Color(0xFF0B57D0)
 val KidGreen = Color(0xFF10B981)
 val KidRed = Color(0xFFEF4444)
 
 @Composable
 fun KidShellScreen(
     navController: NavController,
-    viewModel: KidShellViewModel = hiltViewModel()
+    viewModel: KidShellViewModel = hiltViewModel(),
+    dashboardViewModel: ChildDashboardViewModel = hiltViewModel(),
+    creditRequestViewModel: CreditRequestViewModel = hiltViewModel()
 ) {
     val syncState by viewModel.syncManager.syncState.collectAsState()
+    val wallet by dashboardViewModel.wallet.collectAsState()
+    val pendingTasks by dashboardViewModel.pendingTasks.collectAsState()
+    val upcomingExams by dashboardViewModel.upcomingExams.collectAsState()
+    val appUsageStats by dashboardViewModel.appUsageStats.collectAsState()
+    val calendarEvents by dashboardViewModel.calendarEvents.collectAsState()
+    val creditRequests by creditRequestViewModel.requests.collectAsState()
+
+    val geofenceBreach by dashboardViewModel.geofenceBreach
+    val isRequestCreditsDialogOpen by dashboardViewModel.isRequestCreditsDialogOpen
+
     var selectedTab by remember { mutableStateOf(KidTab.HOME) }
     var showPinDialog by remember { mutableStateOf(false) }
     var enteredPin by remember { mutableStateOf("") }
@@ -142,12 +166,31 @@ fun KidShellScreen(
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                KidTab.HOME -> KidHomeContent(navController, syncState)
-                KidTab.TASKS -> KidTasksContent(navController)
+                KidTab.HOME -> KidHomeContent(
+                    navController = navController,
+                    syncState = syncState,
+                    wallet = wallet,
+                    geofenceBreach = geofenceBreach,
+                    upcomingExams = upcomingExams,
+                    appUsageStats = appUsageStats,
+                    calendarEvents = calendarEvents,
+                    onSpendCredits = { dashboardViewModel.quickConvertCredits(it) },
+                    onQuickAddMinutes = { dashboardViewModel.quickAddMinutes(it) },
+                    onLockNow = { dashboardViewModel.lockDeviceImmediately() },
+                    onSimulateBreach = { dashboardViewModel.simulateCrossingGeofence() },
+                    onDismissBreach = { dashboardViewModel.dismissGeofenceAlert() }
+                )
+                KidTab.TASKS -> KidTasksContent(
+                    tasks = pendingTasks,
+                    requests = creditRequests,
+                    onToggleTask = { dashboardViewModel.toggleTask(it) },
+                    onRequestCreditsClick = { dashboardViewModel.openRequestCreditsDialog() }
+                )
                 KidTab.SOS -> KidSosContent(viewModel.syncManager, syncState)
             }
         }
 
+        // Parent Master PIN dialog to exit child space (No switch role button in UI)
         if (showPinDialog) {
             AlertDialog(
                 onDismissRequest = {
@@ -198,6 +241,14 @@ fun KidShellScreen(
                 }
             )
         }
+
+        // Modal Sheet: Request Extra Credits
+        if (isRequestCreditsDialogOpen) {
+            RequestCreditsDialog(
+                viewModel = creditRequestViewModel,
+                onDismiss = { dashboardViewModel.closeRequestCreditsDialog() }
+            )
+        }
     }
 }
 
@@ -214,12 +265,12 @@ fun KidTopBar(childName: String, battery: Int, onExitClick: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFDBEAFE)),
+                    .background(Color(0xFFE8F0FE)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(childName.take(1), fontWeight = FontWeight.Bold, color = KidBlue)
+                Text(childName.take(1), fontWeight = FontWeight.Bold, color = KidBlue, fontSize = 18.sp)
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
@@ -234,7 +285,7 @@ fun KidTopBar(childName: String, battery: Int, onExitClick: () -> Unit) {
                 .clip(CircleShape)
                 .background(KidCardWhite)
         ) {
-            Icon(Icons.Outlined.Lock, contentDescription = "Exit to Parent", tint = KidTextMuted, modifier = Modifier.size(18.dp))
+            Icon(Icons.Outlined.Lock, contentDescription = "Parent Gate", tint = KidTextMuted, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -242,7 +293,17 @@ fun KidTopBar(childName: String, battery: Int, onExitClick: () -> Unit) {
 @Composable
 fun KidHomeContent(
     navController: NavController,
-    syncState: com.nestcheck.app.data.sync.FamilySyncState
+    syncState: com.nestcheck.app.data.sync.FamilySyncState,
+    wallet: CreditScreenTimeWallet,
+    geofenceBreach: GeofenceBreachSimResult?,
+    upcomingExams: List<UpcomingExam>,
+    appUsageStats: List<AppUsageInfo>,
+    calendarEvents: List<CalendarEventItem>,
+    onSpendCredits: (Int) -> Unit,
+    onQuickAddMinutes: (Int) -> Unit,
+    onLockNow: () -> Unit,
+    onSimulateBreach: () -> Unit,
+    onDismissBreach: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -254,7 +315,7 @@ fun KidHomeContent(
         if (syncState.inAppPurchasesBlocked) {
             item {
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = Color(0xFFFEF2F2),
                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFECACA)),
                     modifier = Modifier.fillMaxWidth()
@@ -276,49 +337,42 @@ fun KidHomeContent(
             }
         }
 
-        // Screen Time Remaining Card
+        // 1. Credit-to-Screen Time Hero Card (2 Credits = 1 Min rule)
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = KidCardWhite),
-                border = androidx.compose.foundation.BorderStroke(1.dp, KidBorder)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text("REMAINING SCREEN TIME", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = KidTextMuted)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val hours = syncState.remainingMinutes / 60
-                    val mins = syncState.remainingMinutes % 60
-                    Text("${hours}h ${mins}m", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = KidBlue)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    LinearProgressIndicator(
-                        progress = { syncState.remainingMinutes.toFloat() / syncState.dailyLimitMinutes.toFloat() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp)),
-                        color = KidBlue,
-                        trackColor = Color(0xFFDBEAFE)
-                    )
-                }
-            }
+            CreditScreenTimeHeroCard(wallet = wallet)
         }
 
-        // Exam & School Card
+        // 2. Quick Time Controls Widget (+15m, +30m, Lock Now)
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBF7D0))
-            ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Text("UPCOMING EXAM 📐", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = KidGreen)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("Math Finals in 4 days ⏳", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = KidTextDark)
-                    Text("Complete daily homework before 7:00 PM for +50 Bonus Credits", fontSize = 13.sp, color = KidTextMuted)
-                }
-            }
+            QuickTimeControlsWidget(
+                onSpendCreditsForMinutes = onSpendCredits,
+                onQuickAddMinutes = onQuickAddMinutes,
+                onLockNow = onLockNow
+            )
+        }
+
+        // 3. Geofence Perimeter Crossing Simulator
+        item {
+            GeofenceCrossingSimulator(
+                breachResult = geofenceBreach,
+                onSimulateBreach = onSimulateBreach,
+                onDismissBreach = onDismissBreach
+            )
+        }
+
+        // 4. App Usage Meters & Blocked Quarantine Apps
+        item {
+            AppUsageMonitorCard(appStats = appUsageStats)
+        }
+
+        // 5. Upcoming School Exams & Preparation Schedule
+        item {
+            UpcomingExamsCard(exams = upcomingExams)
+        }
+
+        // 6. Interactive Weekly Study & Exam Calendar
+        item {
+            ChildCalendarCard(events = calendarEvents)
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
@@ -326,51 +380,35 @@ fun KidHomeContent(
 }
 
 @Composable
-fun KidTasksContent(navController: NavController) {
-    val tasks = listOf(
-        Pair("Finish Math Homework Exercises 1-10", "+50 pts"),
-        Pair("Read 20 minutes before bedtime", "+30 pts"),
-        Pair("Clean desk and organize school bag", "+20 pts")
-    )
-
+fun KidTasksContent(
+    tasks: List<PendingTaskItem>,
+    requests: List<CreditRequest>,
+    onToggleTask: (String) -> Unit,
+    onRequestCreditsClick: () -> Unit
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        item { Spacer(modifier = Modifier.height(4.dp)) }
+
+        // Pending Tasks with points & tap-to-complete
         item {
-            Text("Today's Tasks & Quests", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = KidTextDark)
-            Text("Complete tasks to unlock extra weekend play time", fontSize = 13.sp, color = KidTextMuted)
-            Spacer(modifier = Modifier.height(4.dp))
+            PendingTasksCard(
+                tasks = tasks,
+                onToggleTask = onToggleTask,
+                onRequestCreditsClick = onRequestCreditsClick
+            )
         }
 
-        items(tasks.size) { i ->
-            val (task, pts) = tasks[i]
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = KidCardWhite),
-                border = androidx.compose.foundation.BorderStroke(1.dp, KidBorder)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(task, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = KidTextDark, modifier = Modifier.weight(1f))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFECFDF5)
-                    ) {
-                        Text(pts, color = KidGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
-                    }
-                }
-            }
+        // Credit Request Audit History
+        item {
+            CreditRequestHistoryCard(requests = requests)
         }
+
+        item { Spacer(modifier = Modifier.height(24.dp)) }
     }
 }
 
@@ -430,7 +468,7 @@ fun KidSosContent(
 
         Text(
             if (sosSent) "Parent phone has received your live GPS coordinates. Dialing emergency 112..."
-            else "Press and hold for 2 seconds to alert parents and fast-dial 112 with your live location.",
+            else "Press and hold to alert parents and fast-dial 112 with your live location.",
             fontSize = 14.sp,
             color = KidTextMuted,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -709,4 +747,3 @@ fun DeviceRejectedScreen(
         }
     }
 }
-
