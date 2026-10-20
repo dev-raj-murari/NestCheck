@@ -1,4 +1,4 @@
-﻿package com.nestcheck.app.ui.child.home
+package com.nestcheck.app.ui.child.home
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -81,7 +81,16 @@ class ChildDashboardViewModel @Inject constructor(
             address = alert.address
         )
 
-        // 2. Dispatch real-time high-priority push notification to parent hub
+        // 2. Dispatch real-time Geofence breach to SyncManager for Parent App Alert & Map Pulse
+        syncManager.triggerGeofenceBreach(
+            zoneName = alert.zoneName,
+            address = alert.address,
+            lat = alert.latitude,
+            lng = alert.longitude,
+            isExit = true
+        )
+
+        // 3. Dispatch real-time high-priority push notification to parent hub
         val timeNow = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
         notificationRepository.addNotification(
             type = NotificationType.GEOFENCE_EXIT,
@@ -104,6 +113,7 @@ class ChildDashboardViewModel @Inject constructor(
 
     fun dismissGeofenceAlert() {
         _geofenceBreach.value = null
+        syncManager.dismissGeofenceBreach()
     }
 
     fun openRequestCreditsDialog() {

@@ -627,13 +627,14 @@ fun ScreenTimeTab(
                         val context = LocalContext.current
                         Button(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))
+                                val targetEmergencyPhone = syncState.emergencyContactPhone.ifBlank { "+919876543210" }
+                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$targetEmergencyPhone"))
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = GflRed),
                             shape = RoundedCornerShape(20.dp)
                         ) {
-                            Text("Call 112 Emergency", fontWeight = FontWeight.Bold)
+                            Text("Call Emergency Contact (${syncState.emergencyContactPhone.ifBlank { "+919876543210" }})", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -1653,103 +1654,32 @@ fun LocationMapTab(
     val lat = syncState.kidLatitude
     val lon = syncState.kidLongitude
     val childName = syncState.activeChildName
-    val childAvatar = if (syncState.activeChildAvatar.isNotBlank()) syncState.activeChildAvatar else childName.take(1)
+    val childAvatar = if (syncState.activeChildAvatar.isNotBlank()) syncState.activeChildAvatar else "🦊"
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var showGeofence by remember { mutableStateOf(true) }
 
-    val mapHtml = remember(lat, lon, childName, childAvatar, showGeofence) {
-        """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-            <style>
-                body, html, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #E5E7EB; }
-                .custom-marker {
-                    background: #0B57D0;
-                    color: white;
-                    border: 3px solid white;
-                    border-radius: 50%;
-                    width: 38px;
-                    height: 38px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: bold;
-                    font-size: 16px;
-                    box-shadow: 0 4px 12px rgba(11,87,208,0.45);
-                    animation: pulse 2s infinite;
-                }
-                @keyframes pulse {
-                    0% { box-shadow: 0 0 0 0 rgba(11,87,208,0.6); }
-                    70% { box-shadow: 0 0 0 16px rgba(11,87,208,0); }
-                    100% { box-shadow: 0 0 0 0 rgba(11,87,208,0); }
-                }
-            </style>
-        </head>
-        <body>
-            <div id="map"></div>
-            <script>
-                var lat = $lat;
-                var lon = $lon;
-                var map = L.map('map', { zoomControl: false }).setView([lat, lon], 15);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19,
-                    attribution: 'OpenStreetMap, CARTO'
-                }).addTo(map);
-
-                ${if (showGeofence) """
-                L.circle([lat, lon], {
-                    color: '#0B57D0',
-                    fillColor: '#D3E3FD',
-                    fillOpacity: 0.35,
-                    radius: 350
-                }).addTo(map);
-                """ else ""}
-
-                var markerHtml = '<div class="custom-marker">$childAvatar</div>';
-                var customIcon = L.divIcon({
-                    html: markerHtml,
-                    className: '',
-                    iconSize: [38, 38],
-                    iconAnchor: [19, 19]
-                });
-
-                var marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
-                marker.bindPopup('<b>$childName</b><br>${syncState.locationAddress}').openPopup();
-
-                function recenterMap() {
-                    map.setView([lat, lon], 16);
-                }
-            </script>
-        </body>
-        </html>
-        """.trimIndent()
+    val mapHtml = remember(lat, lon, childName, childAvatar, showGeofence, syncState.geofenceBreachActive) {
+        com.nestcheck.app.ui.parent.location.MapTemplateHelper.buildMpstmeMapHtml(
+            lat = lat,
+            lon = lon,
+            childName = childName,
+            childAvatar = childAvatar,
+            address = syncState.locationAddress,
+            showGeofence = showGeofence,
+            isGeofenceBreached = syncState.geofenceBreachActive
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { ctx ->
-                WebView(ctx).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.loadWithOverviewMode = true
-                    settings.useWideViewPort = true
-                    webChromeClient = WebChromeClient()
-                    webViewClient = WebViewClient()
-                    loadDataWithBaseURL("https://openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
-                    webViewRef = this
-                }
-            },
-            update = { webView ->
-                webView.loadDataWithBaseURL("https://openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
-            }
+        com.nestcheck.app.ui.parent.location.MpstmeCampusMapView(
+            childName = childName,
+            childAvatar = childAvatar,
+            lat = lat,
+            lon = lon,
+            locationAddress = syncState.locationAddress,
+            showGeofence = showGeofence,
+            isGeofenceBreached = syncState.geofenceBreachActive
         )
-
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)

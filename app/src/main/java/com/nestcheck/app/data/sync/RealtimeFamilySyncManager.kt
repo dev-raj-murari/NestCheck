@@ -1,4 +1,4 @@
-﻿package com.nestcheck.app.data.sync
+package com.nestcheck.app.data.sync
 
 import android.content.Context
 import com.google.firebase.firestore.FirebaseFirestore
@@ -176,10 +176,21 @@ class RealtimeFamilySyncManager @Inject constructor(
                     val isLocked = snapshot.getBoolean("isDeviceLocked") ?: _syncState.value.isDeviceLocked
                     val remainingMins = snapshot.getLong("remainingMinutes")?.toInt() ?: _syncState.value.remainingMinutes
                     val dailyLimit = snapshot.getLong("dailyLimitMinutes")?.toInt() ?: _syncState.value.dailyLimitMinutes
-                    val lat = snapshot.getDouble("kidLatitude") ?: _syncState.value.kidLatitude
-                    val lng = snapshot.getDouble("kidLongitude") ?: _syncState.value.kidLongitude
+                    val rawLat = snapshot.getDouble("kidLatitude") ?: _syncState.value.kidLatitude
+                    val rawLng = snapshot.getDouble("kidLongitude") ?: _syncState.value.kidLongitude
+                    // Ensure dummy location defaults to MPSTME NMIMS Mumbai (19.1075, 72.8372) and not legacy SF emulator coordinates
+                    val (lat, lng) = if (rawLat > 30.0 || rawLng < 0.0) {
+                        19.1075 to 72.8372
+                    } else {
+                        rawLat to rawLng
+                    }
                     val battery = snapshot.getLong("kidBattery")?.toInt() ?: _syncState.value.kidBattery
-                    val address = snapshot.getString("locationAddress") ?: _syncState.value.locationAddress
+                    val rawAddress = snapshot.getString("locationAddress") ?: _syncState.value.locationAddress
+                    val address = if (rawAddress.isBlank() || rawAddress.contains("San Francisco") || rawAddress.contains("Market St")) {
+                        "MPSTME NMIMS, Vile Parle West, Mumbai, Maharashtra"
+                    } else {
+                        rawAddress
+                    }
                     val sos = snapshot.getBoolean("sosActive") ?: false
                     val purchasesBlocked = snapshot.getBoolean("inAppPurchasesBlocked") ?: true
                     val activeChild = snapshot.getString("activeChildName") ?: _syncState.value.activeChildName
