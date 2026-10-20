@@ -1,4 +1,4 @@
-﻿package com.nestcheck.app.ui.parent.shell
+package com.nestcheck.app.ui.parent.shell
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -29,10 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.compose.ui.viewinterop.AndroidView
 import com.nestcheck.app.data.repository.ProfileRepository
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
@@ -584,7 +580,7 @@ private fun ParentContactRow(icon: String, label: String, name: String, phone: S
         Spacer(modifier = Modifier.width(8.dp))
         Column {
             Text(label + ": " + name, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = GflTextDark)
-            Text(phone + " â€¢ " + email, fontSize = 11.sp, color = GflTextMuted)
+            Text(phone + " • " + email, fontSize = 11.sp, color = GflTextMuted)
         }
     }
 }
@@ -810,7 +806,7 @@ fun ScreenTimeTab(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(syncState.activeChildName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GflTextDark)
-                                Text("${syncState.childAge} years old • ${syncState.schoolHours}", fontSize = 12.sp, color = GflTextMuted)
+                                Text("${syncState.childAge} years old � ${syncState.schoolHours}", fontSize = 12.sp, color = GflTextMuted)
                             }
                         }
 
@@ -939,7 +935,7 @@ fun ScreenTimeTab(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Time limits", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
-                        Text("Daily limit: ${syncState.dailyLimitMinutes / 60} hrs • School: ${syncState.schoolHours}", fontSize = 13.sp, color = GflTextMuted)
+                        Text("Daily limit: ${syncState.dailyLimitMinutes / 60} hrs � School: ${syncState.schoolHours}", fontSize = 13.sp, color = GflTextMuted)
                     }
                     Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
                 }
@@ -1093,7 +1089,7 @@ fun ControlsTab(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "${syncState.activeChildName} • Controls & Limits",
+                    text = "${syncState.activeChildName} � Controls & Limits",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = GflTextDark
@@ -1110,7 +1106,7 @@ fun ControlsTab(
         item {
             ControlCardItem(
                 title = "Screen Time & Limits",
-                subtitle = "Daily caps, countdown & bedtimes • ${syncState.dailyLimitMinutes / 60}h limit",
+                subtitle = "Daily caps, countdown & bedtimes � ${syncState.dailyLimitMinutes / 60}h limit",
                 icon = Icons.Outlined.HourglassEmpty,
                 iconTint = GflBlue,
                 onClick = { navController.navigate(Screen.TimeLimits.route) }
@@ -1132,7 +1128,7 @@ fun ControlsTab(
         item {
             ControlCardItem(
                 title = "School Timetable & Google Calendar",
-                subtitle = if (syncState.timetableSyncedToCalendar) "Synced to Google Calendar 📅 • PDF Active" else "Upload PDF timetable & sync events to Calendar",
+                subtitle = if (syncState.timetableSyncedToCalendar) "Synced to Google Calendar ?? � PDF Active" else "Upload PDF timetable & sync events to Calendar",
                 icon = Icons.Outlined.CalendarMonth,
                 iconTint = GflBlue,
                 onClick = { navController.navigate(Screen.Timetable.route) }
@@ -1143,7 +1139,7 @@ fun ControlsTab(
         item {
             ControlCardItem(
                 title = "Remote Device Lockout",
-                subtitle = if (syncState.isDeviceLocked) "Device is currently LOCKED 🔒" else "Device unlocked • Tap to freeze screen",
+                subtitle = if (syncState.isDeviceLocked) "Device is currently LOCKED ??" else "Device unlocked � Tap to freeze screen",
                 icon = if (syncState.isDeviceLocked) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
                 iconTint = if (syncState.isDeviceLocked) GflRed else GflGreen,
                 onClick = { navController.navigate(Screen.RemoteLock.route) }
@@ -1204,7 +1200,7 @@ fun ControlsTab(
                         Column {
                             Text("Google Play Purchases", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
                             Text(
-                                if (syncState.inAppPurchasesBlocked) "In-app purchases BLOCKED 🔒" else "Purchases allowed",
+                                if (syncState.inAppPurchasesBlocked) "In-app purchases BLOCKED ??" else "Purchases allowed",
                                 fontSize = 13.sp,
                                 color = if (syncState.inAppPurchasesBlocked) GflRed else GflTextMuted,
                                 fontWeight = if (syncState.inAppPurchasesBlocked) FontWeight.Bold else FontWeight.Normal
@@ -1224,7 +1220,7 @@ fun ControlsTab(
         item {
             ControlCardItem(
                 title = "Google Chrome & Web Filtering",
-                subtitle = "Explicit website blocker • Safe browsing active",
+                subtitle = "Explicit website blocker � Safe browsing active",
                 icon = Icons.Outlined.Public,
                 iconTint = Color(0xFF4285F4),
                 onClick = { navController.navigate(Screen.BlockedUrl.route) }
@@ -1281,7 +1277,7 @@ fun SafetyTab(
         item {
             ControlCardItem(
                 title = "Live Location & Safe Geofences",
-                subtitle = "Google Maps full view • ${syncState.locationAddress}",
+                subtitle = "Google Maps full view � ${syncState.locationAddress}",
                 icon = Icons.Outlined.LocationOn,
                 iconTint = GflBlue,
                 onClick = { navController.navigate(Screen.LiveMap.route) }
@@ -1583,7 +1579,7 @@ fun MoreTab(
         item {
             ControlCardItem(
                 title = "Device Battery & Hardware Telemetry",
-                subtitle = "Child battery level: ${syncState.kidBattery}% • Realtime status",
+                subtitle = "Child battery level: ${syncState.kidBattery}% � Realtime status",
                 icon = Icons.Outlined.BatteryStd,
                 iconTint = Color(0xFF16A34A),
                 onClick = { navController.navigate(Screen.BatteryMonitor.route) }
@@ -1659,7 +1655,7 @@ fun LocationMapTab(
     val lat = syncState.kidLatitude
     val lon = syncState.kidLongitude
     val childName = syncState.activeChildName
-    val childAvatar = if (syncState.activeChildAvatar.isNotBlank()) syncState.activeChildAvatar else "🦊"
+    val childAvatar = if (syncState.activeChildAvatar.isNotBlank()) syncState.activeChildAvatar else "??"
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var showGeofence by remember { mutableStateOf(true) }
 
@@ -1759,7 +1755,7 @@ fun LocationMapTab(
                         Column {
                             Text(syncState.activeChildName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
                             Text(syncState.locationAddress, fontSize = 13.sp, color = GflTextMuted, maxLines = 1)
-                            Text("${syncState.kidBattery}% \u26A1 â€¢ MPSTME Safe Geofence", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
+                            Text("${syncState.kidBattery}% \u26A1 • MPSTME Safe Geofence", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
                         }
                     }
                     IconButton(onClick = {

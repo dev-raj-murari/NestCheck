@@ -41,17 +41,10 @@ data class FamilySyncState(
     val remainingMinutes: Int = 105,
     val dailyLimitMinutes: Int = 180,
     val kidLatitude: Double = 19.1075,
-<<<<<<< HEAD
     val kidLongitude: Double = 72.8369,
     val kidBattery: Int = 88,
     val isCharging: Boolean = false,
     val locationAddress: String = "MPSTME NMIMS, Vile Parle West, Mumbai",
-=======
-    val kidLongitude: Double = 72.8372,
-    val kidBattery: Int = 84,
-    val isCharging: Boolean = false,
-    val locationAddress: String = "MPSTME NMIMS, Vile Parle West, Mumbai, Maharashtra",
->>>>>>> origin/main
     val lastLocationUpdate: Long = System.currentTimeMillis(),
     val sosActive: Boolean = false,
     val sosTimestamp: Long = 0L,
@@ -146,13 +139,11 @@ class RealtimeFamilySyncManager @Inject constructor(
             isDeviceLocked = preferences.isDeviceLocked,
             remainingMinutes = preferences.remainingMinutes,
             dailyLimitMinutes = preferences.dailyLimitMinutes,
-<<<<<<< HEAD
             kidLatitude = preferences.kidLatitude,
             kidLongitude = preferences.kidLongitude,
             locationAddress = preferences.locationAddress,
             kidBattery = preferences.kidBattery,
-            timetableSyncedToCalendar = preferences.timetableSyncedToCalendar
-=======
+            timetableSyncedToCalendar = preferences.timetableSyncedToCalendar,
             emergencyContactPhone = preferences.emergencyContactPhone,
             emergencyContactName = preferences.emergencyContactName,
             activeParentRole = preferences.activeParentRole,
@@ -166,7 +157,6 @@ class RealtimeFamilySyncManager @Inject constructor(
             guardianName = preferences.guardianName,
             guardianPhone = preferences.guardianPhone,
             guardianEmail = preferences.guardianEmail
->>>>>>> origin/main
         )
     )
     val syncState: StateFlow<FamilySyncState> = _syncState.asStateFlow()
@@ -254,14 +244,11 @@ class RealtimeFamilySyncManager @Inject constructor(
                     preferences.isDeviceLocked = isLocked
                     preferences.remainingMinutes = remainingMins
                     preferences.dailyLimitMinutes = dailyLimit
-<<<<<<< HEAD
                     preferences.kidLatitude = lat
                     preferences.kidLongitude = lng
                     preferences.kidBattery = battery
                     preferences.locationAddress = address
-=======
                     preferences.emergencyContactPhone = emergencyPhone
->>>>>>> origin/main
 
                     // Real-time notifications for critical safety state changes
                     if (!previousSos && sos) {
