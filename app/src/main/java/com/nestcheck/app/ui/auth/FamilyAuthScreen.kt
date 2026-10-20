@@ -46,6 +46,7 @@ enum class AuthStep {
     LOGIN,
     SIGNUP,
     OTP_VERIFICATION,
+    PARENT_SETUP,
     CHILD_SETUP,
     SUCCESS
 }
@@ -566,7 +567,8 @@ fun LoginView(
     isLoading: Boolean,
     onBackClick: () -> Unit,
     onLoginSubmit: () -> Unit,
-    onSignUpNav: () -> Unit
+    onSignUpNav: () -> Unit,
+    onConfigureHouseholdParents: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var passwordVisible by remember { mutableStateOf(false) }
@@ -755,7 +757,8 @@ fun SignUpView(
     isLoading: Boolean,
     onBackClick: () -> Unit,
     onSignUpSubmit: () -> Unit,
-    onLoginNav: () -> Unit
+    onLoginNav: () -> Unit,
+    onConfigureHouseholdParents: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var passwordVisible by remember { mutableStateOf(false) }

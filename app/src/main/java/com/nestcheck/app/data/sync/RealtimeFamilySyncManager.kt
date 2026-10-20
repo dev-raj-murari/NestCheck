@@ -1,4 +1,4 @@
-package com.nestcheck.app.data.sync
+﻿package com.nestcheck.app.data.sync
 
 import android.content.Context
 import com.google.firebase.firestore.FirebaseFirestore
@@ -6,6 +6,8 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.nestcheck.app.core.NestCheckNotificationManager
 import com.nestcheck.app.data.local.NestCheckPreferences
 import com.nestcheck.app.data.model.ChildProfile
+import com.nestcheck.app.data.model.ParentContactInfo
+import com.nestcheck.app.data.model.HouseholdParentConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +63,12 @@ data class FamilySyncState(
     val guardianEmail: String = "rohit@nestcheck.app",
     val geofenceBreachActive: Boolean = false,
     val geofenceBreachZone: String = "",
+    val breachZoneName: String = "",
+    val householdParents: HouseholdParentConfig = HouseholdParentConfig(
+        father = ParentContactInfo(name = "Dev Raj", role = "Father", email = "devraj@nestcheck.app", phone = "+91 98765 43210"),
+        mother = ParentContactInfo(name = "Priya", role = "Mother", email = "priya@nestcheck.app", phone = "+91 98765 43212"),
+        guardian = ParentContactInfo(name = "Rohit", role = "Guardian", email = "rohit@nestcheck.app", phone = "+91 98765 43211")
+    ),
     val geofenceBreachAddress: String = "",
     val geofenceBreachTimestamp: Long = 0L,
     val householdChildren: List<ChildProfile> = listOf(
@@ -286,6 +294,32 @@ class RealtimeFamilySyncManager @Inject constructor(
         )
         preferences.activeParentRole = role
         preferences.parentName = name
+    }
+
+    fun updateParentContactDetails(
+        father: ParentContactInfo,
+        mother: ParentContactInfo,
+        guardian: ParentContactInfo,
+        emergencyPhone: String,
+        activeRole: String = "Father"
+    ) {
+        updateParentContactDetails(
+            fatherName = father.name,
+            fatherEmail = father.email,
+            fatherPhone = father.phone,
+            motherName = mother.name,
+            motherEmail = mother.email,
+            motherPhone = mother.phone,
+            guardianName = guardian.name,
+            guardianEmail = guardian.email,
+            guardianPhone = guardian.phone,
+            emergencyPhone = emergencyPhone,
+            emergencyName = activeRole
+        )
+        switchActiveParent(activeRole)
+        _syncState.value = _syncState.value.copy(
+            householdParents = HouseholdParentConfig(father, mother, guardian)
+        )
     }
 
     fun updateParentContactDetails(
@@ -521,6 +555,14 @@ class RealtimeFamilySyncManager @Inject constructor(
                     )
             } catch (e: Exception) {}
         }
+    }
+
+    fun triggerChildEmergencySOS(location: String = "MPSTME NMIMS Campus, Vile Parle West, Mumbai", lat: Double = 19.1075, lng: Double = 72.8372) {
+        triggerKidSos(true, location, lat, lng)
+    }
+
+    fun dismissSosEmergency() {
+        triggerKidSos(false, "", _syncState.value.kidLatitude, _syncState.value.kidLongitude)
     }
 
     fun approveChildDevice() {

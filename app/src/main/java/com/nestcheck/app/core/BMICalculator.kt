@@ -7,6 +7,15 @@ object BMICalculator {
         return weightKg / (heightM * heightM)
     }
 
+    fun getBMICategory(bmi: Float): String {
+        return when {
+            bmi < 18.5f -> "Healthy Weight"
+            bmi in 18.5f..24.9f -> "Healthy Weight"
+            bmi in 25.0f..29.9f -> "Overweight"
+            else -> "Obese"
+        }
+    }
+
     fun calculateStepGoal(age: Int, bmi: Float): Int {
         // Simplified logic
         return when {

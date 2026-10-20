@@ -69,9 +69,10 @@ fun ParentShellScreen(
         containerColor = GflBgLight,
         topBar = {
             FamilyLinkTopBar(
-                childName = syncState.activeChildName,
+                syncState = syncState,
+                syncManager = syncManager,
                 onAlertsClick = { navController.navigate(Screen.NotificationHistory.route) },
-                onProfileClick = { navController.navigate(Screen.ChildProfile.route) }
+                onChildProfileClick = { navController.navigate(Screen.ChildProfile.route) }
             )
         },
         bottomBar = {
@@ -168,12 +169,12 @@ fun ParentShellScreen(
 fun FamilyLinkTopBar(
     syncState: com.nestcheck.app.data.sync.FamilySyncState,
     syncManager: RealtimeFamilySyncManager,
-    profileRepository: ProfileRepository,
+
     onAlertsClick: () -> Unit,
     onChildProfileClick: () -> Unit
 ) {
-    val children by profileRepository.getAllChildren().collectAsState(initial = emptyList())
-    val activeChildrenList = if (children.isEmpty()) profileRepository.getDefaultChildren() else children
+    val activeChildrenList = syncState.householdChildren
+
 
     var showChildMenu by remember { mutableStateOf(false) }
     var showParentMenu by remember { mutableStateOf(false) }
@@ -378,7 +379,7 @@ fun FamilyLinkTopBar(
                                         fontSize = 14.sp
                                     )
                                     Text(
-                                        text = "Age " + child.age + " â€¢ " + child.deviceModel,
+                                        text = "Age " + child.age + " \u2022 " + child.grade,
                                         fontSize = 11.sp,
                                         color = GflTextMuted
                                     )
@@ -395,7 +396,7 @@ fun FamilyLinkTopBar(
                             }
                         },
                         onClick = {
-                            syncManager.switchActiveChild(child)
+                            syncManager.switchActiveChild(child.name, child.avatarUrl)
                             showChildMenu = false
                         }
                     )
