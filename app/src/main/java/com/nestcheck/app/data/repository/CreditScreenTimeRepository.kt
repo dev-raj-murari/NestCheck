@@ -26,6 +26,8 @@ class CreditScreenTimeRepository @Inject constructor() {
     )
     val wallet: StateFlow<CreditScreenTimeWallet> = _wallet.asStateFlow()
 
+    private var burnCarrySeconds = 0L
+
     private val _ledger = MutableStateFlow(
         listOf(
             CreditLedgerRecord(
@@ -90,11 +92,15 @@ class CreditScreenTimeRepository @Inject constructor() {
      */
     fun deductElapsedSeconds(seconds: Long) {
         val current = _wallet.value
-        if (!current.isTrackingActive || current.activeRemainingSeconds <= 0) return
+        if (!current.isTrackingActive || current.activeRemainingSeconds <= 0 || seconds <= 0) return
 
-        val newRemainingSeconds = (current.activeRemainingSeconds - seconds).coerceAtLeast(0L)
-        // 2 credits per 60 seconds
-        val burnedCreditsThisTick = ((seconds * 2) / 60.0).toInt().coerceAtLeast(0)
+        val consumed = minOf(seconds, current.activeRemainingSeconds)
+        val newRemainingSeconds = current.activeRemainingSeconds - consumed
+        // 2 credits per 60 seconds = 1 credit per 30 seconds. Per-second ticks used to round
+        // down to 0 credits every time, so carry the leftover seconds between ticks.
+        burnCarrySeconds += consumed
+        val burnedCreditsThisTick = (burnCarrySeconds / SECONDS_PER_CREDIT).toInt()
+        burnCarrySeconds %= SECONDS_PER_CREDIT
         val newTotalCredits = (current.totalCredits - burnedCreditsThisTick).coerceAtLeast(0)
 
         _wallet.value = current.copy(
@@ -107,8 +113,10 @@ class CreditScreenTimeRepository @Inject constructor() {
 
     fun redeemCreditsForScreenTime(creditsToSpend: Int): Int {
         val current = _wallet.value
-        val spend = creditsToSpend.coerceAtMost(current.totalCredits)
-        val addedMinutes = spend / 2
+        val affordable = creditsToSpend.coerceIn(0, current.totalCredits)
+        val addedMinutes = affordable / 2
+        // Only spend credits that actually convert to whole minutes (odd credit isn't wasted).
+        val spend = addedMinutes * 2
         val addedSeconds = addedMinutes * 60L
 
         _wallet.value = current.copy(
@@ -143,5 +151,9 @@ class CreditScreenTimeRepository @Inject constructor() {
             totalCredits = correspondingCredits,
             lastSyncTimestamp = System.currentTimeMillis()
         )
+    }
+
+    private companion object {
+        const val SECONDS_PER_CREDIT = 30L
     }
 }

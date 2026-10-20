@@ -36,6 +36,8 @@ android {
         buildConfigField("String", "GMAIL_SENDER", "\"$gmailSender\"")
         buildConfigField("String", "GMAIL_API_KEY", "\"$gmailApiKey\"")
         manifestPlaceholders["appLabel"] = "NestCheck"
+        // Put maps.apiKey=... in local.properties (gitignored). Empty key = map tiles stay blank.
+        manifestPlaceholders["mapsApiKey"] = localProps.getProperty("maps.apiKey") ?: ""
     }
 
     buildTypes {

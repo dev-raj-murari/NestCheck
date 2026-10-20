@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -31,7 +32,7 @@
         <!-- Google Maps API Key for Live Location & Geofencing -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyNestCheckSafetyDemoDevelopmentKey123" />
+            android:value="${mapsApiKey}" />
 
         <activity
             android:name=".ParentMainActivity"
@@ -93,7 +94,11 @@
         <service
             android:name=".service.ScreenTimeService"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Tracks child screen time against earned credits" />
+        </service>
     </application>
 
 </manifest>

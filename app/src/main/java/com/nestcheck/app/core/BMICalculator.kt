@@ -9,9 +9,9 @@ object BMICalculator {
 
     fun getBMICategory(bmi: Float): String {
         return when {
-            bmi < 18.5f -> "Healthy Weight"
-            bmi in 18.5f..24.9f -> "Healthy Weight"
-            bmi in 25.0f..29.9f -> "Overweight"
+            bmi < 18.5f -> "Underweight"
+            bmi < 25.0f -> "Healthy Weight"
+            bmi < 30.0f -> "Overweight"
             else -> "Obese"
         }
     }
