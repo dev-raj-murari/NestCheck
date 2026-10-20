@@ -669,6 +669,41 @@ fun ScreenTimeTab(
             }
         }
 
+
+        // 1. Google Family Link Screen Time Card with Vertical App Capsules
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        val hours = (syncState.dailyLimitMinutes - syncState.remainingMinutes).coerceAtLeast(0) / 60
+                        val mins = (syncState.dailyLimitMinutes - syncState.remainingMinutes).coerceAtLeast(0) % 60
+                        Text(
+                            text = "${hours}h ${mins}m",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GflTextDark
+                        )
+                        Text(
+                            text = "Time spent today (Limit: ${syncState.dailyLimitMinutes / 60}h)",
+                            fontSize = 13.sp,
+                            color = GflTextMuted
+                        )
+                    }
+                }
+            }
+        }
+
         // Fancy Horizontal Quick-Actions Carousel
         item {
             Text("Quick Family Actions", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = GflTextDark)
@@ -721,40 +756,6 @@ fun ScreenTimeTab(
                         color = Color(0xFF0B57D0),
                         onClick = { navController.navigate(Screen.Timetable.route) }
                     )
-                }
-            }
-        }
-
-        // 1. Google Family Link Screen Time Card with Vertical App Capsules
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
-                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        val hours = (syncState.dailyLimitMinutes - syncState.remainingMinutes).coerceAtLeast(0) / 60
-                        val mins = (syncState.dailyLimitMinutes - syncState.remainingMinutes).coerceAtLeast(0) % 60
-                        Text(
-                            text = "${hours}h ${mins}m",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = GflTextDark
-                        )
-                        Text(
-                            text = "Time spent today (Limit: ${syncState.dailyLimitMinutes / 60}h)",
-                            fontSize = 13.sp,
-                            color = GflTextMuted
-                        )
-                    }
                 }
             }
         }
