@@ -21,7 +21,7 @@ class FamilySharingRepository @Inject constructor() {
         listOf(
             CoParentMember(
                 id = "mem_1",
-                name = "Dev Raj Murari",
+                name = "Dev Raj",
                 email = "devramj2006@gmail.com",
                 role = CoParentRole.ADMIN,
                 status = InviteStatus.ACTIVE,
@@ -30,8 +30,8 @@ class FamilySharingRepository @Inject constructor() {
             ),
             CoParentMember(
                 id = "mem_2",
-                name = "Priya Murari",
-                email = "priya.murari@example.com",
+                name = "Priya",
+                email = "priya@nestcheck.app",
                 role = CoParentRole.ADMIN,
                 status = InviteStatus.ACTIVE,
                 invitedAt = "03 Oct 2026",

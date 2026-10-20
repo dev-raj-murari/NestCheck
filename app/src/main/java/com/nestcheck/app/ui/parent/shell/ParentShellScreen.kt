@@ -53,8 +53,6 @@ val GflAmber = Color(0xFFF9AB00)
 enum class FamilyLinkTab(val label: String) {
     TODAY("Today"),
     CONTROLS("Controls"),
-    SAFETY("Safety"),
-    REWARDS("Rewards"),
     MORE("More")
 }
 
@@ -108,32 +106,6 @@ fun ParentShellScreen(
                     )
                 )
                 NavigationBarItem(
-                    selected = selectedTab == FamilyLinkTab.SAFETY,
-                    onClick = { selectedTab = FamilyLinkTab.SAFETY },
-                    icon = { Icon(Icons.Outlined.Shield, contentDescription = "Safety") },
-                    label = { Text("Safety", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = GflBlue,
-                        indicatorColor = GflBlueContainer,
-                        selectedTextColor = GflBlue,
-                        unselectedIconColor = GflTextMuted,
-                        unselectedTextColor = GflTextMuted
-                    )
-                )
-                NavigationBarItem(
-                    selected = selectedTab == FamilyLinkTab.REWARDS,
-                    onClick = { selectedTab = FamilyLinkTab.REWARDS },
-                    icon = { Icon(Icons.Outlined.Stars, contentDescription = "Rewards") },
-                    label = { Text("Rewards", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = GflBlue,
-                        indicatorColor = GflBlueContainer,
-                        selectedTextColor = GflBlue,
-                        unselectedIconColor = GflTextMuted,
-                        unselectedTextColor = GflTextMuted
-                    )
-                )
-                NavigationBarItem(
                     selected = selectedTab == FamilyLinkTab.MORE,
                     onClick = { selectedTab = FamilyLinkTab.MORE },
                     icon = { Icon(Icons.Outlined.MoreHoriz, contentDescription = "More") },
@@ -157,8 +129,6 @@ fun ParentShellScreen(
             when (selectedTab) {
                 FamilyLinkTab.TODAY -> ScreenTimeTab(navController, syncState, syncManager)
                 FamilyLinkTab.CONTROLS -> ControlsTab(navController, syncState, syncManager)
-                FamilyLinkTab.SAFETY -> SafetyTab(navController, syncState)
-                FamilyLinkTab.REWARDS -> RewardsTab(navController, syncState)
                 FamilyLinkTab.MORE -> MoreTab(navController, syncState)
             }
         }
@@ -637,6 +607,16 @@ fun ScreenTimeTab(
                         ) {
                             Text("Call Emergency Contact (${syncState.emergencyContactPhone.ifBlank { "+919876543210" }})", fontWeight = FontWeight.Bold)
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { syncManager.clearSOS() },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.7f)),
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Dismiss SOS Alert", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
@@ -806,7 +786,7 @@ fun ScreenTimeTab(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(syncState.activeChildName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GflTextDark)
-                                Text("${syncState.childAge} years old • ${syncState.schoolHours}", fontSize = 12.sp, color = GflTextMuted)
+                                Text("${syncState.childAge} years old ï¿½ ${syncState.schoolHours}", fontSize = 12.sp, color = GflTextMuted)
                             }
                         }
 
@@ -935,7 +915,7 @@ fun ScreenTimeTab(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Time limits", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
-                        Text("Daily limit: ${syncState.dailyLimitMinutes / 60} hrs • School: ${syncState.schoolHours}", fontSize = 13.sp, color = GflTextMuted)
+                        Text("Daily limit: ${syncState.dailyLimitMinutes / 60} hrs ï¿½ School: ${syncState.schoolHours}", fontSize = 13.sp, color = GflTextMuted)
                     }
                     Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = GflTextMuted)
                 }
@@ -1089,7 +1069,7 @@ fun ControlsTab(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "${syncState.activeChildName} • Controls & Limits",
+                    text = "${syncState.activeChildName} ï¿½ Controls & Limits",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = GflTextDark
@@ -1106,7 +1086,7 @@ fun ControlsTab(
         item {
             ControlCardItem(
                 title = "Screen Time & Limits",
-                subtitle = "Daily caps, countdown & bedtimes • ${syncState.dailyLimitMinutes / 60}h limit",
+                subtitle = "Daily caps, countdown & bedtimes ï¿½ ${syncState.dailyLimitMinutes / 60}h limit",
                 icon = Icons.Outlined.HourglassEmpty,
                 iconTint = GflBlue,
                 onClick = { navController.navigate(Screen.TimeLimits.route) }
@@ -1128,7 +1108,7 @@ fun ControlsTab(
         item {
             ControlCardItem(
                 title = "School Timetable & Google Calendar",
-                subtitle = if (syncState.timetableSyncedToCalendar) "Synced to Google Calendar ?? • PDF Active" else "Upload PDF timetable & sync events to Calendar",
+                subtitle = if (syncState.timetableSyncedToCalendar) "Synced to Google Calendar ?? ï¿½ PDF Active" else "Upload PDF timetable & sync events to Calendar",
                 icon = Icons.Outlined.CalendarMonth,
                 iconTint = GflBlue,
                 onClick = { navController.navigate(Screen.Timetable.route) }
@@ -1139,7 +1119,7 @@ fun ControlsTab(
         item {
             ControlCardItem(
                 title = "Remote Device Lockout",
-                subtitle = if (syncState.isDeviceLocked) "Device is currently LOCKED ??" else "Device unlocked • Tap to freeze screen",
+                subtitle = if (syncState.isDeviceLocked) "Device is currently LOCKED ??" else "Device unlocked ï¿½ Tap to freeze screen",
                 icon = if (syncState.isDeviceLocked) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
                 iconTint = if (syncState.isDeviceLocked) GflRed else GflGreen,
                 onClick = { navController.navigate(Screen.RemoteLock.route) }
@@ -1154,17 +1134,6 @@ fun ControlsTab(
                 icon = Icons.Outlined.Category,
                 iconTint = Color(0xFFD97706),
                 onClick = { navController.navigate(Screen.CategoryQuotas.route) }
-            )
-        }
-
-        // Rohit's F25: Age-Based Safety Presets
-        item {
-            ControlCardItem(
-                title = "Age-Based Safety Presets",
-                subtitle = "1-tap rules tuned for Ages 4-7, 8-12, or 13-17",
-                icon = Icons.Outlined.ChildCare,
-                iconTint = Color(0xFF059669),
-                onClick = { navController.navigate(Screen.AgePresets.route) }
             )
         }
 
@@ -1214,285 +1183,6 @@ fun ControlsTab(
                     )
                 }
             }
-        }
-
-        // Google Chrome & Web
-        item {
-            ControlCardItem(
-                title = "Google Chrome & Web Filtering",
-                subtitle = "Explicit website blocker • Safe browsing active",
-                icon = Icons.Outlined.Public,
-                iconTint = Color(0xFF4285F4),
-                onClick = { navController.navigate(Screen.BlockedUrl.route) }
-            )
-        }
-
-        item { Spacer(modifier = Modifier.height(24.dp)) }
-    }
-}
-
-@Composable
-fun SafetyTab(
-    navController: NavController,
-    syncState: com.nestcheck.app.data.sync.FamilySyncState
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFFEF2F2)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Outlined.Shield, contentDescription = null, tint = GflRed, modifier = Modifier.size(36.dp))
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Child Safety & Security Hub",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = GflTextDark
-                )
-                Text(
-                    text = "GPS telemetry, emergency dispatchers & permissions",
-                    fontSize = 12.sp,
-                    color = GflTextMuted
-                )
-            }
-        }
-
-        // Dedicated Live Location Map
-        item {
-            ControlCardItem(
-                title = "Live Location & Safe Geofences",
-                subtitle = "Google Maps full view • ${syncState.locationAddress}",
-                icon = Icons.Outlined.LocationOn,
-                iconTint = GflBlue,
-                onClick = { navController.navigate(Screen.LiveMap.route) }
-            )
-        }
-
-        // Dedicated App Notification History
-        item {
-            ControlCardItem(
-                title = "App Notification History",
-                subtitle = "Track messages & alerts received by child's apps",
-                icon = Icons.Outlined.NotificationsActive,
-                iconTint = Color(0xFF7C3AED),
-                onClick = { navController.navigate(Screen.NotificationHistory.route) }
-            )
-        }
-
-        // Sinan's F41: Emergency Contacts Hub & Fast-Dial Dispatcher
-        item {
-            ControlCardItem(
-                title = "Emergency Contacts Hub & Fast-Dial",
-                subtitle = "One-tap emergency dispatcher & 112 police hotline",
-                icon = Icons.Outlined.WarningAmber,
-                iconTint = GflRed,
-                onClick = { navController.navigate(Screen.EmergencyHub.route) }
-            )
-        }
-
-        // Sinan's F35: App Permission Auditor & Sensitive Scanner
-        item {
-            ControlCardItem(
-                title = "App Permission Auditor",
-                subtitle = "Audit Camera, Microphone & Location access in child apps",
-                icon = Icons.Outlined.Security,
-                iconTint = Color(0xFFD97706),
-                onClick = { navController.navigate(Screen.PermissionAuditor.route) }
-            )
-        }
-
-        // Sinan's F34: Low-Battery Last Ping Telemetry
-        item {
-            ControlCardItem(
-                title = "Low-Battery Last Ping Telemetry",
-                subtitle = "Emergency GPS beacon transmitted when battery < 15%",
-                icon = Icons.Outlined.BatteryAlert,
-                iconTint = Color(0xFFEA580C),
-                onClick = { navController.navigate(Screen.LowBatteryPing.route) }
-            )
-        }
-
-        // Sinan's F33: System-Wide SafeSearch Lock
-        item {
-            ControlCardItem(
-                title = "System-Wide SafeSearch Lock",
-                subtitle = "Enforce SafeSearch filtering across Google, Bing & YouTube",
-                icon = Icons.Outlined.Shield,
-                iconTint = Color(0xFF2563EB),
-                onClick = { navController.navigate(Screen.SafeSearch.route) }
-            )
-        }
-
-        // Sinan's F31: Trusted Contacts Whitelist Directory
-        item {
-            ControlCardItem(
-                title = "Trusted Contacts Whitelist Directory",
-                subtitle = "Whitelist phone numbers & automatically block unknown callers",
-                icon = Icons.Outlined.ContactPhone,
-                iconTint = Color(0xFF059669),
-                onClick = { navController.navigate(Screen.TrustedContacts.route) }
-            )
-        }
-
-        // Sinan's F9: App Quarantine Guard
-        item {
-            ControlCardItem(
-                title = "App Quarantine Guard",
-                subtitle = "Sandbox and isolate unverified newly installed applications",
-                icon = Icons.Outlined.FolderDelete,
-                iconTint = Color(0xFF475569),
-                onClick = { navController.navigate(Screen.AppQuarantine.route) }
-            )
-        }
-
-        // Sinan's F10: Child Safe Check-In
-        item {
-            ControlCardItem(
-                title = "Child Safe Check-In",
-                subtitle = "Instant arrival pings for school, home & sports activities",
-                icon = Icons.Outlined.WhereToVote,
-                iconTint = Color(0xFF0284C7),
-                onClick = { navController.navigate(Screen.ChildCheckIn.route) }
-            )
-        }
-
-        item { Spacer(modifier = Modifier.height(24.dp)) }
-    }
-}
-
-@Composable
-fun RewardsTab(
-    navController: NavController,
-    syncState: com.nestcheck.app.data.sync.FamilySyncState
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFFEF3C7)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Outlined.Stars, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(36.dp))
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Habits, Routines & Rewards",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = GflTextDark
-                )
-                Text(
-                    text = "Chores, homework, stars ledger & focus challenges",
-                    fontSize = 12.sp,
-                    color = GflTextMuted
-                )
-            }
-        }
-
-        // Rohit's F22: Chore Chart & Daily Task Assignment
-        item {
-            ControlCardItem(
-                title = "Chores & Daily Duty Chart",
-                subtitle = "Assign tasks, approve completed chores & award points",
-                icon = Icons.Outlined.CheckCircle,
-                iconTint = Color(0xFF16A34A),
-                onClick = { navController.navigate(Screen.Chores.route) }
-            )
-        }
-
-        // Rohit's F5: Homework Check-Off & Verification
-        item {
-            ControlCardItem(
-                title = "Homework Check-Off Tracker",
-                subtitle = "Track assignments, verify completion & unlock play time",
-                icon = Icons.Outlined.MenuBook,
-                iconTint = Color(0xFF2563EB),
-                onClick = { navController.navigate(Screen.Homework.route) }
-            )
-        }
-
-        // Rohit's F4: Credit System & Reward Ledger
-        item {
-            ControlCardItem(
-                title = "Credits Ledger & Reward System",
-                subtitle = "Award stars for good behavior & view credit transactions",
-                icon = Icons.Outlined.Stars,
-                iconTint = Color(0xFFD97706),
-                onClick = { navController.navigate(Screen.Credits.route) }
-            )
-        }
-
-        // Rohit's F23: Reward Shop
-        item {
-            ControlCardItem(
-                title = "Reward Shop Catalog",
-                subtitle = "Exchange stars for treats, playtime & exciting rewards",
-                icon = Icons.Outlined.ShoppingBag,
-                iconTint = Color(0xFFDB2777),
-                onClick = { navController.navigate(Screen.RewardShop.route) }
-            )
-        }
-
-        // Rohit's F21: Focus Mode Study Timer
-        item {
-            ControlCardItem(
-                title = "Focus Mode Study Timer",
-                subtitle = "Timed distraction-free focus sessions with app lockouts",
-                icon = Icons.Outlined.SelfImprovement,
-                iconTint = Color(0xFF7C3AED),
-                onClick = { navController.navigate(Screen.FocusMode.route) }
-            )
-        }
-
-        // Rohit's F28: Habit Challenges & Streaks
-        item {
-            ControlCardItem(
-                title = "Habit Streaks & Challenges",
-                subtitle = "Daily routine streaks, badges & consistency milestones",
-                icon = Icons.Outlined.EmojiEvents,
-                iconTint = Color(0xFFF59E0B),
-                onClick = { navController.navigate(Screen.HabitChallenges.route) }
-            )
-        }
-
-        // Rohit's F40: Hydration / Water Reminder
-        item {
-            ControlCardItem(
-                title = "Hydration & Health Reminders",
-                subtitle = "Daily water drinking alerts & health telemetry goals",
-                icon = Icons.Outlined.WaterDrop,
-                iconTint = Color(0xFF0284C7),
-                onClick = { navController.navigate(Screen.WaterReminder.route) }
-            )
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
@@ -1579,7 +1269,7 @@ fun MoreTab(
         item {
             ControlCardItem(
                 title = "Device Battery & Hardware Telemetry",
-                subtitle = "Child battery level: ${syncState.kidBattery}% • Realtime status",
+                subtitle = "Child battery level: ${syncState.kidBattery}% ï¿½ Realtime status",
                 icon = Icons.Outlined.BatteryStd,
                 iconTint = Color(0xFF16A34A),
                 onClick = { navController.navigate(Screen.BatteryMonitor.route) }
@@ -1594,17 +1284,6 @@ fun MoreTab(
                 icon = Icons.Outlined.Assessment,
                 iconTint = Color(0xFF4F46E5),
                 onClick = { navController.navigate(Screen.Reports.route) }
-            )
-        }
-
-        // Language & Localization Settings
-        item {
-            ControlCardItem(
-                title = "Language & Regional Settings",
-                subtitle = "Choose interface language & regional preferences",
-                icon = Icons.Outlined.Language,
-                iconTint = Color(0xFF0284C7),
-                onClick = { navController.navigate(Screen.LanguageSettings.route) }
             )
         }
 

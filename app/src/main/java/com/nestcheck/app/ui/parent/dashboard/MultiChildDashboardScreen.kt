@@ -110,7 +110,7 @@ fun MultiChildDashboardScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Murari Household",
+                            text = "My Family",
                             color = TextWhite,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp

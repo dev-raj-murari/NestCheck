@@ -17,7 +17,7 @@ class DeviceLockRepository @Inject constructor() {
         mapOf(
             "child_1" to DeviceLockState(
                 childId = "child_1",
-                childName = "Leo Murari",
+                childName = "Leo",
                 isLocked = false,
                 lockReason = "None",
                 customMessage = "Device paused by parent for dinner.",
@@ -25,7 +25,7 @@ class DeviceLockRepository @Inject constructor() {
             ),
             "child_2" to DeviceLockState(
                 childId = "child_2",
-                childName = "Maya Murari",
+                childName = "Maya",
                 isLocked = true,
                 lockReason = "Bedtime Curfew Enforcement",
                 customMessage = "Time to wind down and sleep! Device locked until 06:30 AM.",

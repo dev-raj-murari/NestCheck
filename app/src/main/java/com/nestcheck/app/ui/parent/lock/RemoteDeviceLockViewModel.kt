@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 data class RemoteLockUiState(
     val selectedChildId: String = "child_1",
-    val selectedChildName: String = "Leo Murari",
+    val selectedChildName: String = "Leo",
     val lockState: DeviceLockState? = null,
     val selectedDurationMinutes: Int? = 30,
     val customMessage: String = "Dinner time! Device paused until we finish eating.",

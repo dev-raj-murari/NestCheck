@@ -604,7 +604,30 @@ class RealtimeFamilySyncManager @Inject constructor(
         triggerKidSos(true, location, lat, lng)
     }
 
+    fun clearSOS() {
+        preferences.sosActive = false
+        _syncState.value = _syncState.value.copy(sosActive = false, sosTimestamp = 0L, sosLocation = "")
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf(
+                            "sosActive" to false,
+                            "sosTimestamp" to 0L,
+                            "sosLocation" to ""
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
+
     fun dismissSosEmergency() {
+        clearSOS()
+    }
+
+    private fun legacy_dismissSosEmergency() {
         triggerKidSos(false, "", _syncState.value.kidLatitude, _syncState.value.kidLongitude)
     }
 

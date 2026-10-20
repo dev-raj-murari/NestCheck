@@ -15,7 +15,7 @@ class HouseholdRepository @Inject constructor() {
         listOf(
             HouseholdChild(
                 id = "child_1",
-                name = "Leo Murari",
+                name = "Leo",
                 age = 10,
                 grade = "5th Grade",
                 avatarColorHex = 0xFF00E5FF,
@@ -32,7 +32,7 @@ class HouseholdRepository @Inject constructor() {
             ),
             HouseholdChild(
                 id = "child_2",
-                name = "Maya Murari",
+                name = "Maya",
                 age = 14,
                 grade = "9th Grade",
                 avatarColorHex = 0xFFFF4081,
@@ -49,7 +49,7 @@ class HouseholdRepository @Inject constructor() {
             ),
             HouseholdChild(
                 id = "child_3",
-                name = "Sam Murari",
+                name = "Sam",
                 age = 7,
                 grade = "2nd Grade",
                 avatarColorHex = 0xFF00E676,

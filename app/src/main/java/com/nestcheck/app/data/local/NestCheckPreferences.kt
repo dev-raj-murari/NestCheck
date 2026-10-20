@@ -124,6 +124,10 @@ class NestCheckPreferences @Inject constructor(
         get() = prefs.getBoolean(KEY_TIMETABLE_CALENDAR_SYNCED, false)
         set(value) = prefs.edit().putBoolean(KEY_TIMETABLE_CALENDAR_SYNCED, value).apply()
 
+    var sosActive: Boolean
+        get() = prefs.getBoolean(KEY_SOS_ACTIVE, false)
+        set(value) = prefs.edit().putBoolean(KEY_SOS_ACTIVE, value).apply()
+
     var childCredits: Int
         get() = prefs.getInt(KEY_CHILD_CREDITS, 210)
         set(value) = prefs.edit().putInt(KEY_CHILD_CREDITS, value).apply()

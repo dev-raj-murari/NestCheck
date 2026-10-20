@@ -107,7 +107,7 @@ class SOSViewModel @Inject constructor(
     }
 
     fun cancelActiveEmergency() {
-        syncManager.dismissSosEmergency()
+        syncManager.clearSOS()
         sosRepository.cancelEmergency()
         _isHolding.value = false
         _countdownSeconds.value = 3

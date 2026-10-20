@@ -83,7 +83,7 @@ fun RemoteDeviceLockScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                listOf("child_1" to "Leo Murari", "child_2" to "Maya Murari", "child_3" to "Sam Murari").forEach { (id, name) ->
+                listOf("child_1" to "Leo", "child_2" to "Maya", "child_3" to "Sam").forEach { (id, name) ->
                     val isSelected = uiState.selectedChildId == id
                     Box(
                         modifier = Modifier

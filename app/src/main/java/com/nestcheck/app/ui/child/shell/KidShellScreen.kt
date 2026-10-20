@@ -43,6 +43,7 @@ import com.nestcheck.app.ui.child.home.components.*
 enum class KidTab(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Outlined.Home),
     TASKS("Tasks & Rewards", Icons.Outlined.EmojiEvents),
+    WELLNESS("Wellness", Icons.Outlined.SelfImprovement),
     SOS("Emergency SOS", Icons.Outlined.WarningAmber)
 }
 
@@ -186,6 +187,7 @@ fun KidShellScreen(
                     onToggleTask = { dashboardViewModel.toggleTask(it) },
                     onRequestCreditsClick = { dashboardViewModel.openRequestCreditsDialog() }
                 )
+                KidTab.WELLNESS -> KidWellnessTab(navController)
                 KidTab.SOS -> KidSosContent(viewModel.syncManager, syncState)
             }
         }
@@ -722,6 +724,74 @@ fun DeviceRejectedScreen(
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Text("Back to Login", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+fun KidWellnessTab(navController: androidx.navigation.NavController) {
+    androidx.compose.foundation.lazy.LazyColumn(
+        modifier = androidx.compose.ui.Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item { Spacer(modifier = androidx.compose.ui.Modifier.height(12.dp)) }
+        item {
+            Text(
+                "Wellness & Focus",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = KidTextDark,
+                modifier = androidx.compose.ui.Modifier.padding(bottom = 4.dp)
+            )
+        }
+        item {
+            KidFeatureCard("Focus Mode & Study Timer", "Distraction-free study sessions", Icons.Outlined.SelfImprovement, KidBlue) {
+                navController.navigate(com.nestcheck.app.navigation.Screen.FocusMode.route)
+            }
+        }
+        item {
+            KidFeatureCard("Habit Streaks & Challenges", "Daily routines, badges & milestones", Icons.Outlined.EmojiEvents, Color(0xFFF59E0B)) {
+                navController.navigate(com.nestcheck.app.navigation.Screen.HabitChallenges.route)
+            }
+        }
+        item {
+            KidFeatureCard("Hydration & Health Reminders", "Water intake goals & health alerts", Icons.Outlined.WaterDrop, Color(0xFF0284C7)) {
+                navController.navigate(com.nestcheck.app.navigation.Screen.WaterReminder.route)
+            }
+        }
+        item {
+            KidFeatureCard("Safe Check-In", "Ping your arrival at school or home", Icons.Outlined.WhereToVote, KidGreen) {
+                navController.navigate(com.nestcheck.app.navigation.Screen.ChildCheckIn.route)
+            }
+        }
+        item { Spacer(modifier = androidx.compose.ui.Modifier.height(24.dp)) }
+    }
+}
+
+@Composable
+private fun KidFeatureCard(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color, onClick: () -> Unit) {
+    Card(
+        modifier = androidx.compose.ui.Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = KidCardWhite),
+        border = androidx.compose.foundation.BorderStroke(1.dp, KidBorder)
+    ) {
+        Row(
+            modifier = androidx.compose.ui.Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = androidx.compose.ui.Modifier.size(44.dp).clip(CircleShape).background(tint.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) { Icon(icon, contentDescription = null, tint = tint, modifier = androidx.compose.ui.Modifier.size(22.dp)) }
+            Spacer(modifier = androidx.compose.ui.Modifier.width(14.dp))
+            Column(modifier = androidx.compose.ui.Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = KidTextDark)
+                Text(subtitle, fontSize = 12.sp, color = KidTextMuted)
+            }
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = KidTextMuted)
         }
     }
 }
