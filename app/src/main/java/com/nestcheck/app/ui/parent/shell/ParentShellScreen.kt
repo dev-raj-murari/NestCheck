@@ -1,4 +1,4 @@
-package com.nestcheck.app.ui.parent.shell
+﻿package com.nestcheck.app.ui.parent.shell
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -29,6 +29,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.ui.viewinterop.AndroidView
+import com.nestcheck.app.data.repository.ProfileRepository
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -69,9 +74,10 @@ fun ParentShellScreen(
         containerColor = GflBgLight,
         topBar = {
             FamilyLinkTopBar(
-                childName = syncState.activeChildName,
+                syncState = syncState,
+                syncManager = syncManager,
                 onAlertsClick = { navController.navigate(Screen.NotificationHistory.route) },
-                onProfileClick = { navController.navigate(Screen.ChildProfile.route) }
+                onChildProfileClick = { navController.navigate(Screen.ChildProfile.route) }
             )
         },
         bottomBar = {
@@ -163,12 +169,130 @@ fun ParentShellScreen(
     }
 }
 
+
 @Composable
 fun FamilyLinkTopBar(
-    childName: String,
+    syncState: com.nestcheck.app.data.sync.FamilySyncState,
+    syncManager: RealtimeFamilySyncManager,
+
     onAlertsClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onChildProfileClick: () -> Unit
 ) {
+    val activeChildrenList = syncState.householdChildren
+
+
+    var showChildMenu by remember { mutableStateOf(false) }
+    var showParentMenu by remember { mutableStateOf(false) }
+    var showParentInfoDialog by remember { mutableStateOf(false) }
+
+    // Dialog showing Parent Personal Info
+    if (showParentInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showParentInfoDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Person, contentDescription = null, tint = GflBlue)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Parent & Household Info", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = GflTextDark)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Manage primary parent profile, co-guardians, and child emergency contacts.",
+                        fontSize = 13.sp,
+                        color = GflTextMuted
+                    )
+
+                    HorizontalDivider(color = GflBorder)
+
+                    // Active Parent Profile
+                    Text("CURRENT ACTIVE PARENT", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = GflBlue)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(GflBgLight, RoundedCornerShape(12.dp))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(GflBlueContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = when (syncState.activeParentRole.lowercase()) {
+                                    "father", "dad" -> "\uD83D\uDC68"
+                                    "mother", "mom" -> "\uD83D\uDC69"
+                                    else -> "\uD83D\uDEE1\uFE0F"
+                                },
+                                fontSize = 20.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(syncState.activeParentName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
+                            Text("Role: " + syncState.activeParentRole, fontSize = 13.sp, color = GflTextMuted)
+                        }
+                    }
+
+                    // Registered Household Contacts
+                    Text("HOUSEHOLD PARENTS / GUARDIANS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = GflTextDark)
+                    val dad = syncState.householdParents.father
+                    val mom = syncState.householdParents.mother
+                    val guardian = syncState.householdParents.guardian
+
+                    if (dad.name.isNotBlank()) {
+                        ParentContactRow(icon = "\uD83D\uDC68", label = "Father / Dad", name = dad.name, phone = dad.phone, email = dad.email)
+                    }
+                    if (mom.name.isNotBlank()) {
+                        ParentContactRow(icon = "\uD83D\uDC69", label = "Mother / Mom", name = mom.name, phone = mom.phone, email = mom.email)
+                    }
+                    if (guardian.name.isNotBlank()) {
+                        ParentContactRow(icon = "\uD83D\uDEE1\uFE0F", label = "Guardian", name = guardian.name, phone = guardian.phone, email = guardian.email)
+                    }
+
+                    HorizontalDivider(color = GflBorder)
+
+                    // Emergency Contact
+                    Text("CHILD EMERGENCY FAST-DIAL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = GflRed)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFEF2F2), RoundedCornerShape(12.dp))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Outlined.Warning, contentDescription = null, tint = GflRed, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = syncState.emergencyContactPhone.ifBlank { "+91 98765 43210" },
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = GflRed
+                            )
+                            Text(
+                                text = "Dials directly when child presses SOS (replaces 112)",
+                                fontSize = 11.sp,
+                                color = GflTextMuted
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showParentInfoDialog = false }) {
+                    Text("Close", fontWeight = FontWeight.Bold, color = GflBlue)
+                }
+            },
+            containerColor = GflCardWhite,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -177,47 +301,131 @@ fun FamilyLinkTopBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = GflCardWhite,
-            border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder),
-            modifier = Modifier.clickable(onClick = onProfileClick)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
+        // TOP-LEFT: Child Info ONLY with Dropdown to Switch Child
+        Box {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = GflCardWhite,
+                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder),
+                modifier = Modifier.clickable { showChildMenu = true }
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .background(GflBlueContainer),
-                    contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(GflBlueContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (syncState.activeChildAvatar.isNotBlank()) syncState.activeChildAvatar else syncState.activeChildName.take(1),
+                            fontWeight = FontWeight.Bold,
+                            color = GflBlue,
+                            fontSize = 14.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = childName.take(1),
-                        fontWeight = FontWeight.Bold,
-                        color = GflBlue,
-                        fontSize = 14.sp
+                        text = syncState.activeChildName,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = GflTextDark
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Outlined.KeyboardArrowDown,
+                        contentDescription = "Switch Child",
+                        tint = GflTextMuted,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            // Dropdown to switch child
+            DropdownMenu(
+                expanded = showChildMenu,
+                onDismissRequest = { showChildMenu = false },
+                modifier = Modifier.background(GflCardWhite)
+            ) {
                 Text(
-                    text = childName,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = GflTextDark
+                    text = "SWITCH CHILD",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = GflTextMuted,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Outlined.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = GflTextMuted,
-                    modifier = Modifier.size(18.dp)
+
+                activeChildrenList.forEach { child ->
+                    val isSelected = child.name.equals(syncState.activeChildName, ignoreCase = true)
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isSelected) GflBlueContainer else GflBgLight),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = if (child.avatarUrl.isNotBlank()) child.avatarUrl else child.name.take(1),
+                                        fontSize = 13.sp
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = child.name,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) GflBlue else GflTextDark,
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = "Age " + child.age + " \u2022 " + child.grade,
+                                        fontSize = 11.sp,
+                                        color = GflTextMuted
+                                    )
+                                }
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Icon(
+                                        imageVector = Icons.Outlined.Check,
+                                        contentDescription = null,
+                                        tint = GflBlue,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        },
+                        onClick = {
+                            syncManager.switchActiveChild(child.name, child.avatarUrl)
+                            showChildMenu = false
+                        }
+                    )
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = GflBorder)
+
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.Person, contentDescription = null, tint = GflBlue, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Manage Child Profile & Avatar", color = GflBlue, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        }
+                    },
+                    onClick = {
+                        showChildMenu = false
+                        onChildProfileClick()
+                    }
                 )
             }
         }
 
+        // TOP-RIGHT: Alerts + Parent Info with Dropdown to Switch Parent
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -225,28 +433,158 @@ fun FamilyLinkTopBar(
             IconButton(
                 onClick = onAlertsClick,
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(38.dp)
                     .clip(CircleShape)
                     .background(GflCardWhite)
+                    .border(1.dp, GflBorder, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.NotificationsActive,
                     contentDescription = "Notification History",
                     tint = GflBlue,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
 
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(GflBlue)
-                    .clickable(onClick = onProfileClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("P", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            // Top-right Parent Pill & Switcher
+            Box {
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = GflCardWhite,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder),
+                    modifier = Modifier.clickable { showParentMenu = true }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(GflBlue),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val parentEmoji = when (syncState.activeParentRole.lowercase()) {
+                                "father", "dad" -> "\uD83D\uDC68"
+                                "mother", "mom" -> "\uD83D\uDC69"
+                                else -> "\uD83D\uDEE1\uFE0F"
+                            }
+                            Text(
+                                text = parentEmoji,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
+                            Text(
+                                text = syncState.activeParentName,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = GflTextDark
+                            )
+                            Text(
+                                text = syncState.activeParentRole,
+                                fontSize = 10.sp,
+                                color = GflTextMuted
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Outlined.KeyboardArrowDown,
+                            contentDescription = "Switch Parent",
+                            tint = GflTextMuted,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                // Dropdown to switch parent or view info
+                DropdownMenu(
+                    expanded = showParentMenu,
+                    onDismissRequest = { showParentMenu = false },
+                    modifier = Modifier.background(GflCardWhite)
+                ) {
+                    Text(
+                        text = "SWITCH PARENT ACCOUNT",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = GflTextMuted,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+
+                    val parentRoles = listOf(
+                        Triple("Father", "\uD83D\uDC68", syncState.householdParents.father.name.ifBlank { "Father" }),
+                        Triple("Mother", "\uD83D\uDC69", syncState.householdParents.mother.name.ifBlank { "Mother" }),
+                        Triple("Guardian", "\uD83D\uDEE1\uFE0F", syncState.householdParents.guardian.name.ifBlank { "Guardian" })
+                    )
+
+                    parentRoles.forEach { (role, icon, name) ->
+                        val isSelected = role.equals(syncState.activeParentRole, ignoreCase = true)
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(icon, fontSize = 16.sp)
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = name,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isSelected) GflBlue else GflTextDark,
+                                            fontSize = 13.sp
+                                        )
+                                        Text(text = role, fontSize = 11.sp, color = GflTextMuted)
+                                    }
+                                    if (isSelected) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        Icon(
+                                            imageVector = Icons.Outlined.Check,
+                                            contentDescription = null,
+                                            tint = GflBlue,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            },
+                            onClick = {
+                                syncManager.switchActiveParent(role)
+                                showParentMenu = false
+                            }
+                        )
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = GflBorder)
+
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Outlined.AccountCircle, contentDescription = null, tint = GflBlue, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text("Parent Personal Info", color = GflBlue, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                            }
+                        },
+                        onClick = {
+                            showParentMenu = false
+                            showParentInfoDialog = true
+                        }
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun ParentContactRow(icon: String, label: String, name: String, phone: String, email: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(icon, fontSize = 16.sp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(label + ": " + name, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = GflTextDark)
+            Text(phone + " â€¢ " + email, fontSize = 11.sp, color = GflTextMuted)
         }
     }
 }
@@ -294,13 +632,14 @@ fun ScreenTimeTab(
                         val context = LocalContext.current
                         Button(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))
+                                val targetEmergencyPhone = syncState.emergencyContactPhone.ifBlank { "+919876543210" }
+                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$targetEmergencyPhone"))
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = GflRed),
                             shape = RoundedCornerShape(20.dp)
                         ) {
-                            Text("Call 112 Emergency", fontWeight = FontWeight.Bold)
+                            Text("Call Emergency Contact (${syncState.emergencyContactPhone.ifBlank { "+919876543210" }})", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -1310,63 +1649,87 @@ fun ControlCardItem(
     }
 }
 
+
 @Composable
 fun LocationMapTab(
     navController: NavController,
     syncState: com.nestcheck.app.data.sync.FamilySyncState
 ) {
-    val childLocation = LatLng(syncState.kidLatitude, syncState.kidLongitude)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(childLocation, 15f)
-    }
+    val context = LocalContext.current
+    val lat = syncState.kidLatitude
+    val lon = syncState.kidLongitude
+    val childName = syncState.activeChildName
+    val childAvatar = if (syncState.activeChildAvatar.isNotBlank()) syncState.activeChildAvatar else "🦊"
+    var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    var showGeofence by remember { mutableStateOf(true) }
 
-    LaunchedEffect(syncState.kidLatitude, syncState.kidLongitude) {
-        cameraPositionState.position = CameraPosition.fromLatLngZoom(childLocation, 15f)
+    val mapHtml = remember(lat, lon, childName, childAvatar, showGeofence, syncState.geofenceBreachActive) {
+        com.nestcheck.app.ui.parent.location.MapTemplateHelper.buildMpstmeMapHtml(
+            lat = lat,
+            lon = lon,
+            childName = childName,
+            childAvatar = childAvatar,
+            address = syncState.locationAddress,
+            showGeofence = showGeofence,
+            isGeofenceBreached = syncState.geofenceBreachActive
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Real Google Maps View
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = true)
-        ) {
-            Marker(
-                state = MarkerState(position = childLocation),
-                title = syncState.activeChildName,
-                snippet = "${syncState.kidBattery}% battery • ${syncState.locationAddress}"
-            )
-            Circle(
-                center = childLocation,
-                radius = 350.0,
-                fillColor = Color(0x224285F4),
-                strokeColor = Color(0xFF4285F4),
-                strokeWidth = 3f
-            )
-        }
-
-        // Top button to expand into Dedicated Live Map Screen
-        Surface(
+        com.nestcheck.app.ui.parent.location.MpstmeCampusMapView(
+            childName = childName,
+            childAvatar = childAvatar,
+            lat = lat,
+            lon = lon,
+            locationAddress = syncState.locationAddress,
+            showGeofence = showGeofence,
+            isGeofenceBreached = syncState.geofenceBreachActive
+        )
+        Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp),
-            shape = RoundedCornerShape(20.dp),
-            color = Color.White,
-            shadowElevation = 6.dp
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .clickable { navController.navigate(Screen.LiveMap.route) }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color.White,
+                shadowElevation = 6.dp
             ) {
-                Icon(Icons.Outlined.Fullscreen, contentDescription = null, tint = GflBlue, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Full Map View", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = GflBlue)
+                Row(
+                    modifier = Modifier
+                        .clickable {
+                            val uri = Uri.parse("geo:$lat,$lon?q=$lat,$lon(${Uri.encode("Child: $childName")})")
+                            val mapIntent = Intent(Intent.ACTION_VIEW, uri)
+                            context.startActivity(mapIntent)
+                        }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Outlined.Map, contentDescription = null, tint = GflBlue, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Google Maps", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = GflBlue)
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color.White,
+                shadowElevation = 6.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .clickable { navController.navigate(Screen.LiveMap.route) }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Outlined.Fullscreen, contentDescription = null, tint = GflBlue, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Full View", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = GflBlue)
+                }
             }
         }
 
-        // Bottom Child Location Sheet
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -1390,19 +1753,19 @@ fun LocationMapTab(
                                 .background(GflBlueContainer),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(syncState.activeChildName.take(1), fontWeight = FontWeight.Bold, color = GflBlue)
+                            Text(childAvatar, fontWeight = FontWeight.Bold, color = GflBlue, fontSize = 18.sp)
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(syncState.activeChildName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
-                            Text(syncState.locationAddress, fontSize = 13.sp, color = GflTextMuted)
-                            Text("${syncState.kidBattery}% ⚡ • Live geofence safe", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
+                            Text(syncState.locationAddress, fontSize = 13.sp, color = GflTextMuted, maxLines = 1)
+                            Text("${syncState.kidBattery}% \u26A1 â€¢ MPSTME Safe Geofence", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
                         }
                     }
                     IconButton(onClick = {
-                        navController.navigate(Screen.LiveMap.route)
+                        webViewRef?.evaluateJavascript("recenterMap();", null)
                     }) {
-                        Icon(Icons.Outlined.Navigation, contentDescription = "Navigate", tint = GflBlue)
+                        Icon(Icons.Outlined.MyLocation, contentDescription = "Recenter", tint = GflBlue)
                     }
                 }
             }

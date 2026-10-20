@@ -17,23 +17,23 @@ data class GeofenceZone(
     val notificationEnabled: Boolean = true
 )
 
-// Default zones centered on MPSTME NMIMS, Mumbai
+// Default zones for MPSTME Mumbai Maharashtra
 object DefaultGeofences {
     val SCHOOL = GeofenceZone(
         id = "school_mpstme",
-        name = "MPSTME NMIMS",
+        name = "MPSTME NMIMS Mumbai",
         latitude = 19.1075,
-        longitude = 72.8369,
+        longitude = 72.8372,
         radiusMeters = 300f,
         isActive = true,
         zoneType = ZoneType.SAFE_ZONE,
-        description = "MPSTME NMIMS Campus & Labs Safe Zone"
+        description = "MPSTME College Campus Safe Zone (Vile Parle West)"
     )
     val HOME = GeofenceZone(
-        id = "home_vile_parle",
+        id = "home_mumbai",
         name = "Home Residence",
-        latitude = 19.1020,
-        longitude = 72.8390,
+        latitude = 19.1265,
+        longitude = 72.8310,
         radiusMeters = 500f,
         isActive = true,
         zoneType = ZoneType.SAFE_ZONE,
@@ -41,12 +41,12 @@ object DefaultGeofences {
     )
     val DANGEROUS_QUARRY = GeofenceZone(
         id = "restricted_area",
-        name = "Juhu Beach Deep Water Area",
-        latitude = 19.0980,
+        name = "Restricted Industrial Zone",
+        latitude = 19.1420,
         longitude = 72.8250,
         radiusMeters = 400f,
         isActive = true,
         zoneType = ZoneType.RESTRICTED_ZONE,
-        description = "Hazardous Out-of-bounds Coastline Zone"
+        description = "Hazardous Out-of-bounds Zone"
     )
 }

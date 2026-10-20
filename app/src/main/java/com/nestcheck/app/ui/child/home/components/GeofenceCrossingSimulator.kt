@@ -1,4 +1,4 @@
-package com.nestcheck.app.ui.child.home.components
+﻿package com.nestcheck.app.ui.child.home.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -91,7 +91,7 @@ fun GeofenceCrossingSimulator(
             }
 
             Text(
-                text = "Simulate crossing Oakridge School safe boundary to test real-time parent notification dispatch and GPS telemetry updates.",
+                text = "Simulate crossing MPSTME NMIMS Mumbai safe boundary to test real-time parent notification dispatch and GPS telemetry updates.",
                 color = textMuted,
                 fontSize = 12.sp
             )

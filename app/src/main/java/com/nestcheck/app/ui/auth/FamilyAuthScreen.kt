@@ -1,4 +1,4 @@
-package com.nestcheck.app.ui.auth
+﻿package com.nestcheck.app.ui.auth
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -34,6 +34,8 @@ import androidx.navigation.NavController
 import com.nestcheck.app.core.PasswordValidationResult
 import com.nestcheck.app.core.PasswordValidator
 import com.nestcheck.app.data.remote.EmailService
+import com.nestcheck.app.data.model.ParentContactInfo
+import com.nestcheck.app.data.model.HouseholdParentConfig
 import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import com.nestcheck.app.navigation.Screen
 import com.nestcheck.app.ui.parent.shell.ParentShellViewModel
@@ -44,6 +46,7 @@ enum class AuthStep {
     LOGIN,
     SIGNUP,
     OTP_VERIFICATION,
+    PARENT_SETUP,
     CHILD_SETUP,
     SUCCESS
 }
@@ -82,6 +85,26 @@ fun FamilyAuthScreen(
     var isSendingOtp by remember { mutableStateOf(false) }
 
     // Child Setup Form State
+    val syncState by syncManager.syncState.collectAsState()
+
+    // Household Parents (Mom, Dad, Guardian) & Child Emergency Contact State
+    var dadName by remember { mutableStateOf(syncState.householdParents.father.name.ifBlank { "Rohit Patil" }) }
+    var dadRole by remember { mutableStateOf("Father") }
+    var dadEmail by remember { mutableStateOf(syncState.householdParents.father.email.ifBlank { "rohit7681010@gmail.com" }) }
+    var dadPhone by remember { mutableStateOf(syncState.householdParents.father.phone.ifBlank { "+91 98765 43210" }) }
+
+    var momName by remember { mutableStateOf(syncState.householdParents.mother.name.ifBlank { "Priya Patil" }) }
+    var momRole by remember { mutableStateOf("Mother") }
+    var momEmail by remember { mutableStateOf(syncState.householdParents.mother.email.ifBlank { "priya.patil@gmail.com" }) }
+    var momPhone by remember { mutableStateOf(syncState.householdParents.mother.phone.ifBlank { "+91 98765 43211" }) }
+
+    var guardianName by remember { mutableStateOf(syncState.householdParents.guardian.name) }
+    var guardianRole by remember { mutableStateOf("Guardian") }
+    var guardianEmail by remember { mutableStateOf(syncState.householdParents.guardian.email) }
+    var guardianPhone by remember { mutableStateOf(syncState.householdParents.guardian.phone) }
+
+    var emergencyContactPhone by remember { mutableStateOf(syncState.emergencyContactPhone.ifBlank { "+91 98765 43210" }) }
+
     var childName by remember { mutableStateOf("Olivia") }
     var childAgeText by remember { mutableStateOf("11") }
     var dailyLimitHours by remember { mutableStateOf("3") }
@@ -192,6 +215,7 @@ fun FamilyAuthScreen(
                             }
                         }
                     },
+                    onConfigureHouseholdParents = { currentStep = AuthStep.PARENT_SETUP },
                     onSignUpNav = {
                         authError = null
                         currentStep = AuthStep.SIGNUP
@@ -225,6 +249,7 @@ fun FamilyAuthScreen(
                         }
                         sendRealOtp(emailOrUsername)
                     },
+                    onConfigureHouseholdParents = { currentStep = AuthStep.PARENT_SETUP },
                     onLoginNav = {
                         authError = null
                         currentStep = AuthStep.LOGIN
@@ -265,11 +290,48 @@ fun FamilyAuthScreen(
                         } else {
                             otpError = null
                             if (isParentRole) {
-                                currentStep = AuthStep.CHILD_SETUP
+                                currentStep = AuthStep.PARENT_SETUP
                             } else {
                                 currentStep = AuthStep.SUCCESS
                             }
                         }
+                    }
+                )
+            }
+            AuthStep.PARENT_SETUP -> {
+                HouseholdParentsSetupView(
+                    dadName = dadName,
+                    onDadNameChange = { dadName = it },
+                    dadEmail = dadEmail,
+                    onDadEmailChange = { dadEmail = it },
+                    dadPhone = dadPhone,
+                    onDadPhoneChange = { dadPhone = it },
+                    momName = momName,
+                    onMomNameChange = { momName = it },
+                    momEmail = momEmail,
+                    onMomEmailChange = { momEmail = it },
+                    momPhone = momPhone,
+                    onMomPhoneChange = { momPhone = it },
+                    guardianName = guardianName,
+                    onGuardianNameChange = { guardianName = it },
+                    guardianEmail = guardianEmail,
+                    onGuardianEmailChange = { guardianEmail = it },
+                    guardianPhone = guardianPhone,
+                    onGuardianPhoneChange = { guardianPhone = it },
+                    emergencyContactPhone = emergencyContactPhone,
+                    onEmergencyContactPhoneChange = { emergencyContactPhone = it },
+                    onBackClick = { currentStep = AuthStep.LOGIN },
+                    onSaveAndContinue = {
+                        val activeRole = if (dadName.isNotBlank()) "Father" else if (momName.isNotBlank()) "Mother" else "Guardian"
+                        val emergencyPhoneToUse = if (emergencyContactPhone.isNotBlank()) emergencyContactPhone.trim() else dadPhone.ifBlank { momPhone.ifBlank { guardianPhone } }
+                        syncManager.updateParentContactDetails(
+                            father = ParentContactInfo(name = dadName.trim(), role = "Father", email = dadEmail.trim(), phone = dadPhone.trim()),
+                            mother = ParentContactInfo(name = momName.trim(), role = "Mother", email = momEmail.trim(), phone = momPhone.trim()),
+                            guardian = ParentContactInfo(name = guardianName.trim(), role = "Guardian", email = guardianEmail.trim(), phone = guardianPhone.trim()),
+                            emergencyPhone = emergencyPhoneToUse,
+                            activeRole = activeRole
+                        )
+                        currentStep = AuthStep.CHILD_SETUP
                     }
                 )
             }
@@ -505,7 +567,8 @@ fun LoginView(
     isLoading: Boolean,
     onBackClick: () -> Unit,
     onLoginSubmit: () -> Unit,
-    onSignUpNav: () -> Unit
+    onSignUpNav: () -> Unit,
+    onConfigureHouseholdParents: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var passwordVisible by remember { mutableStateOf(false) }
@@ -694,7 +757,8 @@ fun SignUpView(
     isLoading: Boolean,
     onBackClick: () -> Unit,
     onSignUpSubmit: () -> Unit,
-    onLoginNav: () -> Unit
+    onLoginNav: () -> Unit,
+    onConfigureHouseholdParents: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var passwordVisible by remember { mutableStateOf(false) }
@@ -1261,5 +1325,319 @@ fun SuccessView(
         ) {
             Text("Launch NestCheck", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+
+
+@Composable
+fun HouseholdParentsSetupView(
+    dadName: String,
+    onDadNameChange: (String) -> Unit,
+    dadEmail: String,
+    onDadEmailChange: (String) -> Unit,
+    dadPhone: String,
+    onDadPhoneChange: (String) -> Unit,
+    momName: String,
+    onMomNameChange: (String) -> Unit,
+    momEmail: String,
+    onMomEmailChange: (String) -> Unit,
+    momPhone: String,
+    onMomPhoneChange: (String) -> Unit,
+    guardianName: String,
+    onGuardianNameChange: (String) -> Unit,
+    guardianEmail: String,
+    onGuardianEmailChange: (String) -> Unit,
+    guardianPhone: String,
+    onGuardianPhoneChange: (String) -> Unit,
+    emergencyContactPhone: String,
+    onEmergencyContactPhoneChange: (String) -> Unit,
+    onBackClick: () -> Unit,
+    onSaveAndContinue: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+    var validationError by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
+            .verticalScroll(scrollState)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable(onClick = onBackClick)
+        ) {
+            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = AuthTextDark)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("Back", color = AuthTextDark, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Text("Household Parents & Safety", color = AuthTextDark, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            "Add parents info (Dad, Mom, Guardian). Minimum 1 parent required. Provide child's emergency contact for direct SOS fast-dialing.",
+            color = AuthTextMuted,
+            fontSize = 13.sp,
+            lineHeight = 18.sp
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Father (Dad) Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = AuthCardBg),
+            border = androidx.compose.foundation.BorderStroke(1.dp, AuthBorderColor)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("\uD83D\uDC68", fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Father / Dad Information", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AuthTextDark)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Surface(
+                        color = AuthPrimaryBlue.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Father", color = AuthPrimaryBlue, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = dadName,
+                    onValueChange = { onDadNameChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Your Name (Father)") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = dadEmail,
+                    onValueChange = { onDadEmailChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Father's Email") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = dadPhone,
+                    onValueChange = { onDadPhoneChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Father's Phone Number") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Mother (Mom) Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = AuthCardBg),
+            border = androidx.compose.foundation.BorderStroke(1.dp, AuthBorderColor)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("\uD83D\uDC69", fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Mother / Mom Information", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AuthTextDark)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Surface(
+                        color = Color(0xFFFCE7F3),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Mother", color = Color(0xFFBE185D), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = momName,
+                    onValueChange = { onMomNameChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Your Name (Mother)") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = momEmail,
+                    onValueChange = { onMomEmailChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Mother's Email") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = momPhone,
+                    onValueChange = { onMomPhoneChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Mother's Phone Number") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Guardian Card (Optional)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = AuthCardBg),
+            border = androidx.compose.foundation.BorderStroke(1.dp, AuthBorderColor)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("\uD83D\uDEE1\uFE0F", fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Guardian Information (Optional)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AuthTextDark)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Surface(
+                        color = Color(0xFFFEF3C7),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Guardian", color = Color(0xFFB45309), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = guardianName,
+                    onValueChange = { onGuardianNameChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Guardian Name") },
+                    placeholder = { Text("e.g. Uncle / Aunt / Co-Guardian") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = guardianEmail,
+                    onValueChange = { onGuardianEmailChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Guardian's Email") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = guardianPhone,
+                    onValueChange = { onGuardianPhoneChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Guardian's Phone Number") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Child's Emergency Fast-Dial Contact Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFFCA5A5))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Emergency, contentDescription = null, tint = AuthErrorRed, modifier = Modifier.size(22.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Child's Emergency Fast-Dial SOS", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AuthErrorRed)
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    "When the child taps the SOS button on their app, this phone number will be dialed directly (calls parent directly, NOT 112), and the parents app receives an instant emergency alert.",
+                    fontSize = 12.sp,
+                    color = AuthTextMuted,
+                    lineHeight = 17.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = emergencyContactPhone,
+                    onValueChange = { onEmergencyContactPhoneChange(it); validationError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Emergency Phone Number") },
+                    placeholder = { Text("+91 98765 43210") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AuthErrorRed,
+                        unfocusedBorderColor = Color(0xFFFCA5A5)
+                    )
+                )
+            }
+        }
+
+        if (validationError != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(validationError!!, color = AuthErrorRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                val hasDad = dadName.isNotBlank() && (dadPhone.isNotBlank() || dadEmail.isNotBlank())
+                val hasMom = momName.isNotBlank() && (momPhone.isNotBlank() || momEmail.isNotBlank())
+                val hasGuardian = guardianName.isNotBlank() && (guardianPhone.isNotBlank() || guardianEmail.isNotBlank())
+
+                if (!hasDad && !hasMom && !hasGuardian) {
+                    validationError = "Please fill in details for at least ONE parent (Father, Mother, or Guardian)."
+                    return@Button
+                }
+                validationError = null
+                onSaveAndContinue()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(26.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AuthPrimaryBlue, contentColor = Color.White)
+        ) {
+            Text("Save Household & Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }

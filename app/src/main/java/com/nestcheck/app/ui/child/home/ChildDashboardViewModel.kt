@@ -71,7 +71,7 @@ class ChildDashboardViewModel @Inject constructor(
     }
 
     fun simulateCrossingGeofence() {
-        val alert = locationRepository.simulateChildPerimeterBreach("Oakridge High School")
+        val alert = locationRepository.simulateChildPerimeterBreach("MPSTME NMIMS Campus")
         
         // 1. Update live telemetry to sync with Parent app
         syncManager.pushKidTelemetry(
@@ -81,12 +81,21 @@ class ChildDashboardViewModel @Inject constructor(
             address = alert.address
         )
 
-        // 2. Dispatch real-time high-priority push notification to parent hub
+        // 2. Dispatch real-time Geofence breach to SyncManager for Parent App Alert & Map Pulse
+        syncManager.triggerGeofenceBreach(
+            zoneName = alert.zoneName,
+            address = alert.address,
+            lat = alert.latitude,
+            lng = alert.longitude,
+            isExit = true
+        )
+
+        // 3. Dispatch real-time high-priority push notification to parent hub
         val timeNow = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
         notificationRepository.addNotification(
             type = NotificationType.GEOFENCE_EXIT,
-            title = "🚨 Oakridge School Geofence Alert",
-            message = "${childProfile.value.name} exited Oakridge High School boundary at $timeNow. Live GPS tracking active."
+            title = "🚨 MPSTME Mumbai Geofence Alert",
+            message = "${childProfile.value.name} exited MPSTME NMIMS boundary at $timeNow. Live GPS tracking active."
         )
 
         // 3. Set local breach state
@@ -98,12 +107,13 @@ class ChildDashboardViewModel @Inject constructor(
             longitude = alert.longitude,
             timestamp = alert.timestamp,
             isParentNotified = true,
-            alertMessage = "Child crossed MPSTME NMIMS Mumbai campus safe perimeter! Parent app immediately notified via instant push & GPS telemetry dispatch."
+            alertMessage = "Child crossed MPSTME NMIMS Mumbai safe perimeter! Parent app immediately notified via instant push & GPS telemetry dispatch."
         )
     }
 
     fun dismissGeofenceAlert() {
         _geofenceBreach.value = null
+        syncManager.dismissGeofenceBreach()
     }
 
     fun openRequestCreditsDialog() {

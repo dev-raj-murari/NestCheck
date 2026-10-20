@@ -1,8 +1,11 @@
 package com.nestcheck.app.ui.parent.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,8 +28,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.nestcheck.app.core.BMICalculator
+import com.nestcheck.app.data.model.ChildAvatars
 import com.nestcheck.app.data.model.ChildProfile
 import com.nestcheck.app.data.repository.ProfileRepository
+import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import com.nestcheck.app.ui.parent.shell.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +39,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChildProfileViewModel @Inject constructor(
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    val syncManager: RealtimeFamilySyncManager
 ) : ViewModel() {
     val childProfile: StateFlow<ChildProfile> = profileRepository.childProfile
 
@@ -43,9 +49,23 @@ class ChildProfileViewModel @Inject constructor(
         age: Int,
         gender: String,
         weight: Float,
-        height: Float
+        height: Float,
+        avatar: String
     ) {
-        profileRepository.updateChildProfile(name, age, gender, weight, height)
+        profileRepository.updateChildProfile(name, age, gender, weight, height, avatarUrl = avatar)
+        syncManager.updateChildProfile(
+            name = name,
+            age = age,
+            dailyLimitMinutes = syncManager.syncState.value.dailyLimitMinutes,
+            bedtime = syncManager.syncState.value.bedtime,
+            schoolHours = syncManager.syncState.value.schoolHours,
+            avatar = avatar
+        )
+    }
+
+    fun selectAvatar(avatar: String) {
+        profileRepository.updateChildAvatar(avatar)
+        syncManager.updateChildAvatar(avatar)
     }
 }
 
@@ -61,6 +81,7 @@ fun ChildProfileScreen(
     var gender by remember(child) { mutableStateOf(child.gender) }
     var weight by remember(child) { mutableStateOf(child.weight.toString()) }
     var height by remember(child) { mutableStateOf(child.height.toString()) }
+    var selectedAvatar by remember(child) { mutableStateOf(if (child.avatarUrl.isNotBlank()) child.avatarUrl else ChildAvatars.DEFAULT_AVATAR) }
 
     val w = weight.toFloatOrNull() ?: 30f
     val h = height.toFloatOrNull() ?: 130f
@@ -129,16 +150,14 @@ fun ChildProfileScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(60.dp)
+                        .size(64.dp)
                         .clip(CircleShape)
                         .background(GflBlueContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = name.take(1).ifBlank { "O" },
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = GflBlue
+                        text = selectedAvatar,
+                        fontSize = 32.sp
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
@@ -150,7 +169,7 @@ fun ChildProfileScreen(
                         color = GflTextDark
                     )
                     Text(
-                        text = "Biometric & Wellness Profile",
+                        text = "Biometric & Avatar Profile",
                         fontSize = 13.sp,
                         color = GflTextMuted
                     )
@@ -158,77 +177,157 @@ fun ChildProfileScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
-        // PERSONAL DETAILS FORM CARD
+        // POINTER 2: CHOOSE CHILD AVATAR CARD
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = GflCardWhite),
             border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text("Personal Information", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
+            Column(modifier = Modifier.padding(18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Face, contentDescription = null, tint = GflBlue, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Choose Child Avatar",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = GflTextDark
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Pick an avatar icon for this child's profile and dashboard",
+                    fontSize = 12.sp,
+                    color = GflTextMuted
+                )
                 Spacer(modifier = Modifier.height(14.dp))
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(ChildAvatars.PRESETS) { preset ->
+                        val isSelected = selectedAvatar == preset.emoji
+                        Box(
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) GflBlueContainer else GflBgLight)
+                                .border(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) GflBlue else GflBorder,
+                                    shape = CircleShape
+                                )
+                                .clickable { selectedAvatar = preset.emoji },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = preset.emoji, fontSize = 26.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        // BASIC DETAILS CARD
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+            border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text(
+                    text = "Child Details",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = GflTextDark
+                )
+                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Child Name") },
+                    label = { Text("Child's Display Name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = age,
-                        onValueChange = { age = it },
-                        label = { Text("Age (Years)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+                OutlinedTextField(
+                    value = age,
+                    onValueChange = { age = it },
+                    label = { Text("Age (Years)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
 
-                    Column(modifier = Modifier.weight(1.2f)) {
-                        Text("Gender", fontSize = 12.sp, color = GflTextMuted, fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                            listOf("Boy", "Girl").forEach { g ->
-                                val selected = gender == g
-                                Surface(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp)
-                                        .clickable { gender = g },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = if (selected) GflBlueContainer else GflBgLight,
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        1.dp,
-                                        if (selected) GflBlue else GflBorder
-                                    )
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(
-                                            text = g,
-                                            color = if (selected) GflBlue else GflTextDark,
-                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text("Gender", color = GflTextMuted, fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    listOf("Boy", "Girl").forEach { g ->
+                        val selected = gender.equals(g, ignoreCase = true)
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (selected) GflBlue else GflBgLight,
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (selected) GflBlue else GflBorder
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .clickable { gender = g }
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = g,
+                                    color = if (selected) Color.White else GflTextDark,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp
+                                )
                             }
                         }
                     }
                 }
+            }
+        }
 
-                Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
-                Row(modifier = Modifier.fillMaxWidth()) {
+        // BIOMETRIC METRICS CARD
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+            border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text(
+                    text = "Physical Health & Growth",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = GflTextDark
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     OutlinedTextField(
                         value = weight,
                         onValueChange = { weight = it },
@@ -238,7 +337,6 @@ fun ChildProfileScreen(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
                     OutlinedTextField(
                         value = height,
                         onValueChange = { height = it },
@@ -249,20 +347,9 @@ fun ChildProfileScreen(
                         shape = RoundedCornerShape(12.dp)
                     )
                 }
-            }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // LIVE BMI & DAILY TARGET CARD
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = GflCardWhite),
-            border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text("Health & Target Metrics", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = GflBorder)
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Row(
@@ -271,31 +358,24 @@ fun ChildProfileScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Calculated BMI", color = GflTextMuted, fontSize = 12.sp)
-                        val category = when {
-                            calculatedBmi < 15.0f -> "Underweight"
-                            calculatedBmi <= 19.5f -> "Healthy Weight"
-                            calculatedBmi <= 24.0f -> "Overweight"
-                            else -> "Obese"
-                        }
+                        Text("Calculated Body Mass Index", color = GflTextMuted, fontSize = 12.sp)
                         Text(
-                            text = "%.1f (%s)".format(calculatedBmi, category),
+                            text = String.format("%.1f BMI", calculatedBmi),
                             color = GflTextDark,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
-
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFECFDF5)
+                        shape = RoundedCornerShape(8.dp),
+                        color = GflBlueContainer
                     ) {
                         Text(
-                            text = "Normal Range",
-                            color = GflGreen,
-                            fontWeight = FontWeight.Bold,
+                            text = BMICalculator.getBMICategory(calculatedBmi),
+                            color = GflBlue,
                             fontSize = 12.sp,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
@@ -333,7 +413,7 @@ fun ChildProfileScreen(
             shape = RoundedCornerShape(24.dp),
             colors = ButtonDefaults.buttonColors(containerColor = GflBlue, contentColor = Color.White),
             onClick = {
-                viewModel.saveProfile(name, a, gender, w, h)
+                viewModel.saveProfile(name, a, gender, w, h, selectedAvatar)
                 navController.popBackStack()
             }
         ) {
