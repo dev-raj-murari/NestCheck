@@ -311,32 +311,6 @@ fun KidHomeContent(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Payment Lock Pill Banner (User Request: In-app purchases blocked)
-        if (syncState.inAppPurchasesBlocked) {
-            item {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFFFEF2F2),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFECACA)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Outlined.Lock, contentDescription = null, tint = KidRed, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            "Google Play purchases and in-app payments are locked by parent.",
-                            fontSize = 12.sp,
-                            color = KidRed,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-        }
-
         // 1. Credit-to-Screen Time Hero Card (2 Credits = 1 Min rule)
         item {
             CreditScreenTimeHeroCard(wallet = wallet)
