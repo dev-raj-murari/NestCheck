@@ -70,13 +70,13 @@ fun CreditScreenTimeHeroCard(
                     }
                     Column {
                         Text(
-                            text = "Credits & Screen Time",
+                            text = "Screen Time Balance",
                             color = textDark,
-                            fontSize = 15.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Auto-exchange wallet",
+                            text = "Rate: 2 credits = 1 min",
                             color = textMuted,
                             fontSize = 12.sp
                         )
@@ -85,16 +85,27 @@ fun CreditScreenTimeHeroCard(
 
                 Surface(
                     color = Color(0xFFE8F0FE),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(20.dp),
                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE))
                 ) {
-                    Text(
-                        text = "2 CREDITS = 1 MIN",
-                        color = primaryBlue,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(primaryBlue)
+                        )
+                        Text(
+                            text = "2 pts / min",
+                            color = primaryBlue,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
