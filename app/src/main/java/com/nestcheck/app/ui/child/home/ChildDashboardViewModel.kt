@@ -1,4 +1,4 @@
-package com.nestcheck.app.ui.child.home
+﻿package com.nestcheck.app.ui.child.home
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -71,7 +71,7 @@ class ChildDashboardViewModel @Inject constructor(
     }
 
     fun simulateCrossingGeofence() {
-        val alert = locationRepository.simulateChildPerimeterBreach("Oakridge High School")
+        val alert = locationRepository.simulateChildPerimeterBreach("MPSTME NMIMS Campus")
         
         // 1. Update live telemetry to sync with Parent app
         syncManager.pushKidTelemetry(
@@ -85,8 +85,8 @@ class ChildDashboardViewModel @Inject constructor(
         val timeNow = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
         notificationRepository.addNotification(
             type = NotificationType.GEOFENCE_EXIT,
-            title = "🚨 Oakridge School Geofence Alert",
-            message = "${childProfile.value.name} exited Oakridge High School boundary at $timeNow. Live GPS tracking active."
+            title = "🚨 MPSTME Mumbai Geofence Alert",
+            message = "${childProfile.value.name} exited MPSTME NMIMS boundary at $timeNow. Live GPS tracking active."
         )
 
         // 3. Set local breach state
@@ -98,7 +98,7 @@ class ChildDashboardViewModel @Inject constructor(
             longitude = alert.longitude,
             timestamp = alert.timestamp,
             isParentNotified = true,
-            alertMessage = "Child crossed Oakridge High School safe perimeter! Parent app immediately notified via instant push & GPS telemetry dispatch."
+            alertMessage = "Child crossed MPSTME NMIMS Mumbai safe perimeter! Parent app immediately notified via instant push & GPS telemetry dispatch."
         )
     }
 

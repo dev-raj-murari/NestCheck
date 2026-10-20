@@ -10,7 +10,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.nestcheck.app.MainActivity
+import com.nestcheck.app.ParentMainActivity
 import com.nestcheck.app.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -70,14 +70,26 @@ class NestCheckNotificationManager @Inject constructor(
                 enableVibration(true)
             }
 
+            // 4. Geofence Perimeter Safety Channel
+            val geofenceChannel = NotificationChannel(
+                CHANNEL_GEOFENCE,
+                "Geofence Safety Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifies when child enters or leaves safe zones like MPSTME or Home"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 150, 300)
+            }
+
             notificationManager.createNotificationChannel(sosChannel)
             notificationManager.createNotificationChannel(controlsChannel)
             notificationManager.createNotificationChannel(tamperChannel)
+            notificationManager.createNotificationChannel(geofenceChannel)
         }
     }
 
-    fun showSosAlert(childName: String, locationText: String, lat: Double, lng: Double) {
-        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+    fun showSosAlert(childName: String, locationText: String, lat: Double, lng: Double, parentPhone: String = "+91 98765 43210") {
+        val openAppIntent = Intent(context, ParentMainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val appPendingIntent = PendingIntent.getActivity(
@@ -87,9 +99,10 @@ class NestCheckNotificationManager @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Real Dial 112 Intent
+        // Real Dial Parent Emergency Contact Intent (NOT 112)
+        val phoneToCall = if (parentPhone.isNotBlank()) parentPhone else "+91 98765 43210"
         val dialIntent = Intent(Intent.ACTION_DIAL).apply {
-            data = Uri.parse("tel:112")
+            data = Uri.parse("tel:$phoneToCall")
         }
         val dialPendingIntent = PendingIntent.getActivity(
             context,
@@ -115,20 +128,60 @@ class NestCheckNotificationManager @Inject constructor(
             .setContentText("Emergency triggered! Last seen: $locationText")
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("🚨 EMERGENCY SOS: $childName activated emergency broadcast!\nLocation: $locationText\nBattery: Active • Immediate parental attention required.")
+                    .bigText("🚨 EMERGENCY SOS: $childName activated emergency broadcast!\nLocation: $locationText\nEmergency Contact: $phoneToCall\nImmediate parental attention required.")
             )
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setColor(0xFFD93025.toInt()) // Google Red
             .setContentIntent(appPendingIntent)
-            .addAction(android.R.drawable.ic_menu_call, "Call 112", dialPendingIntent)
+            .addAction(android.R.drawable.ic_menu_call, "Call Parent ($phoneToCall)", dialPendingIntent)
             .addAction(android.R.drawable.ic_dialog_map, "Open in Maps", mapPendingIntent)
             .setAutoCancel(false)
             .setOngoing(true)
             .build()
 
         notificationManager.notify(NOTIFICATION_ID_SOS, notification)
+    }
+
+    fun showGeofenceAlert(childName: String, zoneName: String, isExit: Boolean, address: String, lat: Double, lng: Double) {
+        val openAppIntent = Intent(context, ParentMainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val appPendingIntent = PendingIntent.getActivity(
+            context,
+            1004,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val mapIntent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("geo:$lat,$lng?q=$lat,$lng($childName+Geofence+Breach)")
+        }
+        val mapPendingIntent = PendingIntent.getActivity(
+            context,
+            1005,
+            mapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val actionText = if (isExit) "EXITED SAFE ZONE" else "ENTERED RESTRICTED AREA"
+        val notification = NotificationCompat.Builder(context, CHANNEL_GEOFENCE)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle("⚠️ GEOFENCE ALERT: $childName $actionText")
+            .setContentText("$childName has crossed the $zoneName boundary! Location: $address")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText("⚠️ GEOFENCE ALERT: $childName $actionText\nBoundary: $zoneName\nLocation: $address\nLive GPS telemetry tracking active.")
+            )
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setColor(0xFFF9AB00.toInt()) // Google Amber
+            .setContentIntent(appPendingIntent)
+            .addAction(android.R.drawable.ic_dialog_map, "View on Map", mapPendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID_GEOFENCE, notification)
     }
 
     fun showDeviceLockNotification(childName: String, isLocked: Boolean) {
@@ -167,9 +220,11 @@ class NestCheckNotificationManager @Inject constructor(
         const val CHANNEL_SOS = "critical_sos_alerts"
         const val CHANNEL_CONTROLS = "parental_device_locks"
         const val CHANNEL_TAMPER = "tamper_security_alerts"
+        const val CHANNEL_GEOFENCE = "geofence_safety_alerts"
 
         const val NOTIFICATION_ID_SOS = 9001
         const val NOTIFICATION_ID_CONTROLS = 9002
         const val NOTIFICATION_ID_TAMPER = 9003
+        const val NOTIFICATION_ID_GEOFENCE = 9004
     }
 }
