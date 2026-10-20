@@ -337,7 +337,11 @@ fun KidHomeContent(
 
         // 5. Interactive Weekly Study & Exam Calendar
         item {
-            ChildCalendarCard(events = calendarEvents)
+            ChildCalendarCard(
+                timetableItems = syncState.timetableItems,
+                isCalendarSynced = syncState.timetableSyncedToCalendar,
+                timetablePdfName = syncState.timetablePdfName
+            )
         }
 
         // 6. Geofence Perimeter Crossing Simulator (Kept at bottom)
