@@ -152,13 +152,6 @@ fun KidShellScreen(
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = KidBlue,
-                            indicatorColor = KidBlueContainer,
-                            selectedTextColor = KidBlue,
-                            unselectedIconColor = KidTextMuted,
-                            unselectedTextColor = KidTextMuted
-                        ),
-                        colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = if (tab == KidTab.SOS) KidRed else KidBlue,
                             selectedTextColor = if (tab == KidTab.SOS) KidRed else KidBlue,
                             indicatorColor = if (tab == KidTab.SOS) Color(0xFFFEE2E2) else Color(0xFFDBEAFE),

@@ -1272,6 +1272,9 @@ fun MoreTab(
                 onClick = { navController.navigate(Screen.ParentSecurity.route) }
             )
         }
+
+        item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
 }
 
 @Composable

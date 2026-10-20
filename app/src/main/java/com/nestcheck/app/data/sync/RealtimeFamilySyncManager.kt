@@ -62,7 +62,7 @@ data class FamilySyncState(
     val guardianName: String = "Rohit",
     val guardianPhone: String = "+91 98765 43211",
     val guardianEmail: String = "rohit@nestcheck.app",
-    val geofenceBreachActive: Boolean = prefs.geofenceBreachActive,
+    val geofenceBreachActive: Boolean = false,
     val geofenceBreachZone: String = "",
     val breachZoneName: String = "",
     val householdParents: HouseholdParentConfig = HouseholdParentConfig(
@@ -137,6 +137,7 @@ class RealtimeFamilySyncManager @Inject constructor(
             activeChildName = preferences.activeChildName,
             activeChildAvatar = preferences.activeChildAvatar,
             isDeviceLocked = preferences.isDeviceLocked,
+            geofenceBreachActive = preferences.geofenceBreachActive,
             remainingMinutes = preferences.remainingMinutes,
             dailyLimitMinutes = preferences.dailyLimitMinutes,
             kidLatitude = preferences.kidLatitude,
@@ -167,6 +168,7 @@ class RealtimeFamilySyncManager @Inject constructor(
     private val prefChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         _syncState.value = _syncState.value.copy(
             isDeviceLocked = preferences.isDeviceLocked,
+            geofenceBreachActive = preferences.geofenceBreachActive,
             remainingMinutes = preferences.remainingMinutes,
             dailyLimitMinutes = preferences.dailyLimitMinutes,
             kidLatitude = preferences.kidLatitude,
@@ -469,7 +471,7 @@ class RealtimeFamilySyncManager @Inject constructor(
     }
 
     fun dismissGeofenceBreach() {
-        prefs.geofenceBreachActive = false
+        preferences.geofenceBreachActive = false
         _syncState.value = _syncState.value.copy(geofenceBreachActive = false)
         scope.launch {
             try {
@@ -615,17 +617,17 @@ class RealtimeFamilySyncManager @Inject constructor(
             "activeParent" to _syncState.value.activeParentName
         )
         try {
-            firestore.collection("user_activity_logs")
+            firestore?.collection("user_activity_logs")
                 .add(logEntry)
         } catch (_: Exception) {}
     }
 
     fun addCredits(amount: Int) {
-        val current = prefs.childCredits
+        val current = preferences.childCredits
         val updated = current + amount
-        prefs.childCredits = updated
+        preferences.childCredits = updated
         try {
-            firestore.collection("family_state").document("current")
+            firestore?.collection("family_state")?.document("current")
                 .set(mapOf("childCredits" to updated), com.google.firebase.firestore.SetOptions.merge())
         } catch (_: Exception) {}
     }
