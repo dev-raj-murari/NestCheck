@@ -3,12 +3,9 @@ package com.nestcheck.app.ui.child.home.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -42,10 +39,10 @@ fun UpcomingExamsCard(
             .clip(RoundedCornerShape(20.dp))
             .background(cardBg)
             .border(1.dp, borderStroke, RoundedCornerShape(20.dp))
-            .padding(18.dp)
+            .padding(16.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            // Header
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Header Row (Compact)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -53,11 +50,11 @@ fun UpcomingExamsCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(32.dp)
                             .clip(CircleShape)
                             .background(Color(0xFFFEF3C7)),
                         contentAlignment = Alignment.Center
@@ -66,134 +63,102 @@ fun UpcomingExamsCard(
                             imageVector = Icons.Default.School,
                             contentDescription = null,
                             tint = amberWarning,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                     Text(
                         text = "Upcoming School Exams",
                         color = textDark,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
                 Surface(
                     color = Color(0xFFFEF3C7),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
                         text = "${exams.size} Scheduled",
                         color = amberWarning,
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
             }
 
-            // Exams List
-            exams.forEach { exam ->
-                val isUrgent = exam.daysRemaining <= 4
-                val badgeBg = if (isUrgent) Color(0xFFFEE2E2) else Color(0xFFFEF3C7)
-                val badgeColor = if (isUrgent) redCritical else amberWarning
+            if (exams.isEmpty()) {
+                Text(
+                    text = "No upcoming exams scheduled.",
+                    color = textMuted,
+                    fontSize = 12.sp
+                )
+            } else {
+                // Sleek, compact exam rows
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    exams.forEach { exam ->
+                        val isUrgent = exam.daysRemaining <= 4
+                        val badgeBg = if (isUrgent) Color(0xFFFEE2E2) else Color(0xFFFEF3C7)
+                        val badgeColor = if (isUrgent) redCritical else amberWarning
 
-                Surface(
-                    color = Color(0xFFF8FAFC),
-                    shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Surface(
+                            color = Color(0xFFF8FAFC),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Surface(
+                                        color = Color(0xFFE8F0FE),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            text = exam.subject,
+                                            color = primaryBlue,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+
+                                    Column {
+                                        Text(
+                                            text = exam.examTitle,
+                                            color = textDark,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1
+                                        )
+                                        Text(
+                                            text = "${exam.examDate} • Target: ${exam.targetGrade}",
+                                            color = textMuted,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+
                                 Surface(
-                                    color = Color(0xFFE8F0FE),
-                                    shape = RoundedCornerShape(6.dp)
+                                    color = badgeBg,
+                                    shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Text(
-                                        text = exam.subject,
-                                        color = primaryBlue,
+                                        text = "${exam.daysRemaining}d left",
+                                        color = badgeColor,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                    )
-                                }
-                                Text(
-                                    text = exam.examTitle,
-                                    color = textDark,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            Surface(
-                                color = badgeBg,
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "${exam.daysRemaining} days left",
-                                    color = badgeColor,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                )
-                            }
-                        }
-
-                        // Date & Target Grade
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CalendarMonth,
-                                    contentDescription = null,
-                                    tint = textMuted,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Text(
-                                    text = exam.examDate,
-                                    color = textMuted,
-                                    fontSize = 12.sp
-                                )
-                            }
-
-                            Text(
-                                text = "Target: ${exam.targetGrade}",
-                                color = Color(0xFF10B981),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        // Syllabus Topics Chips
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            items(exam.syllabusTopics) { topic ->
-                                Surface(
-                                    color = Color(0xFFFFFFFF),
-                                    shape = RoundedCornerShape(6.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-                                ) {
-                                    Text(
-                                        text = topic,
-                                        color = textMuted,
-                                        fontSize = 11.sp,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                     )
                                 }
                             }
