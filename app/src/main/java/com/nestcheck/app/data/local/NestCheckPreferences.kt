@@ -172,6 +172,7 @@ class NestCheckPreferences @Inject constructor(
         private const val KEY_LOCATION_ADDRESS = "location_address"
         private const val KEY_KID_BATTERY = "kid_battery"
         private const val KEY_TIMETABLE_CALENDAR_SYNCED = "timetable_calendar_synced"
+        private const val KEY_SOS_ACTIVE = "sos_active"
         private const val KEY_CHILD_CREDITS = "child_credits"
     }
 }
