@@ -1148,43 +1148,6 @@ fun ControlsTab(
             )
         }
 
-        // Google Play & In-App Purchases Lock
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = GflCardWhite),
-                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.Shop, contentDescription = null, tint = Color(0xFF01875F), modifier = Modifier.size(28.dp))
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Column {
-                            Text("Google Play Purchases", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = GflTextDark)
-                            Text(
-                                if (syncState.inAppPurchasesBlocked) "In-app purchases BLOCKED ✔️" else "Purchases allowed",
-                                fontSize = 13.sp,
-                                color = if (syncState.inAppPurchasesBlocked) GflRed else GflTextMuted,
-                                fontWeight = if (syncState.inAppPurchasesBlocked) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    }
-                    Switch(
-                        checked = syncState.inAppPurchasesBlocked,
-                        onCheckedChange = { syncManager.setInAppPurchasesBlocked(it) },
-                        colors = SwitchDefaults.colors(checkedThumbColor = GflRed, checkedTrackColor = Color(0xFFFEE7E6))
-                    )
-                }
-            }
-        }
-
         item { Spacer(modifier = Modifier.height(24.dp)) }
     }
 }
@@ -1264,31 +1227,6 @@ fun MoreTab(
                 onClick = { navController.navigate(Screen.ParentSecurity.route) }
             )
         }
-
-        // Battery Monitor Telemetry
-        item {
-            ControlCardItem(
-                title = "Device Battery & Hardware Telemetry",
-                subtitle = "Child battery level: ${syncState.kidBattery}% • Realtime status",
-                icon = Icons.Outlined.BatteryStd,
-                iconTint = Color(0xFF16A34A),
-                onClick = { navController.navigate(Screen.BatteryMonitor.route) }
-            )
-        }
-
-        // Weekly Screen Time Reports
-        item {
-            ControlCardItem(
-                title = "Weekly Screen Time Reports",
-                subtitle = "Weekly trends, category breakdowns & usage analytics",
-                icon = Icons.Outlined.Assessment,
-                iconTint = Color(0xFF4F46E5),
-                onClick = { navController.navigate(Screen.Reports.route) }
-            )
-        }
-
-        item { Spacer(modifier = Modifier.height(24.dp)) }
-    }
 }
 
 @Composable
@@ -1434,7 +1372,7 @@ fun LocationMapTab(
                         Column {
                             Text(syncState.activeChildName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = GflTextDark)
                             Text(syncState.locationAddress, fontSize = 13.sp, color = GflTextMuted, maxLines = 1)
-                            Text("${syncState.kidBattery}% \u26A1 • MPSTME Safe Geofence", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
+                            Text("Live GPS Active • MPSTME Safe Geofence", fontSize = 12.sp, color = GflGreen, fontWeight = FontWeight.Medium)
                         }
                     }
                     IconButton(onClick = {
