@@ -116,15 +116,15 @@ class LocationRepository @Inject constructor() {
 
     private val _liveLocation = MutableStateFlow(
         LiveLocationPoint(
-            latitude = 19.1050,
-            longitude = 72.8350,
+            latitude = 19.1075,
+            longitude = 72.8369,
             accuracyMeters = 4.2f,
             altitudeMeters = 24.0,
             speedKmh = 0.0f,
             headingDegrees = 120.0f,
             batteryPercent = 88,
             timestamp = System.currentTimeMillis(),
-            addressName = "MPSTME NMIMS Campus, Vile Parle West, Mumbai",
+            addressName = "MPSTME NMIMS Campus, Bhaktivedanta Swami Marg, Vile Parle West, Mumbai",
             provider = "GPS (High Accuracy Fused)"
         )
     )
@@ -274,7 +274,7 @@ class LocationRepository @Inject constructor() {
         _transitionAlerts.value = listOf(alert) + _transitionAlerts.value
     }
 
-    fun simulateChildPerimeterBreach(zoneName: String = "Oakridge High School"): GeofenceTransitionAlert {
+    fun simulateChildPerimeterBreach(zoneName: String = "MPSTME NMIMS Mumbai"): GeofenceTransitionAlert {
         val alert = GeofenceTransitionAlert(
             id = UUID.randomUUID().toString(),
             zoneName = zoneName,
@@ -283,7 +283,7 @@ class LocationRepository @Inject constructor() {
             timestamp = System.currentTimeMillis(),
             latitude = 19.1085,
             longitude = 72.8375,
-            address = "Crossing perimeter: Outside $zoneName, SV Road"
+            address = "Crossing perimeter: Outside $zoneName, Vile Parle West, Mumbai"
         )
         _transitionAlerts.value = listOf(alert) + _transitionAlerts.value
         return alert

@@ -1,6 +1,7 @@
 package com.nestcheck.app.data.sync
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.nestcheck.app.core.NestCheckNotificationManager
@@ -26,7 +27,7 @@ data class TimetableItem(
     val dayOfWeek: String, // "Monday", "Tuesday", etc.
     val subject: String,
     val timeSlot: String, // e.g. "08:30 AM - 09:30 AM"
-    val roomOrTeacher: String = "Room 101"
+    val roomOrTeacher: String = "MPSTME Room 402"
 )
 
 data class FamilySyncState(
@@ -35,11 +36,11 @@ data class FamilySyncState(
     val isDeviceLocked: Boolean = false,
     val remainingMinutes: Int = 135,
     val dailyLimitMinutes: Int = 180,
-    val kidLatitude: Double = 37.7749,
-    val kidLongitude: Double = -122.4194,
-    val kidBattery: Int = 84,
+    val kidLatitude: Double = 19.1075,
+    val kidLongitude: Double = 72.8369,
+    val kidBattery: Int = 88,
     val isCharging: Boolean = false,
-    val locationAddress: String = "1825 Jersey Street, San Francisco",
+    val locationAddress: String = "MPSTME NMIMS, Vile Parle West, Mumbai",
     val lastLocationUpdate: Long = System.currentTimeMillis(),
     val sosActive: Boolean = false,
     val sosTimestamp: Long = 0L,
@@ -51,36 +52,36 @@ data class FamilySyncState(
     val pendingDeviceName: String = "Google Pixel 9",
     val childAge: Int = 11,
     val bedtime: String = "9:00 PM",
-    val schoolHours: String = "8:30 AM - 3:15 PM",
-    val timetablePdfName: String = "School_Weekly_Timetable.pdf",
+    val schoolHours: String = "8:30 AM - 3:30 PM",
+    val timetablePdfName: String = "MPSTME_NMIMS_Timetable.pdf",
     val timetableSyncedToCalendar: Boolean = false,
     val timetableItems: List<TimetableItem> = listOf(
-        TimetableItem(dayOfWeek = "Monday", subject = "Mathematics", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Physics Lab", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Lab 2 • Mrs. Rao"),
-        TimetableItem(dayOfWeek = "Monday", subject = "English Literature", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 105 • Ms. Davis"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Lunch & Recreation", timeSlot = "12:15 PM - 01:15 PM", roomOrTeacher = "Cafeteria"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Computer Science", timeSlot = "01:15 PM - 02:15 PM", roomOrTeacher = "IT Lab • Mr. Patel"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Physical Education", timeSlot = "02:30 PM - 03:30 PM", roomOrTeacher = "Main Sports Ground"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Engineering Mathematics", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "MPSTME Room 402 • Dr. Sharma"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Data Structures & Algorithms", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Lab 5 • Prof. Rao"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Digital Logic & Computer Design", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "MPSTME Room 301 • Dr. Davis"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Campus Lunch & Break", timeSlot = "12:15 PM - 01:15 PM", roomOrTeacher = "MPSTME Canteen"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Object Oriented Programming (Java)", timeSlot = "01:15 PM - 02:15 PM", roomOrTeacher = "IT Lab 2 • Prof. Patel"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Database Management Systems", timeSlot = "02:30 PM - 03:30 PM", roomOrTeacher = "MPSTME Room 405"),
 
-        TimetableItem(dayOfWeek = "Tuesday", subject = "Chemistry", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Science Hall • Dr. Mehta"),
-        TimetableItem(dayOfWeek = "Tuesday", subject = "Algebra & Geometry", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
-        TimetableItem(dayOfWeek = "Tuesday", subject = "World History", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 108 • Mrs. Gupta"),
-        TimetableItem(dayOfWeek = "Tuesday", subject = "Art & Design", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "Studio A • Ms. Sarah"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Operating Systems", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "MPSTME Room 402 • Dr. Mehta"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Computer Networks", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Lab 3 • Prof. Gupta"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Software Engineering", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "MPSTME Room 302 • Dr. Roy"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "AI & Machine Learning Seminar", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "MPSTME Auditorium"),
 
-        TimetableItem(dayOfWeek = "Wednesday", subject = "Biology", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Bio Lab • Dr. Roy"),
-        TimetableItem(dayOfWeek = "Wednesday", subject = "Mathematics", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
-        TimetableItem(dayOfWeek = "Wednesday", subject = "Spanish / Foreign Lang", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 112 • Senora Lopez"),
-        TimetableItem(dayOfWeek = "Wednesday", subject = "Music & Orchestra", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "Auditorium"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Discrete Mathematics", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "MPSTME Room 402 • Dr. Sharma"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Python & Web Technologies Lab", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Lab 1 • Prof. Wilson"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Microprocessors & Interfacing", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Hardware Lab • Dr. Sen"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Technical Communication & Ethics", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "MPSTME Room 204"),
 
-        TimetableItem(dayOfWeek = "Thursday", subject = "Physics Theory", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Room 201 • Mrs. Rao"),
-        TimetableItem(dayOfWeek = "Thursday", subject = "Social Studies & Civics", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Room 108 • Mrs. Gupta"),
-        TimetableItem(dayOfWeek = "Thursday", subject = "English Composition", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 105 • Ms. Davis"),
-        TimetableItem(dayOfWeek = "Thursday", subject = "Robotics Club", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "STEM Lab"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Cloud Computing & DevOps", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Cloud Lab • Prof. Rao"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Information Security", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "MPSTME Room 301 • Dr. Desai"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Algorithms Analysis Lab", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Lab 5 • Prof. Rao"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Robotics & IoT Project Work", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "Maker Space"),
 
-        TimetableItem(dayOfWeek = "Friday", subject = "Weekly Review & Math Quiz", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
-        TimetableItem(dayOfWeek = "Friday", subject = "Geography & Ecology", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Room 110 • Mr. Wilson"),
-        TimetableItem(dayOfWeek = "Friday", subject = "Library / Independent Study", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Central Library"),
-        TimetableItem(dayOfWeek = "Friday", subject = "Sports & Athletics", timeSlot = "01:15 PM - 03:00 PM", roomOrTeacher = "Sports Arena")
+        TimetableItem(dayOfWeek = "Friday", subject = "Weekly Engineering Quiz", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "MPSTME Room 402"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Applied Statistics & Probability", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "MPSTME Room 405"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Library / Independent Research", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "MPSTME Central Library"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Student Project Mentorship", timeSlot = "01:15 PM - 03:00 PM", roomOrTeacher = "Innovation Lab")
     )
 )
 
@@ -104,7 +105,12 @@ class RealtimeFamilySyncManager @Inject constructor(
             activeChildName = preferences.activeChildName,
             isDeviceLocked = preferences.isDeviceLocked,
             remainingMinutes = preferences.remainingMinutes,
-            dailyLimitMinutes = preferences.dailyLimitMinutes
+            dailyLimitMinutes = preferences.dailyLimitMinutes,
+            kidLatitude = preferences.kidLatitude,
+            kidLongitude = preferences.kidLongitude,
+            locationAddress = preferences.locationAddress,
+            kidBattery = preferences.kidBattery,
+            timetableSyncedToCalendar = preferences.timetableSyncedToCalendar
         )
     )
     val syncState: StateFlow<FamilySyncState> = _syncState.asStateFlow()
@@ -112,7 +118,22 @@ class RealtimeFamilySyncManager @Inject constructor(
     private var firestoreListener: ListenerRegistration? = null
     private val scope = CoroutineScope(Dispatchers.IO)
 
+    private val prefChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        _syncState.value = _syncState.value.copy(
+            isDeviceLocked = preferences.isDeviceLocked,
+            remainingMinutes = preferences.remainingMinutes,
+            dailyLimitMinutes = preferences.dailyLimitMinutes,
+            kidLatitude = preferences.kidLatitude,
+            kidLongitude = preferences.kidLongitude,
+            locationAddress = preferences.locationAddress,
+            kidBattery = preferences.kidBattery,
+            timetableSyncedToCalendar = preferences.timetableSyncedToCalendar,
+            activeChildName = preferences.activeChildName
+        )
+    }
+
     init {
+        preferences.registerOnSharedPreferenceChangeListener(prefChangeListener)
         startSync(preferences.householdPairingCode)
     }
 
@@ -158,6 +179,10 @@ class RealtimeFamilySyncManager @Inject constructor(
                     preferences.isDeviceLocked = isLocked
                     preferences.remainingMinutes = remainingMins
                     preferences.dailyLimitMinutes = dailyLimit
+                    preferences.kidLatitude = lat
+                    preferences.kidLongitude = lng
+                    preferences.kidBattery = battery
+                    preferences.locationAddress = address
 
                     // Real-time notifications for critical safety state changes
                     if (!previousSos && sos) {
@@ -232,6 +257,10 @@ class RealtimeFamilySyncManager @Inject constructor(
             locationAddress = address,
             lastLocationUpdate = System.currentTimeMillis()
         )
+        preferences.kidLatitude = lat
+        preferences.kidLongitude = lng
+        preferences.kidBattery = battery
+        preferences.locationAddress = address
 
         scope.launch {
             try {
@@ -259,6 +288,9 @@ class RealtimeFamilySyncManager @Inject constructor(
             kidLatitude = lat,
             kidLongitude = lng
         )
+        preferences.kidLatitude = lat
+        preferences.kidLongitude = lng
+        preferences.locationAddress = location
 
         if (active) {
             notificationManager.showSosAlert(_syncState.value.activeChildName, location, lat, lng)
@@ -359,6 +391,7 @@ class RealtimeFamilySyncManager @Inject constructor(
             timetableItems = newItems,
             timetableSyncedToCalendar = false
         )
+        preferences.timetableSyncedToCalendar = false
         scope.launch {
             try {
                 firestore?.collection("nestcheck_families")
@@ -376,6 +409,7 @@ class RealtimeFamilySyncManager @Inject constructor(
 
     fun setTimetableCalendarSynced(synced: Boolean) {
         _syncState.value = _syncState.value.copy(timetableSyncedToCalendar = synced)
+        preferences.timetableSyncedToCalendar = synced
         scope.launch {
             try {
                 firestore?.collection("nestcheck_families")
@@ -388,5 +422,3 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 }
-
-

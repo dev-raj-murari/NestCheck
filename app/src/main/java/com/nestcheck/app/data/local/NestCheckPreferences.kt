@@ -52,6 +52,38 @@ class NestCheckPreferences @Inject constructor(
         get() = prefs.getBoolean(KEY_DEVICE_LOCKED, false)
         set(value) = prefs.edit().putBoolean(KEY_DEVICE_LOCKED, value).apply()
 
+    var kidLatitude: Double
+        get() = prefs.getString(KEY_KID_LAT, "19.1075")?.toDoubleOrNull() ?: 19.1075
+        set(value) = prefs.edit().putString(KEY_KID_LAT, value.toString()).apply()
+
+    var kidLongitude: Double
+        get() = prefs.getString(KEY_KID_LNG, "72.8369")?.toDoubleOrNull() ?: 72.8369
+        set(value) = prefs.edit().putString(KEY_KID_LNG, value.toString()).apply()
+
+    var locationAddress: String
+        get() = prefs.getString(KEY_LOCATION_ADDRESS, "MPSTME NMIMS, Vile Parle West, Mumbai") ?: "MPSTME NMIMS, Vile Parle West, Mumbai"
+        set(value) = prefs.edit().putString(KEY_LOCATION_ADDRESS, value).apply()
+
+    var kidBattery: Int
+        get() = prefs.getInt(KEY_KID_BATTERY, 88)
+        set(value) = prefs.edit().putInt(KEY_KID_BATTERY, value).apply()
+
+    var timetableSyncedToCalendar: Boolean
+        get() = prefs.getBoolean(KEY_TIMETABLE_CALENDAR_SYNCED, false)
+        set(value) = prefs.edit().putBoolean(KEY_TIMETABLE_CALENDAR_SYNCED, value).apply()
+
+    var childCredits: Int
+        get() = prefs.getInt(KEY_CHILD_CREDITS, 210)
+        set(value) = prefs.edit().putInt(KEY_CHILD_CREDITS, value).apply()
+
+    fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
+    }
+
     fun clear() {
         prefs.edit().clear().apply()
     }
@@ -66,5 +98,11 @@ class NestCheckPreferences @Inject constructor(
         private const val KEY_DAILY_LIMIT_MINS = "daily_limit_minutes"
         private const val KEY_PAIRING_CODE = "pairing_code"
         private const val KEY_DEVICE_LOCKED = "device_locked"
+        private const val KEY_KID_LAT = "kid_latitude"
+        private const val KEY_KID_LNG = "kid_longitude"
+        private const val KEY_LOCATION_ADDRESS = "location_address"
+        private const val KEY_KID_BATTERY = "kid_battery"
+        private const val KEY_TIMETABLE_CALENDAR_SYNCED = "timetable_calendar_synced"
+        private const val KEY_CHILD_CREDITS = "child_credits"
     }
 }

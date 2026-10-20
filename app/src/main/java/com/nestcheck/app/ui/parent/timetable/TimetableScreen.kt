@@ -88,7 +88,7 @@ fun TimetableScreen(
             val intent = Intent(Intent.ACTION_INSERT)
                 .setData(CalendarContract.Events.CONTENT_URI)
                 .putExtra(CalendarContract.Events.TITLE, "${syncState.activeChildName}'s School Timetable")
-                .putExtra(CalendarContract.Events.EVENT_LOCATION, "Oakridge High School")
+                .putExtra(CalendarContract.Events.EVENT_LOCATION, "MPSTME NMIMS, Vile Parle West, Mumbai")
                 .putExtra(CalendarContract.Events.DESCRIPTION, "Daily School Schedule automatically synced from NestCheck PDF Timetable")
                 .putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, true)
             

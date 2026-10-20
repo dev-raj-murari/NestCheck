@@ -98,7 +98,7 @@ class ChildDashboardViewModel @Inject constructor(
             longitude = alert.longitude,
             timestamp = alert.timestamp,
             isParentNotified = true,
-            alertMessage = "Child crossed Oakridge High School safe perimeter! Parent app immediately notified via instant push & GPS telemetry dispatch."
+            alertMessage = "Child crossed MPSTME NMIMS Mumbai campus safe perimeter! Parent app immediately notified via instant push & GPS telemetry dispatch."
         )
     }
 
