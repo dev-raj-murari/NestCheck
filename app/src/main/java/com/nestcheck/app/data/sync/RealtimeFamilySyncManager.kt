@@ -167,6 +167,12 @@ class RealtimeFamilySyncManager @Inject constructor(
             emergencyContactName = preferences.emergencyContactName,
             activeParentRole = preferences.activeParentRole,
             activeParentName = preferences.parentName,
+            childAge = preferences.activeChildAge,
+            householdChildren = listOf(
+                ChildProfile(uid = "child_1", name = preferences.activeChildName, age = preferences.activeChildAge, gender = preferences.activeChildGender, avatarUrl = preferences.activeChildAvatar, grade = preferences.activeChildGrade),
+                ChildProfile(uid = "child_olivia", name = "Olivia", age = 9, gender = "Girl", avatarUrl = "🦄", grade = "Grade 4"),
+                ChildProfile(uid = "child_aarav", name = "Aarav", age = 10, gender = "Boy", avatarUrl = "🚀", grade = "Grade 5")
+            ),
             fatherName = preferences.fatherName,
             fatherPhone = preferences.fatherPhone,
             fatherEmail = preferences.fatherEmail,
@@ -184,6 +190,14 @@ class RealtimeFamilySyncManager @Inject constructor(
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val prefChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        val activeName = preferences.activeChildName
+        val activeAvatar = preferences.activeChildAvatar
+        val activeAge = preferences.activeChildAge
+        val updatedKids = _syncState.value.householdChildren.map {
+            if (it.uid == "child_1" || it.uid == "child_leo" || it.name.equals(activeName, ignoreCase = true) || it.name.equals(_syncState.value.activeChildName, ignoreCase = true)) {
+                it.copy(name = activeName, avatarUrl = activeAvatar, age = activeAge)
+            } else it
+        }
         _syncState.value = _syncState.value.copy(
             isDeviceLocked = preferences.isDeviceLocked,
             geofenceBreachActive = preferences.geofenceBreachActive,
@@ -194,7 +208,10 @@ class RealtimeFamilySyncManager @Inject constructor(
             locationAddress = preferences.locationAddress,
             kidBattery = preferences.kidBattery,
             timetableSyncedToCalendar = preferences.timetableSyncedToCalendar,
-            activeChildName = preferences.activeChildName
+            activeChildName = activeName,
+            activeChildAvatar = activeAvatar,
+            childAge = activeAge,
+            householdChildren = updatedKids
         )
     }
 
@@ -312,13 +329,22 @@ class RealtimeFamilySyncManager @Inject constructor(
         val finalAvatar = found?.avatarUrl ?: avatar
         val finalAge = found?.age ?: _syncState.value.childAge
 
+        preferences.activeChildName = name
+        preferences.activeChildAvatar = finalAvatar
+        preferences.activeChildAge = finalAge
+
+        val updatedKids = _syncState.value.householdChildren.map {
+            if (it.name.equals(name, ignoreCase = true) || it.name.equals(_syncState.value.activeChildName, ignoreCase = true)) {
+                it.copy(name = name, avatarUrl = finalAvatar, age = finalAge)
+            } else it
+        }
+
         _syncState.value = _syncState.value.copy(
             activeChildName = name,
             activeChildAvatar = finalAvatar,
-            childAge = finalAge
+            childAge = finalAge,
+            householdChildren = updatedKids
         )
-        preferences.activeChildName = name
-        preferences.activeChildAvatar = finalAvatar
 
         scope.launch {
             try {
@@ -820,18 +846,27 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 
-    fun updateChildProfile(name: String, age: Int, dailyLimitMinutes: Int, bedtime: String, schoolHours: String, avatar: String = "🦊") {
+    fun updateChildProfile(name: String, age: Int, dailyLimitMinutes: Int, bedtime: String, schoolHours: String, avatar: String = preferences.activeChildAvatar) {
+        preferences.activeChildName = name
+        preferences.activeChildAvatar = avatar
+        preferences.activeChildAge = age
+        preferences.dailyLimitMinutes = dailyLimitMinutes
+
+        val updatedKids = _syncState.value.householdChildren.map {
+            if (it.uid == "child_1" || it.uid == "child_leo" || it.name.equals(name, ignoreCase = true) || it.name.equals(_syncState.value.activeChildName, ignoreCase = true)) {
+                it.copy(name = name, age = age, avatarUrl = avatar)
+            } else it
+        }
+
         _syncState.value = _syncState.value.copy(
             activeChildName = name,
             activeChildAvatar = avatar,
             childAge = age,
             dailyLimitMinutes = dailyLimitMinutes,
             bedtime = bedtime,
-            schoolHours = schoolHours
+            schoolHours = schoolHours,
+            householdChildren = updatedKids
         )
-        preferences.activeChildName = name
-        preferences.activeChildAvatar = avatar
-        preferences.dailyLimitMinutes = dailyLimitMinutes
 
         scope.launch {
             try {

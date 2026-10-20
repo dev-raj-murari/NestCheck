@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nestcheck.app.data.model.DeviceLockState
 import com.nestcheck.app.data.repository.DeviceLockRepository
+import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,17 +25,34 @@ data class RemoteLockUiState(
 
 @HiltViewModel
 class RemoteDeviceLockViewModel @Inject constructor(
-    private val repository: DeviceLockRepository
+    private val repository: DeviceLockRepository,
+    val syncManager: RealtimeFamilySyncManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(RemoteLockUiState())
+    private val _uiState = MutableStateFlow(
+        RemoteLockUiState(
+            selectedChildName = syncManager.syncState.value.activeChildName
+        )
+    )
     val uiState: StateFlow<RemoteLockUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             repository.lockStates.collect { states ->
                 val current = states[_uiState.value.selectedChildId]
-                _uiState.value = _uiState.value.copy(lockState = current)
+                _uiState.value = _uiState.value.copy(
+                    lockState = current,
+                    selectedChildName = if (_uiState.value.selectedChildId == "child_1") {
+                        syncManager.syncState.value.activeChildName
+                    } else _uiState.value.selectedChildName
+                )
+            }
+        }
+        viewModelScope.launch {
+            syncManager.syncState.collect { sync ->
+                if (_uiState.value.selectedChildId == "child_1") {
+                    _uiState.value = _uiState.value.copy(selectedChildName = sync.activeChildName)
+                }
             }
         }
     }

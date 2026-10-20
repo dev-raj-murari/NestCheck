@@ -2,6 +2,7 @@ package com.nestcheck.app.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.nestcheck.app.data.model.ChildProfile
 import com.nestcheck.app.ui.common.UserType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -43,6 +44,68 @@ class NestCheckPreferences @Inject constructor(
     var activeChildAvatar: String
         get() = prefs.getString(KEY_ACTIVE_CHILD_AVATAR, "🦊") ?: "🦊"
         set(value) = prefs.edit().putString(KEY_ACTIVE_CHILD_AVATAR, value).apply()
+
+    var activeChildAge: Int
+        get() = prefs.getInt(KEY_ACTIVE_CHILD_AGE, 11)
+        set(value) = prefs.edit().putInt(KEY_ACTIVE_CHILD_AGE, value).apply()
+
+    var activeChildGender: String
+        get() = prefs.getString(KEY_ACTIVE_CHILD_GENDER, "Boy") ?: "Boy"
+        set(value) = prefs.edit().putString(KEY_ACTIVE_CHILD_GENDER, value).apply()
+
+    var activeChildWeight: Float
+        get() = prefs.getFloat(KEY_ACTIVE_CHILD_WEIGHT, 34.0f)
+        set(value) = prefs.edit().putFloat(KEY_ACTIVE_CHILD_WEIGHT, value).apply()
+
+    var activeChildHeight: Float
+        get() = prefs.getFloat(KEY_ACTIVE_CHILD_HEIGHT, 140.0f)
+        set(value) = prefs.edit().putFloat(KEY_ACTIVE_CHILD_HEIGHT, value).apply()
+
+    var activeChildGrade: String
+        get() = prefs.getString(KEY_ACTIVE_CHILD_GRADE, "Grade 6") ?: "Grade 6"
+        set(value) = prefs.edit().putString(KEY_ACTIVE_CHILD_GRADE, value).apply()
+
+    var activeChildDob: String
+        get() = prefs.getString(KEY_ACTIVE_CHILD_DOB, "2015-05-15") ?: "2015-05-15"
+        set(value) = prefs.edit().putString(KEY_ACTIVE_CHILD_DOB, value).apply()
+
+    var activeChildDailyStepGoal: Int
+        get() = prefs.getInt(KEY_ACTIVE_CHILD_STEP_GOAL, 6000)
+        set(value) = prefs.edit().putInt(KEY_ACTIVE_CHILD_STEP_GOAL, value).apply()
+
+    fun getPersistedChildProfile(): ChildProfile {
+        val w = activeChildWeight
+        val h = activeChildHeight
+        val bmi = if (h > 0f) w / ((h / 100f) * (h / 100f)) else 17.3f
+        return ChildProfile(
+            uid = "child_1",
+            parentUid = "parent_1",
+            name = activeChildName,
+            age = activeChildAge,
+            gender = activeChildGender,
+            weight = w,
+            height = h,
+            grade = activeChildGrade,
+            dateOfBirth = activeChildDob,
+            avatarUrl = activeChildAvatar,
+            bmi = (Math.round(bmi * 10f) / 10f),
+            dailyStepGoal = activeChildDailyStepGoal
+        )
+    }
+
+    fun saveChildProfile(profile: ChildProfile) {
+        prefs.edit()
+            .putString(KEY_ACTIVE_CHILD_NAME, profile.name)
+            .putString(KEY_ACTIVE_CHILD_AVATAR, profile.avatarUrl)
+            .putInt(KEY_ACTIVE_CHILD_AGE, profile.age)
+            .putString(KEY_ACTIVE_CHILD_GENDER, profile.gender)
+            .putFloat(KEY_ACTIVE_CHILD_WEIGHT, profile.weight)
+            .putFloat(KEY_ACTIVE_CHILD_HEIGHT, profile.height)
+            .putString(KEY_ACTIVE_CHILD_GRADE, profile.grade)
+            .putString(KEY_ACTIVE_CHILD_DOB, profile.dateOfBirth)
+            .putInt(KEY_ACTIVE_CHILD_STEP_GOAL, profile.dailyStepGoal)
+            .apply()
+    }
 
     var emergencyContactPhone: String
         get() = prefs.getString(KEY_EMERGENCY_CONTACT_PHONE, "+91 98765 43210") ?: "+91 98765 43210"
@@ -154,8 +217,15 @@ class NestCheckPreferences @Inject constructor(
         private const val KEY_PARENT_NAME = "parent_name"
         private const val KEY_PARENT_EMAIL = "parent_email"
         private const val KEY_ACTIVE_PARENT_ROLE = "active_parent_role"
-        private const val KEY_ACTIVE_CHILD_NAME = "active_child_name"
-        private const val KEY_ACTIVE_CHILD_AVATAR = "active_child_avatar"
+        const val KEY_ACTIVE_CHILD_NAME = "active_child_name"
+        const val KEY_ACTIVE_CHILD_AVATAR = "active_child_avatar"
+        const val KEY_ACTIVE_CHILD_AGE = "active_child_age"
+        const val KEY_ACTIVE_CHILD_GENDER = "active_child_gender"
+        const val KEY_ACTIVE_CHILD_WEIGHT = "active_child_weight"
+        const val KEY_ACTIVE_CHILD_HEIGHT = "active_child_height"
+        const val KEY_ACTIVE_CHILD_GRADE = "active_child_grade"
+        const val KEY_ACTIVE_CHILD_DOB = "active_child_dob"
+        const val KEY_ACTIVE_CHILD_STEP_GOAL = "active_child_step_goal"
         private const val KEY_EMERGENCY_CONTACT_PHONE = "emergency_contact_phone"
         private const val KEY_EMERGENCY_CONTACT_NAME = "emergency_contact_name"
         private const val KEY_FATHER_NAME = "father_name"

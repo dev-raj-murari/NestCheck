@@ -1,5 +1,7 @@
 package com.nestcheck.app.data.repository
 
+import android.content.SharedPreferences
+import com.nestcheck.app.data.local.NestCheckPreferences
 import com.nestcheck.app.data.model.DeviceLockState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,13 +13,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class DeviceLockRepository @Inject constructor() {
+class DeviceLockRepository @Inject constructor(
+    private val preferences: NestCheckPreferences
+) {
 
     private val _lockStates = MutableStateFlow<Map<String, DeviceLockState>>(
         mapOf(
             "child_1" to DeviceLockState(
                 childId = "child_1",
-                childName = "Leo",
+                childName = preferences.activeChildName,
                 isLocked = false,
                 lockReason = "None",
                 customMessage = "Device paused by parent for dinner.",
@@ -37,6 +41,21 @@ class DeviceLockRepository @Inject constructor() {
         )
     )
     val lockStates: StateFlow<Map<String, DeviceLockState>> = _lockStates.asStateFlow()
+
+    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == NestCheckPreferences.KEY_ACTIVE_CHILD_NAME) {
+            val current = _lockStates.value.toMutableMap()
+            val child1 = current["child_1"]
+            if (child1 != null) {
+                current["child_1"] = child1.copy(childName = preferences.activeChildName)
+                _lockStates.value = current
+            }
+        }
+    }
+
+    init {
+        preferences.registerOnSharedPreferenceChangeListener(prefListener)
+    }
 
     fun lockDevice(
         childId: String,

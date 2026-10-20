@@ -1,5 +1,7 @@
 package com.nestcheck.app.data.repository
 
+import android.content.SharedPreferences
+import com.nestcheck.app.data.local.NestCheckPreferences
 import com.nestcheck.app.data.model.HouseholdChild
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,15 +11,17 @@ import javax.inject.Singleton
 import kotlin.random.Random
 
 @Singleton
-class HouseholdRepository @Inject constructor() {
+class HouseholdRepository @Inject constructor(
+    private val preferences: NestCheckPreferences
+) {
 
     private val _children = MutableStateFlow<List<HouseholdChild>>(
         listOf(
             HouseholdChild(
                 id = "child_1",
-                name = "Leo",
-                age = 10,
-                grade = "5th Grade",
+                name = preferences.activeChildName,
+                age = preferences.activeChildAge,
+                grade = preferences.activeChildGrade,
                 avatarColorHex = 0xFF00E5FF,
                 deviceName = "Samsung Galaxy Tab A9",
                 isOnline = true,
@@ -67,6 +71,20 @@ class HouseholdRepository @Inject constructor() {
         )
     )
     val children: StateFlow<List<HouseholdChild>> = _children.asStateFlow()
+
+    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == NestCheckPreferences.KEY_ACTIVE_CHILD_NAME || key == NestCheckPreferences.KEY_ACTIVE_CHILD_AGE) {
+            _children.value = _children.value.map { child ->
+                if (child.id == "child_1") {
+                    child.copy(name = preferences.activeChildName, age = preferences.activeChildAge)
+                } else child
+            }
+        }
+    }
+
+    init {
+        preferences.registerOnSharedPreferenceChangeListener(prefListener)
+    }
 
     private val _selectedChildId = MutableStateFlow<String>("child_1")
     val selectedChildId: StateFlow<String> = _selectedChildId.asStateFlow()

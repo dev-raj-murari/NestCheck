@@ -33,7 +33,7 @@ class ChildDashboardViewModel @Inject constructor(
 ) : ViewModel() {
 
     val childProfile: StateFlow<ChildProfile> = profileRepository.childProfile
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ChildProfile())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), profileRepository.childProfile.value)
 
     val wallet: StateFlow<CreditScreenTimeWallet> = creditRepository.wallet
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CreditScreenTimeWallet())

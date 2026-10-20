@@ -45,16 +45,27 @@ fun KidLoginScreen(
     val context = LocalContext.current
     val syncState by syncManager.syncState.collectAsState()
 
-    val profiles = remember {
-        listOf(
-            KidProfileOption("Leo", "🦊", "Grade 6", 11),
-            KidProfileOption("Olivia", "🦄", "Grade 4", 9),
-            KidProfileOption("Aarav", "🚀", "Grade 5", 10),
-            KidProfileOption("Maya", "🐼", "Grade 2", 7)
-        )
+    val profiles = remember(syncState.activeChildName, syncState.activeChildAvatar, syncState.householdChildren) {
+        val activeName = syncState.activeChildName
+        val activeAvatar = syncState.activeChildAvatar
+        val kids = syncState.householdChildren.map { kid ->
+            KidProfileOption(
+                name = kid.name,
+                avatar = kid.avatarUrl,
+                grade = kid.grade.ifBlank { "Grade 6" },
+                age = kid.age
+            )
+        }
+        if (kids.none { it.name.equals(activeName, ignoreCase = true) }) {
+            listOf(KidProfileOption(activeName, activeAvatar, "Grade 6", syncState.childAge)) + kids
+        } else {
+            kids
+        }
     }
 
-    var selectedProfile by remember { mutableStateOf(profiles[0]) }
+    var selectedProfile by remember(profiles) {
+        mutableStateOf(profiles.firstOrNull { it.name.equals(syncState.activeChildName, ignoreCase = true) } ?: profiles[0])
+    }
     var pin by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
 
