@@ -618,7 +618,7 @@ class RealtimeFamilySyncManager @Inject constructor(
         )
         try {
             firestore?.collection("user_activity_logs")
-                .add(logEntry)
+                ?.add(logEntry)
         } catch (_: Exception) {}
     }
 
@@ -628,7 +628,7 @@ class RealtimeFamilySyncManager @Inject constructor(
         preferences.childCredits = updated
         try {
             firestore?.collection("family_state")?.document("current")
-                .set(mapOf("childCredits" to updated), com.google.firebase.firestore.SetOptions.merge())
+                ?.set(mapOf("childCredits" to updated), com.google.firebase.firestore.SetOptions.merge())
         } catch (_: Exception) {}
     }
 
