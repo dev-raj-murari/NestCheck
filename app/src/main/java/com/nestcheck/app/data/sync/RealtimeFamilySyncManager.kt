@@ -605,6 +605,21 @@ class RealtimeFamilySyncManager @Inject constructor(
         triggerKidSos(true, location, lat, lng)
     }
 
+    fun logUserActivity(event: String, details: String) {
+        val logEntry = hashMapOf(
+            "event" to event,
+            "details" to details,
+            "timestamp" to System.currentTimeMillis(),
+            "device" to android.os.Build.MODEL,
+            "activeChild" to _syncState.value.activeChildName,
+            "activeParent" to _syncState.value.activeParentName
+        )
+        try {
+            firestore.collection("user_activity_logs")
+                .add(logEntry)
+        } catch (_: Exception) {}
+    }
+
     fun addCredits(amount: Int) {
         val current = prefs.childCredits
         val updated = current + amount
@@ -616,6 +631,7 @@ class RealtimeFamilySyncManager @Inject constructor(
     }
 
     fun clearSOS() {
+        logUserActivity("sos_dismissed", "Parent/Child dismissed SOS")
         preferences.sosActive = false
         _syncState.value = _syncState.value.copy(sosActive = false, sosTimestamp = 0L, sosLocation = "")
         scope.launch {
