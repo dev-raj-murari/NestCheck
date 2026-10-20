@@ -26,6 +26,7 @@ fun WaterReminderScreen(
     viewModel: WaterReminderViewModel = hiltViewModel()
 ) {
     val config by viewModel.config.collectAsState()
+    val rewardMsg by viewModel.rewardMessage.collectAsState()
     val progress = (config.glassesDrank.toFloat() / config.dailyGoalGlasses.toFloat()).coerceIn(0f, 1f)
 
     Column(
@@ -58,7 +59,31 @@ fun WaterReminderScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        if (rewardMsg != null) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = androidx.compose.ui.graphics.Color(0xFFFEF3C7)
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = rewardMsg ?: "",
+                        fontWeight = FontWeight.Bold,
+                        color = androidx.compose.ui.graphics.Color(0xFF92400E),
+                        fontSize = 13.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = { viewModel.clearRewardMessage() }) {
+                        Text("✕", color = androidx.compose.ui.graphics.Color(0xFF92400E), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         // WATER GLASS TRACKER CARD
         Box(

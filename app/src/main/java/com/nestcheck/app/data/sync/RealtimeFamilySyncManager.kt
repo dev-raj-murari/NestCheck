@@ -605,6 +605,16 @@ class RealtimeFamilySyncManager @Inject constructor(
         triggerKidSos(true, location, lat, lng)
     }
 
+    fun addCredits(amount: Int) {
+        val current = prefs.childCredits
+        val updated = current + amount
+        prefs.childCredits = updated
+        try {
+            firestore.collection("family_state").document("current")
+                .set(mapOf("childCredits" to updated), com.google.firebase.firestore.SetOptions.merge())
+        } catch (_: Exception) {}
+    }
+
     fun clearSOS() {
         preferences.sosActive = false
         _syncState.value = _syncState.value.copy(sosActive = false, sosTimestamp = 0L, sosLocation = "")
