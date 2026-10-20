@@ -47,14 +47,16 @@ enum class KidTab(val label: String, val icon: ImageVector) {
     SOS("Emergency SOS", Icons.Outlined.WarningAmber)
 }
 
-val KidBgLight = Color(0xFFF0F4F9)
+val KidBgLight = Color(0xFFF8F9FA)
 val KidCardWhite = Color(0xFFFFFFFF)
-val KidTextDark = Color(0xFF1E293B)
-val KidTextMuted = Color(0xFF64748B)
-val KidBorder = Color(0xFFE2E8F0)
+val KidTextDark = Color(0xFF1F1F1F)
+val KidTextMuted = Color(0xFF5E5E5E)
+val KidBorder = Color(0xFFE0E2EC)
 val KidBlue = Color(0xFF0B57D0)
-val KidGreen = Color(0xFF10B981)
-val KidRed = Color(0xFFEF4444)
+val KidBlueContainer = Color(0xFFD3E3FD)
+val KidGreen = Color(0xFF1E8E3E)
+val KidRed = Color(0xFFD93025)
+val KidAmber = Color(0xFFF9AB00)
 
 @Composable
 fun KidShellScreen(
@@ -149,6 +151,13 @@ fun KidShellScreen(
                                 fontWeight = if (selectedTab == tab) FontWeight.Bold else FontWeight.Normal
                             )
                         },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = KidBlue,
+                            indicatorColor = KidBlueContainer,
+                            selectedTextColor = KidBlue,
+                            unselectedIconColor = KidTextMuted,
+                            unselectedTextColor = KidTextMuted
+                        ),
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = if (tab == KidTab.SOS) KidRed else KidBlue,
                             selectedTextColor = if (tab == KidTab.SOS) KidRed else KidBlue,
