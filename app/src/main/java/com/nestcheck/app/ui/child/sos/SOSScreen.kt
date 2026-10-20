@@ -4,8 +4,6 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -40,9 +38,12 @@ fun SOSScreen(
 ) {
     val context = LocalContext.current
     val sosState by viewModel.sosState.collectAsState()
+    val syncState by viewModel.syncManager.syncState.collectAsState()
     val countdown by viewModel.countdownSeconds.collectAsState()
     val isHolding by viewModel.isHolding.collectAsState()
     val scrollState = rememberScrollState()
+
+    val primaryPhone = syncState.emergencyContactPhone.ifBlank { sosState.emergencyContactPhone.ifBlank { "+91 98765 43210" } }
 
     // Pulse animation for active emergency state
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -124,7 +125,7 @@ fun SOSScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "GPS telemetry & alert dispatched to parents",
+                            text = "Dispatched to parents app • Fast-dial parent: $primaryPhone",
                             color = CyberTextDim,
                             fontSize = 11.sp
                         )
@@ -155,7 +156,17 @@ fun SOSScreen(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Warning,
+                    contentDescription = null,
+                    tint = if (sosState.isEmergencyActive) White else AlertRed,
+                    modifier = Modifier.size(52.dp)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = if (sosState.isEmergencyActive) "CANCEL" else "SOS",
                     color = White,
@@ -175,7 +186,7 @@ fun SOSScreen(
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // HOLD-TO-ACTIVATE SECTION
+        // HOLD-TO-ACTIVATE OR RESOLVE SECTION
         if (!sosState.isEmergencyActive) {
             Button(
                 onClick = viewModel::onStartHold,
@@ -198,6 +209,25 @@ fun SOSScreen(
                 }
             }
         } else {
+            // Instant Direct Call Parent Button (Calls Parent Directly, NOT 112)
+            Button(
+                onClick = {
+                    val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$primaryPhone"))
+                    context.startActivity(dialIntent)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = Black)
+            ) {
+                Icon(Icons.Outlined.Call, contentDescription = null, tint = Black, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Call Parent Now ($primaryPhone)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             Button(
                 onClick = viewModel::cancelActiveEmergency,
                 modifier = Modifier
@@ -270,7 +300,7 @@ fun SOSScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                Text("Emergency Contacts (Tap to Fast-Dial):", color = CyberTextDim, fontSize = 12.sp)
+                Text("Emergency Contacts (Calls Parent Directly, NOT 112):", color = CyberTextDim, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 sosState.notifiedContacts.forEach { contact ->
                     Row(
@@ -278,17 +308,20 @@ fun SOSScreen(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(6.dp))
                             .clickable {
-                                val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))
+                                val targetPhone = if (contact.phone.isNotBlank()) contact.phone else primaryPhone
+                                val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$targetPhone"))
                                 context.startActivity(dialIntent)
                             }
-                            .padding(vertical = 6.dp, horizontal = 4.dp),
+                            .padding(vertical = 8.dp, horizontal = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(Icons.Outlined.Call, contentDescription = "Call", tint = SuccessGreen, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(contact, color = CyberTextBright, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("DIAL NOW", color = SuccessGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(contact.name, color = CyberTextBright, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Text(contact.phone, color = CyberTextDim, fontSize = 11.sp)
+                        }
+                        Text("DIAL NOW", color = SuccessGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
