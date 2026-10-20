@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nestcheck.app.data.model.PendingTaskItem
+import com.nestcheck.app.data.model.TaskApprovalStatus
 
 @Composable
 fun PendingTasksCard(
@@ -34,8 +36,9 @@ fun PendingTasksCard(
     val textMuted = Color(0xFF64748B)
     val primaryBlue = Color(0xFF0B57D0)
     val greenSuccess = Color(0xFF10B981)
+    val amberPending = Color(0xFFD97706)
 
-    val pendingCount = tasks.count { !it.isCompleted }
+    val pendingCount = tasks.count { it.approvalStatus != TaskApprovalStatus.APPROVED_AND_CREDITED }
 
     Box(
         modifier = modifier
@@ -71,7 +74,7 @@ fun PendingTasksCard(
                         )
                     }
                     Text(
-                        text = "Pending Tasks & Quests",
+                        text = "Tasks & Quests",
                         color = textDark,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -91,7 +94,7 @@ fun PendingTasksCard(
                 }
 
                 Text(
-                    text = "Tap to Complete",
+                    text = "Tap to Check Off",
                     color = textMuted,
                     fontSize = 11.sp
                 )
@@ -99,10 +102,16 @@ fun PendingTasksCard(
 
             // Task Items List
             tasks.forEach { task ->
+                val isApproved = task.approvalStatus == TaskApprovalStatus.APPROVED_AND_CREDITED
+                val isPending = task.approvalStatus == TaskApprovalStatus.PENDING_PARENT_APPROVAL
+
                 Surface(
-                    color = if (task.isCompleted) Color(0xFFF8FAFC) else Color.White,
+                    color = if (isApproved) Color(0xFFF8FAFC) else if (isPending) Color(0xFFFFFBEB) else Color.White,
                     shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isPending) Color(0xFFFDE68A) else Color(0xFFE2E8F0)
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onToggleTask(task.id) }
@@ -121,20 +130,31 @@ fun PendingTasksCard(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(24.dp)
+                                    .size(26.dp)
                                     .clip(CircleShape)
-                                    .background(if (task.isCompleted) greenSuccess else Color.Transparent)
+                                    .background(
+                                        if (isApproved) greenSuccess
+                                        else if (isPending) amberPending
+                                        else Color.Transparent
+                                    )
                                     .border(
                                         width = 1.5.dp,
-                                        color = if (task.isCompleted) greenSuccess else Color(0xFFCBD5E1),
+                                        color = if (isApproved) greenSuccess else if (isPending) amberPending else Color(0xFFCBD5E1),
                                         shape = CircleShape
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
-                                if (task.isCompleted) {
+                                if (isApproved) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Done",
+                                        contentDescription = "Verified",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                } else if (isPending) {
+                                    Icon(
+                                        imageVector = Icons.Default.HourglassTop,
+                                        contentDescription = "Pending Approval",
                                         tint = Color.White,
                                         modifier = Modifier.size(14.dp)
                                     )
@@ -144,30 +164,74 @@ fun PendingTasksCard(
                             Column {
                                 Text(
                                     text = task.title,
-                                    color = if (task.isCompleted) textMuted else textDark,
+                                    color = if (isApproved) textMuted else textDark,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    style = if (task.isCompleted) androidx.compose.ui.text.TextStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough) else androidx.compose.ui.text.TextStyle()
+                                    style = if (isApproved) androidx.compose.ui.text.TextStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough) else androidx.compose.ui.text.TextStyle()
                                 )
+                                val subtitleText = when (task.approvalStatus) {
+                                    TaskApprovalStatus.APPROVED_AND_CREDITED -> "Verified by Parent ✓"
+                                    TaskApprovalStatus.PENDING_PARENT_APPROVAL -> "Submitted • Waiting for Parent Approval ⏳"
+                                    TaskApprovalStatus.NOT_COMPLETED -> "${task.category.label} • Due ${task.dueDate}"
+                                }
+                                val subtitleColor = when (task.approvalStatus) {
+                                    TaskApprovalStatus.APPROVED_AND_CREDITED -> greenSuccess
+                                    TaskApprovalStatus.PENDING_PARENT_APPROVAL -> amberPending
+                                    TaskApprovalStatus.NOT_COMPLETED -> textMuted
+                                }
                                 Text(
-                                    text = "${task.category.label} • Due ${task.dueDate}",
-                                    color = textMuted,
-                                    fontSize = 11.sp
+                                    text = subtitleText,
+                                    color = subtitleColor,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isPending) FontWeight.Medium else FontWeight.Normal
                                 )
                             }
                         }
 
-                        Surface(
-                            color = if (task.isCompleted) Color(0xFFE6F4EA) else Color(0xFFE8F0FE),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = if (task.isCompleted) "+${task.creditsReward} pts EARNED" else "+${task.creditsReward} pts (+${task.screenTimeBonusMinutes}m)",
-                                color = if (task.isCompleted) greenSuccess else primaryBlue,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
+                        // Status badge on the right
+                        when (task.approvalStatus) {
+                            TaskApprovalStatus.APPROVED_AND_CREDITED -> {
+                                Surface(
+                                    color = Color(0xFFE6F4EA),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = "+${task.creditsReward} pts CREDITED",
+                                        color = greenSuccess,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                            TaskApprovalStatus.PENDING_PARENT_APPROVAL -> {
+                                Surface(
+                                    color = Color(0xFFFEF3C7),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = "+${task.creditsReward} pts PENDING",
+                                        color = amberPending,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                            TaskApprovalStatus.NOT_COMPLETED -> {
+                                Surface(
+                                    color = Color(0xFFE8F0FE),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = "+${task.creditsReward} pts (+${task.screenTimeBonusMinutes}m)",
+                                        color = primaryBlue,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

@@ -21,6 +21,7 @@ class ChildDashboardRepository @Inject constructor(
                 category = TaskCategory.CHORE,
                 creditsReward = 30, // 15 mins screen time
                 isCompleted = false,
+                approvalStatus = TaskApprovalStatus.NOT_COMPLETED,
                 dueDate = "Today, 5:30 PM"
             ),
             PendingTaskItem(
@@ -29,6 +30,7 @@ class ChildDashboardRepository @Inject constructor(
                 category = TaskCategory.STUDY,
                 creditsReward = 40, // 20 mins screen time
                 isCompleted = false,
+                approvalStatus = TaskApprovalStatus.NOT_COMPLETED,
                 dueDate = "Today, 7:00 PM"
             ),
             PendingTaskItem(
@@ -37,6 +39,7 @@ class ChildDashboardRepository @Inject constructor(
                 category = TaskCategory.READING,
                 creditsReward = 20, // 10 mins screen time
                 isCompleted = false,
+                approvalStatus = TaskApprovalStatus.NOT_COMPLETED,
                 dueDate = "Tonight, 8:30 PM"
             ),
             PendingTaskItem(
@@ -45,6 +48,7 @@ class ChildDashboardRepository @Inject constructor(
                 category = TaskCategory.WELLBEING,
                 creditsReward = 10, // 5 mins screen time
                 isCompleted = true,
+                approvalStatus = TaskApprovalStatus.APPROVED_AND_CREDITED,
                 dueDate = "Completed"
             )
         )
@@ -107,24 +111,55 @@ class ChildDashboardRepository @Inject constructor(
     )
     val calendarEvents: StateFlow<List<CalendarEventItem>> = _calendarEvents.asStateFlow()
 
-    fun toggleTask(taskId: String): Boolean {
-        var completedNow = false
+    fun toggleTask(taskId: String): PendingTaskItem? {
+        var updatedTask: PendingTaskItem? = null
         val updated = _pendingTasks.value.map { task ->
             if (task.id == taskId) {
-                val nextState = !task.isCompleted
-                if (nextState) {
-                    completedNow = true
-                    // Award credits (2 credits = 1 min screen time)
-                    creditRepository.addCredits(
-                        amount = task.creditsReward,
-                        type = CreditTransactionType.TASK_COMPLETED,
-                        title = "Completed: ${task.title}"
-                    )
+                val nextTask = when (task.approvalStatus) {
+                    TaskApprovalStatus.NOT_COMPLETED -> {
+                        // Mark as pending parent approval! DO NOT credit points yet!
+                        task.copy(
+                            approvalStatus = TaskApprovalStatus.PENDING_PARENT_APPROVAL,
+                            isCompleted = false
+                        )
+                    }
+                    TaskApprovalStatus.PENDING_PARENT_APPROVAL -> {
+                        // Child can uncheck if clicked by mistake
+                        task.copy(
+                            approvalStatus = TaskApprovalStatus.NOT_COMPLETED,
+                            isCompleted = false
+                        )
+                    }
+                    TaskApprovalStatus.APPROVED_AND_CREDITED -> {
+                        task // Already approved and credited by parents
+                    }
                 }
-                task.copy(isCompleted = nextState)
+                updatedTask = nextTask
+                nextTask
             } else task
         }
         _pendingTasks.value = updated
-        return completedNow
+        return updatedTask
+    }
+
+    fun approveTaskByParent(taskId: String): Boolean {
+        var approved = false
+        val updated = _pendingTasks.value.map { task ->
+            if (task.id == taskId && task.approvalStatus == TaskApprovalStatus.PENDING_PARENT_APPROVAL) {
+                approved = true
+                // Award credits upon parent approval!
+                creditRepository.addCredits(
+                    amount = task.creditsReward,
+                    type = CreditTransactionType.TASK_COMPLETED,
+                    title = "Parent Verified: ${task.title}"
+                )
+                task.copy(
+                    approvalStatus = TaskApprovalStatus.APPROVED_AND_CREDITED,
+                    isCompleted = true
+                )
+            } else task
+        }
+        _pendingTasks.value = updated
+        return approved
     }
 }

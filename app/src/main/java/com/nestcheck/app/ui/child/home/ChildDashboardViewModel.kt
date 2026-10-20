@@ -58,7 +58,15 @@ class ChildDashboardViewModel @Inject constructor(
 
     fun toggleTask(taskId: String) {
         viewModelScope.launch {
-            dashboardRepository.toggleTask(taskId)
+            val updatedTask = dashboardRepository.toggleTask(taskId)
+            if (updatedTask?.approvalStatus == TaskApprovalStatus.PENDING_PARENT_APPROVAL) {
+                // Inform parent that child submitted task for verification
+                notificationRepository.addNotification(
+                    type = NotificationType.STEP_GOAL_COMPLETE,
+                    title = "📋 Task Awaiting Approval: ${updatedTask.title}",
+                    message = "${childProfile.value.name} marked '${updatedTask.title}' as done. Parent review required to credit +${updatedTask.creditsReward} pts."
+                )
+            }
         }
     }
 
