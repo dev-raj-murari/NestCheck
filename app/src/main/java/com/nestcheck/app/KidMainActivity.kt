@@ -14,7 +14,7 @@ class KidMainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NestCheckTheme {
-                NestCheckApp(startDestination = Screen.KidHome.route)
+                NestCheckApp(startDestination = Screen.KidLogin.route)
             }
         }
     }

@@ -14,7 +14,7 @@ class ParentMainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NestCheckTheme {
-                NestCheckApp(startDestination = Screen.ParentDashboard.route)
+                NestCheckApp(startDestination = Screen.ParentLogin.route)
             }
         }
     }

@@ -3,6 +3,8 @@ package com.nestcheck.app.navigation
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
     object Login : Screen("login")
+    object ParentLogin : Screen("parent_login")
+    object KidLogin : Screen("kid_login")
     
     // Parent routes
     object ParentDashboard : Screen("parent_dashboard")

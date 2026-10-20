@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.nestcheck.app.ui.auth.ParentLoginScreen
+import com.nestcheck.app.ui.auth.KidLoginScreen
 import com.nestcheck.app.ui.common.LoginScreen
 import com.nestcheck.app.ui.auth.FamilyAuthScreen
 import com.nestcheck.app.ui.common.SplashScreen
@@ -67,6 +69,8 @@ fun NestCheckApp(startDestination: String = Screen.Splash.route) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Splash.route) { SplashScreen(navController) }
         composable(Screen.Login.route) { FamilyAuthScreen(navController) }
+        composable(Screen.ParentLogin.route) { ParentLoginScreen(navController) }
+        composable(Screen.KidLogin.route) { KidLoginScreen(navController) }
         composable(Screen.ParentDashboard.route) { ParentShellScreen(navController) }
         
         // Rohit's Feature Routes (F1-F6, F21-F28, F40)
