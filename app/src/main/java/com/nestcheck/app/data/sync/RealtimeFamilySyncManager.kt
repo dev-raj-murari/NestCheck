@@ -5,6 +5,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.nestcheck.app.core.NestCheckNotificationManager
 import com.nestcheck.app.data.local.NestCheckPreferences
+import com.nestcheck.app.data.model.ChildProfile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,24 +32,47 @@ data class TimetableItem(
 
 data class FamilySyncState(
     val familyCode: String = "NC-8294",
-    val activeChildName: String = "Olivia",
+    val activeChildName: String = "Leo",
+    val activeChildAvatar: String = "🦊",
     val isDeviceLocked: Boolean = false,
-    val remainingMinutes: Int = 135,
+    val remainingMinutes: Int = 105,
     val dailyLimitMinutes: Int = 180,
-    val kidLatitude: Double = 37.7749,
-    val kidLongitude: Double = -122.4194,
+    val kidLatitude: Double = 19.1075,
+    val kidLongitude: Double = 72.8372,
     val kidBattery: Int = 84,
     val isCharging: Boolean = false,
-    val locationAddress: String = "1825 Jersey Street, San Francisco",
+    val locationAddress: String = "MPSTME NMIMS, Vile Parle West, Mumbai, Maharashtra",
     val lastLocationUpdate: Long = System.currentTimeMillis(),
     val sosActive: Boolean = false,
     val sosTimestamp: Long = 0L,
     val sosLocation: String = "",
+    val emergencyContactPhone: String = "+91 98765 43210",
+    val emergencyContactName: String = "Father (Dev Raj)",
+    val activeParentRole: String = "Father",
+    val activeParentName: String = "Dev Raj",
+    val fatherName: String = "Dev Raj",
+    val fatherPhone: String = "+91 98765 43210",
+    val fatherEmail: String = "devraj@nestcheck.app",
+    val motherName: String = "Priya",
+    val motherPhone: String = "+91 98765 43212",
+    val motherEmail: String = "priya@nestcheck.app",
+    val guardianName: String = "Rohit",
+    val guardianPhone: String = "+91 98765 43211",
+    val guardianEmail: String = "rohit@nestcheck.app",
+    val geofenceBreachActive: Boolean = false,
+    val geofenceBreachZone: String = "",
+    val geofenceBreachAddress: String = "",
+    val geofenceBreachTimestamp: Long = 0L,
+    val householdChildren: List<ChildProfile> = listOf(
+        ChildProfile(uid = "child_leo", name = "Leo", age = 11, gender = "Boy", avatarUrl = "🦊", grade = "Grade 6"),
+        ChildProfile(uid = "child_olivia", name = "Olivia", age = 9, gender = "Girl", avatarUrl = "🦄", grade = "Grade 4"),
+        ChildProfile(uid = "child_aarav", name = "Aarav", age = 10, gender = "Boy", avatarUrl = "🚀", grade = "Grade 5")
+    ),
     val lockedApps: List<String> = listOf("com.instagram.android", "com.zhiliaoapp.musically"),
     val inAppPurchasesBlocked: Boolean = true, // Google Play Payment Block
     val appApprovalsRequired: Boolean = true,
     val deviceApprovalStatus: DeviceApprovalStatus = DeviceApprovalStatus.APPROVED,
-    val pendingDeviceName: String = "Google Pixel 9",
+    val pendingDeviceName: String = "Google Pixel 8",
     val childAge: Int = 11,
     val bedtime: String = "9:00 PM",
     val schoolHours: String = "8:30 AM - 3:15 PM",
@@ -102,9 +126,23 @@ class RealtimeFamilySyncManager @Inject constructor(
         FamilySyncState(
             familyCode = preferences.householdPairingCode,
             activeChildName = preferences.activeChildName,
+            activeChildAvatar = preferences.activeChildAvatar,
             isDeviceLocked = preferences.isDeviceLocked,
             remainingMinutes = preferences.remainingMinutes,
-            dailyLimitMinutes = preferences.dailyLimitMinutes
+            dailyLimitMinutes = preferences.dailyLimitMinutes,
+            emergencyContactPhone = preferences.emergencyContactPhone,
+            emergencyContactName = preferences.emergencyContactName,
+            activeParentRole = preferences.activeParentRole,
+            activeParentName = preferences.parentName,
+            fatherName = preferences.fatherName,
+            fatherPhone = preferences.fatherPhone,
+            fatherEmail = preferences.fatherEmail,
+            motherName = preferences.motherName,
+            motherPhone = preferences.motherPhone,
+            motherEmail = preferences.motherEmail,
+            guardianName = preferences.guardianName,
+            guardianPhone = preferences.guardianPhone,
+            guardianEmail = preferences.guardianEmail
         )
     )
     val syncState: StateFlow<FamilySyncState> = _syncState.asStateFlow()
@@ -136,12 +174,17 @@ class RealtimeFamilySyncManager @Inject constructor(
                     val address = snapshot.getString("locationAddress") ?: _syncState.value.locationAddress
                     val sos = snapshot.getBoolean("sosActive") ?: false
                     val purchasesBlocked = snapshot.getBoolean("inAppPurchasesBlocked") ?: true
+                    val activeChild = snapshot.getString("activeChildName") ?: _syncState.value.activeChildName
+                    val activeAvatar = snapshot.getString("activeChildAvatar") ?: _syncState.value.activeChildAvatar
+                    val emergencyPhone = snapshot.getString("emergencyContactPhone") ?: _syncState.value.emergencyContactPhone
 
                     val previousSos = _syncState.value.sosActive
                     val previousLocked = _syncState.value.isDeviceLocked
 
                     val newState = _syncState.value.copy(
                         familyCode = familyCode,
+                        activeChildName = activeChild,
+                        activeChildAvatar = activeAvatar,
                         isDeviceLocked = isLocked,
                         remainingMinutes = remainingMins,
                         dailyLimitMinutes = dailyLimit,
@@ -151,17 +194,21 @@ class RealtimeFamilySyncManager @Inject constructor(
                         locationAddress = address,
                         lastLocationUpdate = System.currentTimeMillis(),
                         sosActive = sos,
+                        emergencyContactPhone = emergencyPhone,
                         inAppPurchasesBlocked = purchasesBlocked
                     )
 
                     _syncState.value = newState
+                    preferences.activeChildName = activeChild
+                    preferences.activeChildAvatar = activeAvatar
                     preferences.isDeviceLocked = isLocked
                     preferences.remainingMinutes = remainingMins
                     preferences.dailyLimitMinutes = dailyLimit
+                    preferences.emergencyContactPhone = emergencyPhone
 
                     // Real-time notifications for critical safety state changes
                     if (!previousSos && sos) {
-                        notificationManager.showSosAlert(newState.activeChildName, address, lat, lng)
+                        notificationManager.showSosAlert(newState.activeChildName, address, lat, lng, emergencyPhone)
                     }
                     if (previousLocked != isLocked) {
                         notificationManager.showDeviceLockNotification(newState.activeChildName, isLocked)
@@ -169,6 +216,196 @@ class RealtimeFamilySyncManager @Inject constructor(
                 }
         } catch (e: Exception) {
             // Offline / graceful local fallback
+        }
+    }
+
+    fun switchActiveChild(name: String, avatar: String = "🦊") {
+        val found = _syncState.value.householdChildren.find { it.name.equals(name, ignoreCase = true) }
+        val finalAvatar = found?.avatarUrl ?: avatar
+        val finalAge = found?.age ?: _syncState.value.childAge
+
+        _syncState.value = _syncState.value.copy(
+            activeChildName = name,
+            activeChildAvatar = finalAvatar,
+            childAge = finalAge
+        )
+        preferences.activeChildName = name
+        preferences.activeChildAvatar = finalAvatar
+
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf(
+                            "activeChildName" to name,
+                            "activeChildAvatar" to finalAvatar,
+                            "childAge" to finalAge
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun updateChildAvatar(avatar: String) {
+        val updatedKids = _syncState.value.householdChildren.map {
+            if (it.name.equals(_syncState.value.activeChildName, ignoreCase = true)) {
+                it.copy(avatarUrl = avatar)
+            } else it
+        }
+
+        _syncState.value = _syncState.value.copy(
+            activeChildAvatar = avatar,
+            householdChildren = updatedKids
+        )
+        preferences.activeChildAvatar = avatar
+
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf("activeChildAvatar" to avatar),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun switchActiveParent(role: String) {
+        val name = when (role) {
+            "Father" -> _syncState.value.fatherName
+            "Mother" -> _syncState.value.motherName
+            "Guardian" -> _syncState.value.guardianName
+            else -> _syncState.value.fatherName
+        }
+        _syncState.value = _syncState.value.copy(
+            activeParentRole = role,
+            activeParentName = name
+        )
+        preferences.activeParentRole = role
+        preferences.parentName = name
+    }
+
+    fun updateParentContactDetails(
+        fatherName: String,
+        fatherEmail: String,
+        fatherPhone: String,
+        motherName: String,
+        motherEmail: String,
+        motherPhone: String,
+        guardianName: String,
+        guardianEmail: String,
+        guardianPhone: String,
+        emergencyPhone: String,
+        emergencyName: String = "Parent"
+    ) {
+        preferences.fatherName = fatherName
+        preferences.fatherEmail = fatherEmail
+        preferences.fatherPhone = fatherPhone
+        preferences.motherName = motherName
+        preferences.motherEmail = motherEmail
+        preferences.motherPhone = motherPhone
+        preferences.guardianName = guardianName
+        preferences.guardianEmail = guardianEmail
+        preferences.guardianPhone = guardianPhone
+        preferences.emergencyContactPhone = emergencyPhone
+        preferences.emergencyContactName = emergencyName
+
+        val currentRole = preferences.activeParentRole
+        val currentName = when (currentRole) {
+            "Father" -> fatherName
+            "Mother" -> motherName
+            "Guardian" -> guardianName
+            else -> fatherName
+        }
+
+        _syncState.value = _syncState.value.copy(
+            fatherName = fatherName,
+            fatherEmail = fatherEmail,
+            fatherPhone = fatherPhone,
+            motherName = motherName,
+            motherEmail = motherEmail,
+            motherPhone = motherPhone,
+            guardianName = guardianName,
+            guardianEmail = guardianEmail,
+            guardianPhone = guardianPhone,
+            emergencyContactPhone = emergencyPhone,
+            emergencyContactName = emergencyName,
+            activeParentName = currentName
+        )
+
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf(
+                            "emergencyContactPhone" to emergencyPhone,
+                            "emergencyContactName" to emergencyName,
+                            "fatherName" to fatherName,
+                            "fatherPhone" to fatherPhone,
+                            "motherName" to motherName,
+                            "motherPhone" to motherPhone,
+                            "guardianName" to guardianName,
+                            "guardianPhone" to guardianPhone
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun triggerGeofenceBreach(zoneName: String, address: String, lat: Double, lng: Double, isExit: Boolean = true) {
+        _syncState.value = _syncState.value.copy(
+            geofenceBreachActive = true,
+            geofenceBreachZone = zoneName,
+            geofenceBreachAddress = address,
+            geofenceBreachTimestamp = System.currentTimeMillis(),
+            kidLatitude = lat,
+            kidLongitude = lng,
+            locationAddress = address,
+            lastLocationUpdate = System.currentTimeMillis()
+        )
+
+        notificationManager.showGeofenceAlert(
+            childName = _syncState.value.activeChildName,
+            zoneName = zoneName,
+            isExit = isExit,
+            address = address,
+            lat = lat,
+            lng = lng
+        )
+
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(
+                        mapOf(
+                            "geofenceBreachActive" to true,
+                            "geofenceBreachZone" to zoneName,
+                            "geofenceBreachAddress" to address,
+                            "kidLatitude" to lat,
+                            "kidLongitude" to lng,
+                            "locationAddress" to address,
+                            "geofenceBreachTimestamp" to System.currentTimeMillis()
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun dismissGeofenceBreach() {
+        _syncState.value = _syncState.value.copy(geofenceBreachActive = false)
+        scope.launch {
+            try {
+                firestore?.collection("nestcheck_families")
+                    ?.document(_syncState.value.familyCode)
+                    ?.set(mapOf("geofenceBreachActive" to false), com.google.firebase.firestore.SetOptions.merge())
+            } catch (e: Exception) {}
         }
     }
 
@@ -188,9 +425,7 @@ class RealtimeFamilySyncManager @Inject constructor(
                         ),
                         com.google.firebase.firestore.SetOptions.merge()
                     )
-            } catch (e: Exception) {
-                // local fallback maintained
-            }
+            } catch (e: Exception) {}
         }
     }
 
@@ -261,7 +496,13 @@ class RealtimeFamilySyncManager @Inject constructor(
         )
 
         if (active) {
-            notificationManager.showSosAlert(_syncState.value.activeChildName, location, lat, lng)
+            notificationManager.showSosAlert(
+                childName = _syncState.value.activeChildName,
+                locationText = location,
+                lat = lat,
+                lng = lng,
+                parentPhone = _syncState.value.emergencyContactPhone
+            )
         }
 
         scope.launch {
@@ -324,15 +565,17 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 
-    fun updateChildProfile(name: String, age: Int, dailyLimitMinutes: Int, bedtime: String, schoolHours: String) {
+    fun updateChildProfile(name: String, age: Int, dailyLimitMinutes: Int, bedtime: String, schoolHours: String, avatar: String = "🦊") {
         _syncState.value = _syncState.value.copy(
             activeChildName = name,
+            activeChildAvatar = avatar,
             childAge = age,
             dailyLimitMinutes = dailyLimitMinutes,
             bedtime = bedtime,
             schoolHours = schoolHours
         )
         preferences.activeChildName = name
+        preferences.activeChildAvatar = avatar
         preferences.dailyLimitMinutes = dailyLimitMinutes
 
         scope.launch {
@@ -342,6 +585,7 @@ class RealtimeFamilySyncManager @Inject constructor(
                     ?.set(
                         mapOf(
                             "activeChildName" to name,
+                            "activeChildAvatar" to avatar,
                             "childAge" to age,
                             "dailyLimitMinutes" to dailyLimitMinutes,
                             "bedtime" to bedtime,
@@ -388,5 +632,3 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 }
-
-
