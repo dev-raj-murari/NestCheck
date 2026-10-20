@@ -1,10 +1,14 @@
 package com.nestcheck.app.ui.auth
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,22 +30,43 @@ import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import com.nestcheck.app.navigation.Screen
 import com.nestcheck.app.ui.child.shell.KidShellViewModel
 
+data class KidProfileOption(
+    val name: String,
+    val avatar: String,
+    val grade: String,
+    val age: Int
+)
+
 @Composable
 fun KidLoginScreen(
     navController: NavController,
     syncManager: RealtimeFamilySyncManager = hiltViewModel<KidShellViewModel>().syncManager
 ) {
     val context = LocalContext.current
+    val syncState by syncManager.syncState.collectAsState()
+
+    val profiles = remember {
+        listOf(
+            KidProfileOption("Leo", "🦊", "Grade 6", 11),
+            KidProfileOption("Olivia", "🦄", "Grade 4", 9),
+            KidProfileOption("Aarav", "🚀", "Grade 5", 10),
+            KidProfileOption("Maya", "🐼", "Grade 2", 7)
+        )
+    }
+
+    var selectedProfile by remember { mutableStateOf(profiles[0]) }
     var pin by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
 
-    val primaryBlue = Color(0xFF0B57D0)
-    val cardWhite = Color(0xFFFFFFFF)
-    val bgLight = Color(0xFFF8F9FA)
-    val textDark = Color(0xFF1F1F1F)
-    val textMuted = Color(0xFF5E5E5E)
-    val borderCol = Color(0xFFE0E2EC)
-    val errorRed = Color(0xFFD93025)
+    val mintGreen = Color(0xFF00875A)
+    val indigoPrimary = Color(0xFF4C6EF5)
+    val warmAmber = Color(0xFFFF922B)
+    val cardBg = Color(0xFFFFFFFF)
+    val bgSoft = Color(0xFFF4F7FB)
+    val textDark = Color(0xFF1E293B)
+    val textMuted = Color(0xFF64748B)
+    val borderCol = Color(0xFFD0D7DE)
+    val errorRed = Color(0xFFE03131)
 
     fun onDigitPress(digit: String) {
         if (pin.length < 4) {
@@ -49,15 +74,35 @@ fun KidLoginScreen(
             isError = false
             if (pin.length == 4) {
                 if (pin == "8294" || pin == "1234" || pin == "0000") {
-                    syncManager.logUserActivity("kid_pairing_success", "Device paired with code: $pin")
-                    Toast.makeText(context, "Device successfully connected to family!", Toast.LENGTH_SHORT).show()
+                    // Update syncManager with child profile
+                    syncManager.switchActiveChild(selectedProfile.name, selectedProfile.avatar)
+                    syncManager.addCredits(10) // Welcome bonus stars!
+                    syncManager.logChildActivity(
+                        event = "child_pairing_success",
+                        details = "Child device paired as ${selectedProfile.name} (${selectedProfile.avatar}) with PIN $pin",
+                        extraData = mapOf(
+                            "childName" to selectedProfile.name,
+                            "avatar" to selectedProfile.avatar,
+                            "grade" to selectedProfile.grade,
+                            "welcomeStars" to 10
+                        )
+                    )
+                    Toast.makeText(
+                        context,
+                        "🌟 Welcome, ${selectedProfile.name}! +10 Stars added to your bank!",
+                        Toast.LENGTH_LONG
+                    ).show()
                     navController.navigate(Screen.KidHome.route) {
                         popUpTo(Screen.KidLogin.route) { inclusive = true }
                     }
                 } else {
                     isError = true
                     pin = ""
-                    Toast.makeText(context, "Invalid pairing code. Ask parent for code (Default: 8294)", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Oops! Ask your parent for the 4-digit code (Default is 8294)",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -73,54 +118,124 @@ fun KidLoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(bgLight)
+            .background(bgSoft)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+            .padding(horizontal = 24.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // TOP HEADER
+        // TOP AVATAR & HEADER
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 24.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Box(
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(80.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFE8F0FE)),
+                    .background(Color(0xFFE6FCF5))
+                    .border(3.dp, mintGreen.copy(alpha = 0.5f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "🦊",
-                    fontSize = 36.sp
+                    text = selectedProfile.avatar,
+                    fontSize = 42.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Connect Your Device",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
+                text = "NestCheck Junior",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
                 color = textDark
+            )
+
+            Text(
+                text = "Choose your avatar & enter your family code",
+                fontSize = 12.5.sp,
+                color = textMuted,
+                fontWeight = FontWeight.Medium
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // AVATAR PICKER ROW
+            Text(
+                text = "Who is using this phone?",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = textDark,
+                modifier = Modifier.align(Alignment.Start)
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(profiles) { profile ->
+                    val isSelected = profile.name == selectedProfile.name
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (isSelected) Color(0xFFEDF2FF) else cardBg,
+                        border = androidx.compose.foundation.BorderStroke(
+                            2.dp,
+                            if (isSelected) indigoPrimary else borderCol
+                        ),
+                        modifier = Modifier
+                            .clickable {
+                                selectedProfile = profile
+                                syncManager.logChildActivity(
+                                    "child_profile_selected",
+                                    "Selected ${profile.name} (${profile.avatar})"
+                                )
+                            }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Text(text = profile.avatar, fontSize = 22.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column {
+                                Text(
+                                    text = profile.name,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) indigoPrimary else textDark
+                                )
+                                Text(
+                                    text = profile.grade,
+                                    fontSize = 10.sp,
+                                    color = textMuted
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // MIDDLE: 4 PAIRING DIGITS BOXES
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text(
-                text = "Enter the 4-digit pairing PIN given by your parent\n(Default: 8294)",
-                fontSize = 13.sp,
-                color = textMuted,
-                textAlign = TextAlign.Center
+                text = "Family Pairing Code",
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = textDark
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // 4 PIN BOXES
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 for (i in 0 until 4) {
@@ -129,84 +244,143 @@ fun KidLoginScreen(
                     Box(
                         modifier = Modifier
                             .size(54.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(cardWhite)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(cardBg)
                             .border(
-                                2.dp,
-                                if (isError) errorRed else if (isFilled) primaryBlue else borderCol,
-                                RoundedCornerShape(12.dp)
+                                2.5.dp,
+                                if (isError) errorRed
+                                else if (isFilled) indigoPrimary
+                                else borderCol,
+                                RoundedCornerShape(14.dp)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = if (isFilled) "•" else "",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = primaryBlue
-                        )
+                        if (isFilled) {
+                            Text(
+                                text = "⭐",
+                                fontSize = 24.sp
+                            )
+                        } else {
+                            Text(
+                                text = "-",
+                                fontSize = 20.sp,
+                                color = Color(0xFFADB5BD)
+                            )
+                        }
                     }
                 }
             }
 
-            if (isError) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "Incorrect pairing code. Default: 8294",
-                    color = errorRed,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Ask your parent for the code (Default: 8294)",
+                fontSize = 11.5.sp,
+                color = textMuted
+            )
         }
 
-        // NUMERIC KEYPAD
+        // NUMBER KEYPAD (FRIENDLY SOFT ROUNDED)
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            val keyMatrix = listOf(
+            val rows = listOf(
                 listOf("1", "2", "3"),
                 listOf("4", "5", "6"),
                 listOf("7", "8", "9"),
-                listOf("", "0", "⌫")
+                listOf("HELP", "0", "DEL")
             )
 
-            for (row in keyMatrix) {
+            for (row in rows) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.spacedBy(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     for (key in row) {
-                        if (key.isEmpty()) {
-                            Spacer(modifier = Modifier.size(72.dp))
-                        } else {
-                            Surface(
+                        if (key == "DEL") {
+                            Box(
                                 modifier = Modifier
-                                    .size(72.dp)
+                                    .size(58.dp)
+                                    .clip(CircleShape)
+                                    .clickable { onBackspace() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Backspace,
+                                    contentDescription = "Delete",
+                                    tint = textDark,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        } else if (key == "HELP") {
+                            Box(
+                                modifier = Modifier
+                                    .size(58.dp)
                                     .clip(CircleShape)
                                     .clickable {
-                                        if (key == "⌫") onBackspace() else onDigitPress(key)
+                                        Toast.makeText(context, "Tip: Default code is 8294 or 1234!", Toast.LENGTH_SHORT).show()
                                     },
-                                color = cardWhite,
-                                shape = CircleShape,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, borderCol),
-                                shadowElevation = 2.dp
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = key,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = textDark
-                                    )
-                                }
+                                Text(
+                                    text = "💡 8294",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = warmAmber
+                                )
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(58.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(cardBg)
+                                    .border(1.5.dp, borderCol, RoundedCornerShape(16.dp))
+                                    .clickable { onDigitPress(key) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = key,
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = textDark
+                                )
                             }
                         }
                     }
                 }
             }
+        }
+
+        // BOTTOM EMERGENCY CALL SHORTCUT
+        OutlinedButton(
+            onClick = {
+                syncManager.logChildActivity("emergency_call_shortcut_tapped", "Child tapped emergency call from pairing screen")
+                val intent = Intent(Intent.ACTION_DIAL).apply {
+                    data = Uri.parse("tel:${syncState.emergencyContactPhone}")
+                }
+                context.startActivity(intent)
+            },
+            shape = RoundedCornerShape(20.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = errorRed),
+            border = androidx.compose.foundation.BorderStroke(1.dp, errorRed.copy(alpha = 0.5f)),
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.PhoneInTalk,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = errorRed
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "Emergency Call Dad (${syncState.emergencyContactName})",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = errorRed
+            )
         }
     }
 }

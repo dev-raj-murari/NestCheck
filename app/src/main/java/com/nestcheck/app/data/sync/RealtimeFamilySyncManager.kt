@@ -4,6 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.nestcheck.app.core.NestCheckNotificationManager
 import com.nestcheck.app.data.local.NestCheckPreferences
 import com.nestcheck.app.data.model.ChildProfile
@@ -131,6 +136,19 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 
+    val rtdb by lazy {
+        try {
+            FirebaseDatabase.getInstance("https://nestcheck-f0f6e-default-rtdb.firebaseio.com")
+        } catch (e: Exception) {
+            try {
+                FirebaseDatabase.getInstance()
+            } catch (e2: Exception) {
+                null
+            }
+        }
+    }
+
+
     private val _syncState = MutableStateFlow(
         FamilySyncState(
             familyCode = preferences.householdPairingCode,
@@ -187,6 +205,30 @@ class RealtimeFamilySyncManager @Inject constructor(
 
     fun startSync(familyCode: String) {
         firestoreListener?.remove()
+
+        try {
+            rtdb?.getReference("children")?.child("status")
+                ?.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val locked = snapshot.child("isDeviceLocked").getValue(Boolean::class.java)
+                        val mins = snapshot.child("remainingMinutes").getValue(Long::class.java)?.toInt()
+                        val sos = snapshot.child("sosActive").getValue(Boolean::class.java)
+                        if (locked != null && locked != preferences.isDeviceLocked) {
+                            preferences.isDeviceLocked = locked
+                            _syncState.value = _syncState.value.copy(isDeviceLocked = locked)
+                        }
+                        if (mins != null && mins != preferences.remainingMinutes) {
+                            preferences.remainingMinutes = mins
+                            _syncState.value = _syncState.value.copy(remainingMinutes = mins)
+                        }
+                        if (sos != null && sos != preferences.sosActive) {
+                            preferences.sosActive = sos
+                            _syncState.value = _syncState.value.copy(sosActive = sos)
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+        } catch (_: Exception) {}
 
         try {
             firestore?.collection("nestcheck_families")
@@ -486,6 +528,10 @@ class RealtimeFamilySyncManager @Inject constructor(
         _syncState.value = _syncState.value.copy(isDeviceLocked = isLocked)
         preferences.isDeviceLocked = isLocked
         notificationManager.showDeviceLockNotification(_syncState.value.activeChildName, isLocked)
+        logParentActivity("device_lock_toggle", if (isLocked) "Device locked remotely by parent" else "Device unlocked remotely by parent")
+        try {
+            rtdb?.getReference("children")?.child("status")?.child("isDeviceLocked")?.setValue(isLocked)
+        } catch (_: Exception) {}
 
         scope.launch {
             try {
@@ -607,19 +653,91 @@ class RealtimeFamilySyncManager @Inject constructor(
         triggerKidSos(true, location, lat, lng)
     }
 
-    fun logUserActivity(event: String, details: String) {
-        val logEntry = hashMapOf(
+    fun logParentActivity(event: String, details: String, extraData: Map<String, Any?> = emptyMap()) {
+        val timestamp = System.currentTimeMillis()
+        val entry = hashMapOf<String, Any>(
             "event" to event,
             "details" to details,
-            "timestamp" to System.currentTimeMillis(),
+            "timestamp" to timestamp,
             "device" to android.os.Build.MODEL,
-            "activeChild" to _syncState.value.activeChildName,
-            "activeParent" to _syncState.value.activeParentName
+            "role" to "PARENT",
+            "parentName" to _syncState.value.activeParentName,
+            "parentRole" to _syncState.value.activeParentRole,
+            "familyCode" to _syncState.value.familyCode
         )
+        extraData.forEach { (k, v) -> if (v != null) entry[k] = v }
+
+        // 1. Firebase Realtime Database: /parents/activity_logs/
         try {
-            firestore?.collection("user_activity_logs")
-                ?.add(logEntry)
+            rtdb?.getReference("parents")?.child("activity_logs")?.push()?.setValue(entry)
+            rtdb?.getReference("parents")?.child("status")?.updateChildren(
+                mapOf(
+                    "lastActive" to timestamp,
+                    "activeParent" to _syncState.value.activeParentName,
+                    "activeParentRole" to _syncState.value.activeParentRole,
+                    "device" to android.os.Build.MODEL
+                )
+            )
         } catch (_: Exception) {}
+
+        // 2. Cloud Firestore: parent_activity_logs
+        try {
+            firestore?.collection("parent_activity_logs")?.add(entry)
+            firestore?.collection("parents")?.document(_syncState.value.activeParentRole.lowercase())
+                ?.collection("activity_logs")?.add(entry)
+            firestore?.collection("user_activity_logs")?.add(entry)
+        } catch (_: Exception) {}
+    }
+
+    fun logChildActivity(event: String, details: String, extraData: Map<String, Any?> = emptyMap()) {
+        val timestamp = System.currentTimeMillis()
+        val entry = hashMapOf<String, Any>(
+            "event" to event,
+            "details" to details,
+            "timestamp" to timestamp,
+            "device" to android.os.Build.MODEL,
+            "role" to "CHILD",
+            "childName" to _syncState.value.activeChildName,
+            "childAvatar" to _syncState.value.activeChildAvatar,
+            "familyCode" to _syncState.value.familyCode
+        )
+        extraData.forEach { (k, v) -> if (v != null) entry[k] = v }
+
+        // 1. Firebase Realtime Database: /children/activity_logs/
+        try {
+            rtdb?.getReference("children")?.child("activity_logs")?.push()?.setValue(entry)
+            rtdb?.getReference("children")?.child("status")?.updateChildren(
+                mapOf(
+                    "lastActive" to timestamp,
+                    "activeChild" to _syncState.value.activeChildName,
+                    "activeChildAvatar" to _syncState.value.activeChildAvatar,
+                    "device" to android.os.Build.MODEL,
+                    "isDeviceLocked" to _syncState.value.isDeviceLocked,
+                    "remainingMinutes" to _syncState.value.remainingMinutes,
+                    "kidLatitude" to _syncState.value.kidLatitude,
+                    "kidLongitude" to _syncState.value.kidLongitude,
+                    "geofenceBreachActive" to _syncState.value.geofenceBreachActive,
+                    "sosActive" to _syncState.value.sosActive
+                )
+            )
+        } catch (_: Exception) {}
+
+        // 2. Cloud Firestore: child_activity_logs
+        try {
+            firestore?.collection("child_activity_logs")?.add(entry)
+            firestore?.collection("children")?.document(_syncState.value.activeChildName.lowercase())
+                ?.collection("activity_logs")?.add(entry)
+            firestore?.collection("user_activity_logs")?.add(entry)
+        } catch (_: Exception) {}
+    }
+
+    fun logUserActivity(event: String, details: String) {
+        val parentKeywords = listOf("parent", "admin", "lock_toggle", "screen_time", "rule", "calendar", "pin_setup", "timetable", "switch_parent")
+        if (parentKeywords.any { event.contains(it, ignoreCase = true) }) {
+            logParentActivity(event, details)
+        } else {
+            logChildActivity(event, details)
+        }
     }
 
     fun addCredits(amount: Int) {
