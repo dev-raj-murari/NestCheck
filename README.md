@@ -63,7 +63,9 @@
 3. Run on connected Android device or emulator:
    ```bash
    adb install -r app/build/outputs/apk/debug/app-debug.apk
-   adb shell am start -n com.nestcheck.app/.MainActivity
+   adb shell am start -n com.nestcheck.app/.ParentMainActivity
+   # Or launch Kid App (NSC):
+   adb shell am start -n com.nestcheck.app/.KidMainActivity
    ```
 
 ---
