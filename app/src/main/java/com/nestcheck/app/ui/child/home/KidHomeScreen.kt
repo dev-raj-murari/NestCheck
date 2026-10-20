@@ -97,38 +97,38 @@ fun KidHomeScreen(
             onLockNow = { viewModel.lockDeviceImmediately() }
         )
 
-        // 4. GEOFENCE PERIMETER CROSSING SIMULATOR
-        GeofenceCrossingSimulator(
-            breachResult = geofenceBreach,
-            onSimulateBreach = { viewModel.simulateCrossingGeofence() },
-            onDismissBreach = { viewModel.dismissGeofenceAlert() }
-        )
-
-        // 5. PENDING TASKS & CHORES CARD
+        // 4. PENDING TASKS & CHORES CARD
         PendingTasksCard(
             tasks = pendingTasks,
             onToggleTask = { taskId -> viewModel.toggleTask(taskId) },
             onRequestCreditsClick = { viewModel.openRequestCreditsDialog() }
         )
 
-        // 6. UPCOMING SCHOOL EXAMS & PREPARATION SCHEDULE
+        // 5. UPCOMING SCHOOL EXAMS & PREPARATION SCHEDULE
         UpcomingExamsCard(
             exams = upcomingExams
         )
 
-        // 7. APP USAGE METERS & BLOCKED QUARANTINE APPS
+        // 6. APP USAGE METERS & BLOCKED QUARANTINE APPS
         AppUsageMonitorCard(
             appStats = appUsageStats
         )
 
-        // 8. INTERACTIVE WEEKLY STUDY & EXAM CALENDAR
+        // 7. INTERACTIVE WEEKLY STUDY & EXAM CALENDAR
         ChildCalendarCard(
             events = calendarEvents
         )
 
-        // 9. CREDIT REQUEST STATUS AUDIT HISTORY
+        // 8. CREDIT REQUEST STATUS AUDIT HISTORY
         CreditRequestHistoryCard(
             requests = creditRequests
+        )
+
+        // 9. GEOFENCE PERIMETER CROSSING SIMULATOR (Kept at bottom)
+        GeofenceCrossingSimulator(
+            breachResult = geofenceBreach,
+            onSimulateBreach = { viewModel.simulateCrossingGeofence() },
+            onDismissBreach = { viewModel.dismissGeofenceAlert() }
         )
 
         // 10. EMERGENCY SOS BUTTON

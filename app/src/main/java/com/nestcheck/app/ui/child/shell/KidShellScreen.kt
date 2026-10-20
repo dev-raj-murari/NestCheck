@@ -325,28 +325,28 @@ fun KidHomeContent(
             )
         }
 
-        // 3. Geofence Perimeter Crossing Simulator
+        // 3. App Usage Meters & Blocked Quarantine Apps
+        item {
+            AppUsageMonitorCard(appStats = appUsageStats)
+        }
+
+        // 4. Upcoming School Exams & Preparation Schedule
+        item {
+            UpcomingExamsCard(exams = upcomingExams)
+        }
+
+        // 5. Interactive Weekly Study & Exam Calendar
+        item {
+            ChildCalendarCard(events = calendarEvents)
+        }
+
+        // 6. Geofence Perimeter Crossing Simulator (Kept at bottom)
         item {
             GeofenceCrossingSimulator(
                 breachResult = geofenceBreach,
                 onSimulateBreach = onSimulateBreach,
                 onDismissBreach = onDismissBreach
             )
-        }
-
-        // 4. App Usage Meters & Blocked Quarantine Apps
-        item {
-            AppUsageMonitorCard(appStats = appUsageStats)
-        }
-
-        // 5. Upcoming School Exams & Preparation Schedule
-        item {
-            UpcomingExamsCard(exams = upcomingExams)
-        }
-
-        // 6. Interactive Weekly Study & Exam Calendar
-        item {
-            ChildCalendarCard(events = calendarEvents)
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
