@@ -128,6 +128,10 @@ class NestCheckPreferences @Inject constructor(
         get() = prefs.getBoolean(KEY_SOS_ACTIVE, false)
         set(value) = prefs.edit().putBoolean(KEY_SOS_ACTIVE, value).apply()
 
+    var geofenceBreachActive: Boolean
+        get() = prefs.getBoolean(KEY_GEOFENCE_BREACH_ACTIVE, false)
+        set(value) = prefs.edit().putBoolean(KEY_GEOFENCE_BREACH_ACTIVE, value).apply()
+
     var childCredits: Int
         get() = prefs.getInt(KEY_CHILD_CREDITS, 210)
         set(value) = prefs.edit().putInt(KEY_CHILD_CREDITS, value).apply()
@@ -173,6 +177,7 @@ class NestCheckPreferences @Inject constructor(
         private const val KEY_KID_BATTERY = "kid_battery"
         private const val KEY_TIMETABLE_CALENDAR_SYNCED = "timetable_calendar_synced"
         private const val KEY_SOS_ACTIVE = "sos_active"
+        private const val KEY_GEOFENCE_BREACH_ACTIVE = "geofence_breach_active"
         private const val KEY_CHILD_CREDITS = "child_credits"
     }
 }

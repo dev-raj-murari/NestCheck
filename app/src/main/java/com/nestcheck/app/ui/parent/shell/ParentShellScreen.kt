@@ -620,7 +620,51 @@ fun ScreenTimeTab(
                     }
                 }
             }
+    
+
+        // Critical Geofence Breach Alert Banner
+        if (syncState.geofenceBreachActive) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFDC2626))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("GEOFENCE BOUNDARY BREACH", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "${syncState.activeChildName} left MPSTME Campus Safe Zone! Current location: ${syncState.locationAddress}",
+                            color = Color.White.copy(alpha = 0.95f),
+                            fontSize = 13.sp
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { navController.navigate(Screen.LiveMap.route) },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFFDC2626)),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text("View on Map", fontWeight = FontWeight.Bold)
+                            }
+                            OutlinedButton(
+                                onClick = { syncManager.dismissGeofenceBreach() },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.7f)),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text("Dismiss Alert", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
 
         // Child Device Approval Gate Request Card (Parent Approval Gate)
         if (syncState.deviceApprovalStatus == DeviceApprovalStatus.PENDING) {

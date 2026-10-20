@@ -62,7 +62,7 @@ data class FamilySyncState(
     val guardianName: String = "Rohit",
     val guardianPhone: String = "+91 98765 43211",
     val guardianEmail: String = "rohit@nestcheck.app",
-    val geofenceBreachActive: Boolean = false,
+    val geofenceBreachActive: Boolean = prefs.geofenceBreachActive,
     val geofenceBreachZone: String = "",
     val breachZoneName: String = "",
     val householdParents: HouseholdParentConfig = HouseholdParentConfig(
@@ -469,6 +469,7 @@ class RealtimeFamilySyncManager @Inject constructor(
     }
 
     fun dismissGeofenceBreach() {
+        prefs.geofenceBreachActive = false
         _syncState.value = _syncState.value.copy(geofenceBreachActive = false)
         scope.launch {
             try {
