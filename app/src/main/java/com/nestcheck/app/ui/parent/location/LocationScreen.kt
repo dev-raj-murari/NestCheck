@@ -779,11 +779,11 @@ private fun SpeedMonitorTabContent(
                         value = speedThreshold,
                         onValueChange = onSetThreshold,
                         valueRange = 20f..90f,
-                        steps = 6,
+
                         colors = SliderDefaults.colors(
-                            thumbColor = White,
+                            thumbColor = Color(0xFF00E5FF),
                             activeTrackColor = Color(0xFF00E5FF),
-                            inactiveTrackColor = CyberBorder
+                            inactiveTrackColor = Color(0xFFCBD5E1)
                         )
                     )
 
@@ -1243,11 +1243,11 @@ private fun AddGeofenceDialog(
                         value = radiusSlider,
                         onValueChange = { radiusSlider = it },
                         valueRange = 100f..1000f,
-                        steps = 9,
+
                         colors = SliderDefaults.colors(
-                            thumbColor = White,
+                            thumbColor = if (selectedType == ZoneType.SAFE_ZONE) SuccessGreen else AlertRed,
                             activeTrackColor = if (selectedType == ZoneType.SAFE_ZONE) SuccessGreen else AlertRed,
-                            inactiveTrackColor = CyberBorder
+                            inactiveTrackColor = Color(0xFFCBD5E1)
                         )
                     )
                 }

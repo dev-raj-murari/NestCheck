@@ -272,7 +272,9 @@ class RealtimeFamilySyncManager @Inject constructor(
             guardianName = preferences.guardianName,
             guardianPhone = preferences.guardianPhone,
             guardianEmail = preferences.guardianEmail,
-            childCredits = preferences.childCredits
+            childCredits = preferences.childCredits,
+            timetablePdfName = preferences.timetablePdfName.ifBlank { "MPSTME_NMIMS_Timetable.pdf" },
+            timetableItems = if (preferences.timetableItemsJson.isNotBlank()) deserializeTimetable(preferences.timetableItemsJson) else FamilySyncState().timetableItems
         )
     )
     val syncState: StateFlow<FamilySyncState> = _syncState.asStateFlow()
@@ -1435,6 +1437,16 @@ class RealtimeFamilySyncManager @Inject constructor(
                     )
             } catch (e: Exception) {}
         }
+    }
+
+    fun addTimetableItem(item: TimetableItem) {
+        val updated = _syncState.value.timetableItems + item
+        uploadTimetablePdf(_syncState.value.timetablePdfName, updated)
+    }
+
+    fun deleteTimetableItem(itemId: String) {
+        val updated = _syncState.value.timetableItems.filter { it.id != itemId }
+        uploadTimetablePdf(_syncState.value.timetablePdfName, updated)
     }
 
     fun setTimetableCalendarSynced(synced: Boolean) {

@@ -28,7 +28,11 @@ class WaterReminderViewModel @Inject constructor(
 
     fun logGlass() {
         val current = config.value
-        val nextGlasses = current.glassesDrank + 1
+        if (current.glassesDrank >= current.dailyGoalGlasses) {
+            _rewardMessage.value = "Daily goal reached! 8/8 glasses completed. Great job staying hydrated! 💧"
+            return
+        }
+        val nextGlasses = (current.glassesDrank + 1).coerceAtMost(current.dailyGoalGlasses)
         habitRepository.logGlassOfWater()
 
         // 1. Award 2 credits for each completed hydration step

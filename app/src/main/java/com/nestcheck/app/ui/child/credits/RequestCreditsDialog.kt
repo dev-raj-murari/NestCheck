@@ -204,7 +204,7 @@ fun RequestCreditsDialog(
                         value = creditsRequested.toFloat(),
                         onValueChange = { viewModel.onCreditsChange(it.toInt()) },
                         valueRange = 10f..100f,
-                        steps = 8,
+
                         colors = SliderDefaults.colors(
                             thumbColor = primaryBlue,
                             activeTrackColor = primaryBlue,

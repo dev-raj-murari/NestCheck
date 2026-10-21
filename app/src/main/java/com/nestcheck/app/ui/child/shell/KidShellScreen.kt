@@ -466,7 +466,7 @@ fun TaskCreditHeroCard(
             )
 
             Text(
-                text = "Equivalent to ${wallet.remainingMinutes} mins (${wallet.equivalentScreenTimeFormatted}) screen time",
+                text = "Equivalent to ${wallet.totalCredits / 2} mins (${(wallet.totalCredits / 2) / 60}h ${(wallet.totalCredits / 2) % 60}m) screen time (2:1 rule)",
                 color = KidTextMuted,
                 fontSize = 13.sp
             )

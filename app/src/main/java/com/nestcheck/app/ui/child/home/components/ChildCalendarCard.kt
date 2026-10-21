@@ -42,17 +42,24 @@ fun ChildCalendarCard(
     val textMuted = Color(0xFF64748B)
     val primaryBlue = Color(0xFF0B57D0)
 
-    val daysOfWeek = listOf(
-        Pair("Mon", 20),
-        Pair("Tue", 21),
-        Pair("Wed", 22),
-        Pair("Thu", 23),
-        Pair("Fri", 24),
-        Pair("Sat", 25),
-        Pair("Sun", 26)
-    )
+    val daysOfWeek = remember {
+        val cal = java.util.Calendar.getInstance()
+        cal.firstDayOfWeek = java.util.Calendar.MONDAY
+        cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+        val list = mutableListOf<Pair<String, Int>>()
+        val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+        for (name in dayNames) {
+            list.add(Pair(name, cal.get(java.util.Calendar.DAY_OF_MONTH)))
+            cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
+        }
+        list
+    }
 
-    var selectedDayNum by remember { mutableIntStateOf(20) }
+    val todayDay = remember { java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_MONTH) }
+    var selectedDayNum by remember {
+        val defaultDay = daysOfWeek.find { it.second == todayDay }?.second ?: daysOfWeek.first().second
+        mutableIntStateOf(defaultDay)
+    }
     val currentDayPair = daysOfWeek.find { it.second == selectedDayNum } ?: daysOfWeek.first()
     val currentDayPrefix = currentDayPair.first
 

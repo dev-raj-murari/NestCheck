@@ -1,5 +1,7 @@
 package com.nestcheck.app.ui.parent.quotas
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -132,11 +134,11 @@ private fun CategoryQuotaCard(
                     onLimitChange(it.toInt())
                 },
                 valueRange = 0f..180f,
-                steps = 11,
+                
                 colors = SliderDefaults.colors(
-                    thumbColor = White,
-                    activeTrackColor = White,
-                    inactiveTrackColor = CyberBorder
+                    thumbColor = AccentBlue,
+                    activeTrackColor = AccentBlue,
+                    inactiveTrackColor = Color(0xFFCBD5E1)
                 )
             )
 

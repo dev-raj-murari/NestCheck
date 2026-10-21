@@ -1,5 +1,7 @@
 package com.nestcheck.app.ui.child.steps
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -268,12 +270,12 @@ fun StepCounterScreen(
                     value = goalSliderValue,
                     onValueChange = { goalSliderValue = it },
                     valueRange = 3000f..15000f,
-                    steps = 11,
+                    
                     colors = SliderDefaults.colors(
-                        thumbColor = White,
-                        activeTrackColor = SuccessGreen,
-                        inactiveTrackColor = CyberBorder
-                    )
+                    thumbColor = SuccessGreen,
+                    activeTrackColor = SuccessGreen,
+                    inactiveTrackColor = Color(0xFFCBD5E1)
+                )
                 )
 
                 Button(

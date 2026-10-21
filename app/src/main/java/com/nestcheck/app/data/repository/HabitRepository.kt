@@ -157,7 +157,8 @@ class HabitRepository @Inject constructor(
     // F40: Water Log
     fun logGlassOfWater() {
         val current = _waterConfig.value
-        val newCount = current.glassesDrank + 1
+        if (current.glassesDrank >= current.dailyGoalGlasses) return
+        val newCount = (current.glassesDrank + 1).coerceAtMost(current.dailyGoalGlasses)
         _waterConfig.value = current.copy(glassesDrank = newCount)
     }
 }

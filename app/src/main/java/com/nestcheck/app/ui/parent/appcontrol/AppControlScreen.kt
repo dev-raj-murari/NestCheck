@@ -234,11 +234,14 @@ private fun AppControlItemCard(
                         onLimitChanged(it.toInt())
                     },
                     valueRange = 15f..180f,
-                    steps = 10,
+
                     colors = SliderDefaults.colors(
-                        thumbColor = White,
+                        thumbColor = WarningAmber,
+
                         activeTrackColor = WarningAmber,
-                        inactiveTrackColor = CyberBorder
+                        inactiveTrackColor = Color(0xFFCBD5E1)
+
+
                     )
                 )
             }

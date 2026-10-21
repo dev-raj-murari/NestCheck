@@ -123,13 +123,15 @@ fun WaterReminderScreen(
 
                 Button(
                     onClick = { viewModel.logGlass() },
+                    enabled = config.glassesDrank < config.dailyGoalGlasses,
                     modifier = Modifier.fillMaxWidth().height(44.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = Black)
                 ) {
                     Icon(Icons.Outlined.Add, contentDescription = null, tint = Black)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Drink 1 Glass (+250 ml)", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    val isGoalCompleted = config.glassesDrank >= config.dailyGoalGlasses
+                    Text(if (isGoalCompleted) "Daily Goal Completed (8/8 💧)" else "Drink 1 Glass (+250 ml)", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

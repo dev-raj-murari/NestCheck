@@ -1,8 +1,10 @@
 package com.nestcheck.app.ui.parent.requests
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
@@ -15,21 +17,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nestcheck.app.data.model.CreditRequest
 import com.nestcheck.app.data.model.CreditRequestStatus
-import com.nestcheck.app.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val ElectricCyan = Color(0xFF00E5FF)
-private val CyberSurface = Color(0xFF16181D)
-private val CyberTextMuted = Color(0xFF8B949E)
-private val CoralRed = Color(0xFFFF5252)
+private val BrandBlue = Color(0xFF0B57D0)
+private val CardBg = Color(0xFFFFFFFF)
+private val BorderColor = Color(0xFFE2E8F0)
+private val TextDark = Color(0xFF0F172A)
+private val TextMuted = Color(0xFF64748B)
+
+private val StatusPendingBg = Color(0xFFFEF3C7)
+private val StatusPendingText = Color(0xFFB45309)
+private val StatusApprovedBg = Color(0xFFDCFCE7)
+private val StatusApprovedText = Color(0xFF15803D)
+private val StatusDeclinedBg = Color(0xFFFEE2E2)
+private val StatusDeclinedText = Color(0xFFB91C1C)
 
 @Composable
 fun ParentCreditRequestCard(
@@ -38,20 +46,25 @@ fun ParentCreditRequestCard(
     onDecline: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val statusColor = Color(request.status.badgeColorHex)
     val timeFormat = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
     val formattedTime = timeFormat.format(Date(request.requestTimestamp))
+
+    val (badgeBg, badgeText, badgeLabel) = when (request.status) {
+        CreditRequestStatus.PENDING -> Triple(StatusPendingBg, StatusPendingText, "Pending Review")
+        CreditRequestStatus.APPROVED -> Triple(StatusApprovedBg, StatusApprovedText, "Approved & Credited")
+        CreditRequestStatus.DECLINED -> Triple(StatusDeclinedBg, StatusDeclinedText, "Declined")
+    }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(CyberCard)
-            .border(1.dp, CyberBorder, RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(CardBg)
+            .border(1.dp, BorderColor, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // Header: Child Info & Status Badge
+            // Header: Child Avatar + Name + Timestamp on Left; Status Badge on Right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -59,97 +72,97 @@ fun ParentCreditRequestCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(28.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(ElectricCyan.copy(alpha = 0.2f)),
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE8F0FE)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = request.childName.firstOrNull()?.toString() ?: "K",
-                            color = ElectricCyan,
+                            text = request.childName.firstOrNull()?.toString()?.uppercase() ?: "K",
+                            color = BrandBlue,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
+                            fontSize = 15.sp
                         )
                     }
 
                     Column {
                         Text(
                             text = request.childName,
-                            color = CyberTextBright,
-                            fontSize = 13.sp,
+                            color = TextDark,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = formattedTime,
-                            color = CyberTextDim,
-                            fontSize = 10.sp
+                            color = TextMuted,
+                            fontSize = 11.sp
                         )
                     }
                 }
 
                 Surface(
-                    color = statusColor.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(4.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, statusColor.copy(alpha = 0.4f))
+                    color = badgeBg,
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = request.status.label,
-                        color = statusColor,
-                        fontSize = 10.sp,
+                        text = badgeLabel,
+                        color = badgeText,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
             }
 
             // Task Title & Category
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
                     text = request.taskTitle,
-                    color = CyberTextBright,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
+                    color = TextDark,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Text(
                     text = "Category: ${request.reasonCategory.title}",
-                    color = ElectricCyan,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
+                    color = BrandBlue,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
             // Justification note if present
             if (request.justificationNote.isNotBlank()) {
                 Surface(
-                    color = CyberSurface,
-                    shape = RoundedCornerShape(6.dp),
+                    color = Color(0xFFF8FAFC),
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "\"${request.justificationNote}\"",
-                        color = CyberTextMuted,
+                        color = Color(0xFF334155),
                         fontSize = 12.sp,
-                        modifier = Modifier.padding(10.dp)
+                        modifier = Modifier.padding(12.dp)
                     )
                 }
             }
 
-            // Credit & Screen Time Conversion Banner (2 credits = 1 min rule)
+            // 2:1 CREDIT & SCREEN TIME CONVERSION SECTION
             Surface(
-                color = ElectricCyan.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, ElectricCyan.copy(alpha = 0.25f)),
+                color = Color(0xFFF0FDF4),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color(0xFFBBF7D0)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -160,44 +173,50 @@ fun ParentCreditRequestCard(
                         Icon(
                             imageVector = Icons.Outlined.ElectricBolt,
                             contentDescription = null,
-                            tint = ElectricCyan,
-                            modifier = Modifier.size(16.dp)
+                            tint = Color(0xFF059669),
+                            modifier = Modifier.size(18.dp)
                         )
                         Text(
                             text = "+${request.creditsRequested} Credits",
-                            color = ElectricCyan,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
+                            color = Color(0xFF047857),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    Surface(
+                        color = Color(0xFFFFFFFF),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Schedule,
-                            contentDescription = null,
-                            tint = CyberTextDim,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = "= ${request.screenTimeMinutesEquivalent} min Screen Time (2:1)",
-                            color = CyberTextDim,
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Schedule,
+                                contentDescription = null,
+                                tint = Color(0xFF0F172A),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = "+${request.screenTimeMinutesEquivalent} min Screen Time (2:1)",
+                                color = Color(0xFF0F172A),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
 
-            // Response note if already handled
+            // Resolution note if resolved
             if (request.responseNote.isNotBlank()) {
                 Text(
                     text = "Resolution: ${request.responseNote}",
-                    color = CyberTextDim,
-                    fontSize = 11.sp
+                    color = TextMuted,
+                    fontSize = 12.sp
                 )
             }
 
@@ -205,17 +224,17 @@ fun ParentCreditRequestCard(
             if (request.status == CreditRequestStatus.PENDING) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     OutlinedButton(
                         onClick = { onDecline(request.id) },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = CoralRed
+                            contentColor = Color(0xFFDC2626)
                         ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, CoralRed.copy(alpha = 0.5f)),
-                        contentPadding = PaddingValues(vertical = 8.dp)
+                        border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                        contentPadding = PaddingValues(vertical = 10.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Close,
@@ -223,28 +242,29 @@ fun ParentCreditRequestCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Decline", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "Decline", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Button(
                         onClick = { onApprove(request.id) },
-                        modifier = Modifier.weight(1.5f),
-                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1.4f),
+                        shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = ElectricCyan,
-                            contentColor = CyberBlack
+                            containerColor = BrandBlue,
+                            contentColor = Color.White
                         ),
-                        contentPadding = PaddingValues(vertical = 8.dp)
+                        contentPadding = PaddingValues(vertical = 10.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Check,
                             contentDescription = null,
+                            tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "Approve (+${request.screenTimeMinutesEquivalent}m)",
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }

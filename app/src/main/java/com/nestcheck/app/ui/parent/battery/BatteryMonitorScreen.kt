@@ -1,5 +1,7 @@
 package com.nestcheck.app.ui.parent.battery
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -278,12 +280,12 @@ fun BatteryMonitorScreen(
                     value = telemetry.lowBatteryAlertThreshold.toFloat(),
                     onValueChange = { viewModel.setLowBatteryThreshold(it.toInt()) },
                     valueRange = 5f..30f,
-                    steps = 4,
+                    
                     colors = SliderDefaults.colors(
-                        thumbColor = White,
-                        activeTrackColor = WarningAmber,
-                        inactiveTrackColor = CyberBorder
-                    )
+                    thumbColor = WarningAmber,
+                    activeTrackColor = WarningAmber,
+                    inactiveTrackColor = Color(0xFFCBD5E1)
+                )
                 )
             }
         }
