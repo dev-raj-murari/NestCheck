@@ -116,13 +116,17 @@ class ChildDashboardRepository @Inject constructor(
         val updated = _pendingTasks.value.map { task ->
             if (task.id == taskId) {
                 val nextTask = when (task.approvalStatus) {
-                    TaskApprovalStatus.NOT_COMPLETED -> {
+                    TaskApprovalStatus.NOT_COMPLETED,
+                    TaskApprovalStatus.PENDING,
+                    TaskApprovalStatus.IN_PROGRESS,
+                    TaskApprovalStatus.REJECTED -> {
                         // Mark as pending parent approval! DO NOT credit points yet!
                         task.copy(
                             approvalStatus = TaskApprovalStatus.PENDING_PARENT_APPROVAL,
                             isCompleted = false
                         )
                     }
+                    TaskApprovalStatus.SUBMITTED_PENDING_APPROVAL,
                     TaskApprovalStatus.PENDING_PARENT_APPROVAL -> {
                         // Child can uncheck if clicked by mistake
                         task.copy(
@@ -130,7 +134,8 @@ class ChildDashboardRepository @Inject constructor(
                             isCompleted = false
                         )
                     }
-                    TaskApprovalStatus.APPROVED_AND_CREDITED -> {
+                    TaskApprovalStatus.APPROVED_AND_CREDITED,
+                    TaskApprovalStatus.APPROVED -> {
                         task // Already approved and credited by parents
                     }
                 }

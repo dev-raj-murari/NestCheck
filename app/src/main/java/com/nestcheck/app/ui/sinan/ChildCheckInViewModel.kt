@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.nestcheck.app.data.model.ChildArrivalCheckIn
 import com.nestcheck.app.data.model.LiveLocationPoint
 import com.nestcheck.app.data.repository.LocationRepository
+import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChildCheckInViewModel @Inject constructor(
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val syncManager: RealtimeFamilySyncManager
 ) : ViewModel() {
 
     val liveLocation: StateFlow<LiveLocationPoint> = locationRepository.liveLocation
@@ -31,8 +33,14 @@ class ChildCheckInViewModel @Inject constructor(
         _isSubmitting.value = true
 
         viewModelScope.launch {
-            delay(400) // Brief UI dispatch animation
-            val result = locationRepository.sendChildCheckIn(label, note)
+            delay(300)
+            val loc = liveLocation.value
+            val childName = syncManager.syncState.value.activeChildName
+            val result = locationRepository.sendChildCheckIn(label, note, childName)
+
+            // Save to shared backend & notify parent app immediately (Requirement 10)
+            syncManager.onChildCheckIn(label, note, loc.latitude, loc.longitude)
+
             _lastSentCheckIn.value = result
             _isSubmitting.value = false
         }

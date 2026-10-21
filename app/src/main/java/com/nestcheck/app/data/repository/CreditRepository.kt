@@ -3,6 +3,8 @@ package com.nestcheck.app.data.repository
 import com.nestcheck.app.data.model.CreditBalance
 import com.nestcheck.app.data.model.CreditTransaction
 import com.nestcheck.app.data.model.RewardPrivilege
+import com.nestcheck.app.data.local.NestCheckPreferences
+import com.nestcheck.app.data.model.CreditTransactionType
 import com.nestcheck.app.data.model.RewardType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,13 +15,15 @@ import javax.inject.Singleton
 
 @Singleton
 class CreditRepository @Inject constructor(
-    private val screenTimeRepository: ScreenTimeRepository
+    private val screenTimeRepository: ScreenTimeRepository,
+    private val creditScreenTimeRepository: CreditScreenTimeRepository,
+    private val preferences: NestCheckPreferences
 ) {
 
     private val _creditBalance = MutableStateFlow(
         CreditBalance(
             childUid = "child_1",
-            balance = 140, // 1 credit = 5 min
+            balance = preferences.childCredits,
             lifetimeEarned = 260,
             lifetimeSpent = 120
         )
@@ -96,8 +100,9 @@ class CreditRepository @Inject constructor(
     )
 
     fun awardCredits(amount: Int, reason: String) {
+        creditScreenTimeRepository.addCredits(amount, CreditTransactionType.TASK_COMPLETED, reason)
         val current = _creditBalance.value
-        val newBalance = current.balance + amount
+        val newBalance = creditScreenTimeRepository.wallet.value.totalCredits
         val newEarned = current.lifetimeEarned + amount
         _creditBalance.value = current.copy(
             balance = newBalance,

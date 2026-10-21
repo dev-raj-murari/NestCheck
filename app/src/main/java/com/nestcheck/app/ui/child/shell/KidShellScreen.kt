@@ -184,6 +184,7 @@ fun KidShellScreen(
                     onDismissBreach = { dashboardViewModel.dismissGeofenceAlert() }
                 )
                 KidTab.TASKS -> KidTasksContent(
+                    wallet = wallet,
                     tasks = pendingTasks,
                     requests = creditRequests,
                     onToggleTask = { dashboardViewModel.toggleTask(it) },
@@ -363,6 +364,7 @@ fun KidHomeContent(
 
 @Composable
 fun KidTasksContent(
+    wallet: CreditScreenTimeWallet,
     tasks: List<PendingTaskItem>,
     requests: List<CreditRequest>,
     onToggleTask: (String) -> Unit,
@@ -375,6 +377,14 @@ fun KidTasksContent(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item { Spacer(modifier = Modifier.height(4.dp)) }
+
+        // Consolidated Task Credit (2:1) Rule & Authoritative Balance Hero
+        item {
+            TaskCreditHeroCard(
+                wallet = wallet,
+                onRequestCreditsClick = onRequestCreditsClick
+            )
+        }
 
         // Pending Tasks with points & tap-to-complete
         item {
@@ -391,6 +401,99 @@ fun KidTasksContent(
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
+}
+
+@Composable
+fun TaskCreditHeroCard(
+    wallet: CreditScreenTimeWallet,
+    onRequestCreditsClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    color = Color(0xFF1E293B),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "TASK CREDIT RULE (2:1)",
+                        color = Color(0xFF38BDF8),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
+
+                Surface(
+                    color = Color(0xFF0284C7).copy(alpha = 0.25f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "2 Credits = 1 Min Screen Time",
+                        color = Color(0xFF7DD3FC),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = "${wallet.totalCredits} Credits Available",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "Equivalent to ${wallet.remainingMinutes} mins (${wallet.equivalentScreenTimeFormatted}) screen time",
+                color = Color(0xFF94A3B8),
+                fontSize = 13.sp
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Complete parent quests to earn credits.\nRewards unlock screen time upon parent approval.",
+                    color = Color(0xFFCBD5E1),
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = onRequestCreditsClick,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2563EB),
+                        contentColor = Color.White
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Text("+ Request", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     }
 }
 
@@ -751,11 +854,6 @@ fun KidWellnessTab(navController: androidx.navigation.NavController) {
         item {
             KidFeatureCard("Focus Mode & Study Timer", "Distraction-free study sessions", Icons.Outlined.SelfImprovement, KidBlue) {
                 navController.navigate(com.nestcheck.app.navigation.Screen.FocusMode.route)
-            }
-        }
-        item {
-            KidFeatureCard("Habit Streaks & Challenges", "Daily routines, badges & milestones", Icons.Outlined.EmojiEvents, Color(0xFFF59E0B)) {
-                navController.navigate(com.nestcheck.app.navigation.Screen.HabitChallenges.route)
             }
         }
         item {

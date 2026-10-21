@@ -14,6 +14,12 @@ import com.nestcheck.app.data.local.NestCheckPreferences
 import com.nestcheck.app.data.model.ChildProfile
 import com.nestcheck.app.data.model.ParentContactInfo
 import com.nestcheck.app.data.model.HouseholdParentConfig
+import com.nestcheck.app.data.model.PendingTaskItem
+import com.nestcheck.app.data.model.TaskApprovalStatus
+import com.nestcheck.app.data.model.TaskCategory
+import com.nestcheck.app.data.model.CreditTransactionType
+import com.nestcheck.app.data.model.ChildArrivalCheckIn
+import com.nestcheck.app.data.repository.CreditScreenTimeRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +44,69 @@ data class TimetableItem(
     val roomOrTeacher: String = "MPSTME Room 402"
 )
 
+data class GeofenceAlertEvent(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val title: String = "PERIMETER CROSSING DETECTED",
+    val message: String = "The child crossed the configured school perimeter.",
+    val childName: String = "Leo",
+    val schoolOrGeofenceName: String = "MPSTME NMIMS Campus",
+    val timestamp: Long = System.currentTimeMillis(),
+    val formattedTime: String = "",
+    val isTestEvent: Boolean = true,
+    val isAcknowledged: Boolean = false,
+    val isDismissed: Boolean = false,
+    val latitude: Double = 19.1075,
+    val longitude: Double = 72.8372
+)
+
 data class FamilySyncState(
+    val childCredits: Int = 180,
+    val activeGeofenceAlert: GeofenceAlertEvent? = null,
+    val geofenceAlertHistory: List<GeofenceAlertEvent> = emptyList(),
+    val latestCheckIn: ChildArrivalCheckIn? = null,
+    val checkInHistory: List<ChildArrivalCheckIn> = emptyList(),
+    val tasks: List<PendingTaskItem> = listOf(
+        PendingTaskItem(
+            id = "task_1",
+            title = "Clean Up Bedroom & Study Desk",
+            category = TaskCategory.CHORE,
+            creditsReward = 30,
+            isCompleted = false,
+            approvalStatus = TaskApprovalStatus.NOT_COMPLETED,
+            dueDate = "Today, 5:30 PM",
+            childName = "Leo"
+        ),
+        PendingTaskItem(
+            id = "task_2",
+            title = "Complete Algebra Worksheet (Ch 4)",
+            category = TaskCategory.STUDY,
+            creditsReward = 40,
+            isCompleted = false,
+            approvalStatus = TaskApprovalStatus.NOT_COMPLETED,
+            dueDate = "Today, 7:00 PM",
+            childName = "Leo"
+        ),
+        PendingTaskItem(
+            id = "task_3",
+            title = "Read 20 Pages of Science Book",
+            category = TaskCategory.READING,
+            creditsReward = 20,
+            isCompleted = false,
+            approvalStatus = TaskApprovalStatus.NOT_COMPLETED,
+            dueDate = "Tonight, 8:30 PM",
+            childName = "Leo"
+        ),
+        PendingTaskItem(
+            id = "task_4",
+            title = "Drink 4 Glasses of Water & Stretch",
+            category = TaskCategory.WELLBEING,
+            creditsReward = 10,
+            isCompleted = true,
+            approvalStatus = TaskApprovalStatus.APPROVED_AND_CREDITED,
+            dueDate = "Completed",
+            childName = "Leo"
+        )
+    ),
     val familyCode: String = "NC-8294",
     val activeChildName: String = "Leo",
     val activeChildAvatar: String = "🦊",
@@ -126,7 +194,8 @@ data class FamilySyncState(
 class RealtimeFamilySyncManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val preferences: NestCheckPreferences,
-    private val notificationManager: NestCheckNotificationManager
+    private val notificationManager: NestCheckNotificationManager,
+    private val creditRepository: CreditScreenTimeRepository
 ) {
     private val firestore by lazy {
         try {
@@ -181,7 +250,8 @@ class RealtimeFamilySyncManager @Inject constructor(
             motherEmail = preferences.motherEmail,
             guardianName = preferences.guardianName,
             guardianPhone = preferences.guardianPhone,
-            guardianEmail = preferences.guardianEmail
+            guardianEmail = preferences.guardianEmail,
+            childCredits = preferences.childCredits
         )
     )
     val syncState: StateFlow<FamilySyncState> = _syncState.asStateFlow()
@@ -211,7 +281,8 @@ class RealtimeFamilySyncManager @Inject constructor(
             activeChildName = activeName,
             activeChildAvatar = activeAvatar,
             childAge = activeAge,
-            householdChildren = updatedKids
+            householdChildren = updatedKids,
+            childCredits = preferences.childCredits
         )
     }
 
@@ -224,6 +295,7 @@ class RealtimeFamilySyncManager @Inject constructor(
         firestoreListener?.remove()
 
         try {
+            // 1. Children status listener
             rtdb?.getReference("children")?.child("status")
                 ?.addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
@@ -242,6 +314,113 @@ class RealtimeFamilySyncManager @Inject constructor(
                             preferences.sosActive = sos
                             _syncState.value = _syncState.value.copy(sosActive = sos)
                         }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+
+            // 2. Real-Time Profile Listener: Parent updates child name/age/avatar -> child updates immediately!
+            rtdb?.getReference("children")?.child("profile")
+                ?.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (!snapshot.exists()) return
+                        val name = snapshot.child("name").getValue(String::class.java)
+                        val age = snapshot.child("age").getValue(Long::class.java)?.toInt()
+                        val avatar = snapshot.child("avatar").getValue(String::class.java)
+                        if (name != null && name != _syncState.value.activeChildName) {
+                            preferences.activeChildName = name
+                            _syncState.value = _syncState.value.copy(activeChildName = name)
+                        }
+                        if (age != null && age != _syncState.value.childAge) {
+                            _syncState.value = _syncState.value.copy(childAge = age)
+                        }
+                        if (avatar != null && avatar != _syncState.value.activeChildAvatar) {
+                            preferences.activeChildAvatar = avatar
+                            _syncState.value = _syncState.value.copy(activeChildAvatar = avatar)
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+
+            // 3. Real-Time Authoritative Credit Balance Listener
+            rtdb?.getReference("children")?.child("credits")?.child("balance")
+                ?.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val balance = snapshot.getValue(Long::class.java)?.toInt()
+                        if (balance != null) {
+                            _syncState.value = _syncState.value.copy(childCredits = balance)
+                            preferences.childCredits = balance
+                            creditRepository.syncWithExternalBalance(balance)
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+
+            // 4. Real-Time Geofence Alert Listener (Parent console receives breach alert)
+            rtdb?.getReference("children")?.child("geofence_alerts")?.child("active")
+                ?.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (!snapshot.exists()) {
+                            _syncState.value = _syncState.value.copy(activeGeofenceAlert = null, geofenceBreachActive = false)
+                            preferences.geofenceBreachActive = false
+                            return
+                        }
+                        val id = snapshot.child("id").getValue(String::class.java) ?: ""
+                        val title = snapshot.child("title").getValue(String::class.java) ?: "PERIMETER CROSSING DETECTED"
+                        val message = snapshot.child("message").getValue(String::class.java) ?: "The child crossed the configured school perimeter."
+                        val child = snapshot.child("childName").getValue(String::class.java) ?: _syncState.value.activeChildName
+                        val school = snapshot.child("schoolOrGeofenceName").getValue(String::class.java) ?: "MPSTME NMIMS Campus"
+                        val time = snapshot.child("formattedTime").getValue(String::class.java) ?: ""
+                        val isTest = snapshot.child("isTestEvent").getValue(Boolean::class.java) ?: true
+                        val isAck = snapshot.child("isAcknowledged").getValue(Boolean::class.java) ?: false
+                        val isDismiss = snapshot.child("isDismissed").getValue(Boolean::class.java) ?: false
+                        val lat = snapshot.child("latitude").getValue(Double::class.java) ?: 19.1075
+                        val lng = snapshot.child("longitude").getValue(Double::class.java) ?: 72.8372
+
+                        val alert = GeofenceAlertEvent(
+                            id = id,
+                            title = title,
+                            message = message,
+                            childName = child,
+                            schoolOrGeofenceName = school,
+                            timestamp = snapshot.child("timestamp").getValue(Long::class.java) ?: System.currentTimeMillis(),
+                            formattedTime = time,
+                            isTestEvent = isTest,
+                            isAcknowledged = isAck,
+                            isDismissed = isDismiss,
+                            latitude = lat,
+                            longitude = lng
+                        )
+                        _syncState.value = _syncState.value.copy(activeGeofenceAlert = alert, geofenceBreachActive = !isDismiss)
+                        preferences.geofenceBreachActive = !isDismiss
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+
+            // 5. Real-Time Safe Check-In Listener (Parent receives arrival notification)
+            rtdb?.getReference("children")?.child("checkins")?.child("latest")
+                ?.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (!snapshot.exists()) return
+                        val id = snapshot.child("id").getValue(String::class.java) ?: ""
+                        val child = snapshot.child("childName").getValue(String::class.java) ?: _syncState.value.activeChildName
+                        val label = snapshot.child("locationLabel").getValue(String::class.java) ?: ""
+                        val note = snapshot.child("customNote").getValue(String::class.java) ?: ""
+                        val ts = snapshot.child("timestamp").getValue(Long::class.java) ?: System.currentTimeMillis()
+                        val lat = snapshot.child("latitude").getValue(Double::class.java) ?: 19.1075
+                        val lng = snapshot.child("longitude").getValue(Double::class.java) ?: 72.8372
+                        val ack = snapshot.child("isParentAcknowledged").getValue(Boolean::class.java) ?: false
+
+                        val checkIn = ChildArrivalCheckIn(
+                            id = id,
+                            childName = child,
+                            timestamp = ts,
+                            latitude = lat,
+                            longitude = lng,
+                            locationLabel = label,
+                            customNote = note,
+                            isParentAcknowledged = ack
+                        )
+                        _syncState.value = _syncState.value.copy(latestCheckIn = checkIn)
                     }
                     override fun onCancelled(error: DatabaseError) {}
                 })
@@ -497,8 +676,32 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 
-    fun triggerGeofenceBreach(zoneName: String, address: String, lat: Double, lng: Double, isExit: Boolean = true) {
+    fun triggerGeofenceBreach(
+        zoneName: String,
+        address: String,
+        lat: Double,
+        lng: Double,
+        isExit: Boolean = true,
+        isTestEvent: Boolean = true
+    ) {
+        val timeNow = java.text.SimpleDateFormat("hh:mm a, MMM d", java.util.Locale.getDefault()).format(java.util.Date())
+        val event = GeofenceAlertEvent(
+            id = java.util.UUID.randomUUID().toString(),
+            title = "PERIMETER CROSSING DETECTED",
+            message = "The child crossed the configured school perimeter.",
+            childName = _syncState.value.activeChildName,
+            schoolOrGeofenceName = zoneName,
+            timestamp = System.currentTimeMillis(),
+            formattedTime = timeNow,
+            isTestEvent = isTestEvent,
+            isAcknowledged = false,
+            isDismissed = false,
+            latitude = lat,
+            longitude = lng
+        )
+
         _syncState.value = _syncState.value.copy(
+            activeGeofenceAlert = event,
             geofenceBreachActive = true,
             geofenceBreachZone = zoneName,
             geofenceBreachAddress = address,
@@ -508,6 +711,7 @@ class RealtimeFamilySyncManager @Inject constructor(
             locationAddress = address,
             lastLocationUpdate = System.currentTimeMillis()
         )
+        preferences.geofenceBreachActive = true
 
         notificationManager.showGeofenceAlert(
             childName = _syncState.value.activeChildName,
@@ -517,6 +721,31 @@ class RealtimeFamilySyncManager @Inject constructor(
             lat = lat,
             lng = lng
         )
+
+        logChildActivity(
+            if (isTestEvent) "geofence_test_triggered" else "geofence_breach_detected",
+            if (isTestEvent) "Simulated perimeter test event sent to Parent App" else "Boundary crossing detected"
+        )
+
+        // Save active breach event to Firebase RTDB & Firestore
+        try {
+            rtdb?.getReference("children")?.child("geofence_alerts")?.child("active")?.setValue(
+                mapOf(
+                    "id" to event.id,
+                    "title" to event.title,
+                    "message" to event.message,
+                    "childName" to event.childName,
+                    "schoolOrGeofenceName" to event.schoolOrGeofenceName,
+                    "timestamp" to event.timestamp,
+                    "formattedTime" to event.formattedTime,
+                    "isTestEvent" to event.isTestEvent,
+                    "isAcknowledged" to event.isAcknowledged,
+                    "isDismissed" to event.isDismissed,
+                    "latitude" to event.latitude,
+                    "longitude" to event.longitude
+                )
+            )
+        } catch (_: Exception) {}
 
         scope.launch {
             try {
@@ -538,15 +767,46 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 
-    fun dismissGeofenceBreach() {
+    fun acknowledgeGeofenceAlert(id: String) {
+        val current = _syncState.value.activeGeofenceAlert ?: return
+        val updated = current.copy(isAcknowledged = true)
+        _syncState.value = _syncState.value.copy(activeGeofenceAlert = updated)
+        logParentActivity("geofence_alert_acknowledged", "Parent acknowledged perimeter alert for ${updated.childName}")
+        try {
+            rtdb?.getReference("children")?.child("geofence_alerts")?.child("active")?.child("isAcknowledged")?.setValue(true)
+        } catch (_: Exception) {}
+    }
+
+    fun dismissGeofenceAlert(id: String) {
+        val current = _syncState.value.activeGeofenceAlert
+        val history = if (current != null) listOf(current.copy(isDismissed = true)) + _syncState.value.geofenceAlertHistory else _syncState.value.geofenceAlertHistory
+        _syncState.value = _syncState.value.copy(
+            activeGeofenceAlert = null,
+            geofenceAlertHistory = history,
+            geofenceBreachActive = false
+        )
         preferences.geofenceBreachActive = false
-        _syncState.value = _syncState.value.copy(geofenceBreachActive = false)
+        logParentActivity("geofence_alert_dismissed", "Parent dismissed active perimeter alert")
+        try {
+            rtdb?.getReference("children")?.child("geofence_alerts")?.child("active")?.removeValue()
+            if (current != null) {
+                rtdb?.getReference("children")?.child("geofence_alerts")?.child("history")?.child(current.id)?.setValue(current)
+            }
+        } catch (_: Exception) {}
         scope.launch {
             try {
                 firestore?.collection("nestcheck_families")
                     ?.document(_syncState.value.familyCode)
                     ?.set(mapOf("geofenceBreachActive" to false), com.google.firebase.firestore.SetOptions.merge())
             } catch (e: Exception) {}
+        }
+    }
+
+    fun dismissGeofenceBreach() {
+        val alert = _syncState.value.activeGeofenceAlert
+        if (alert != null) dismissGeofenceAlert(alert.id) else {
+            preferences.geofenceBreachActive = false
+            _syncState.value = _syncState.value.copy(geofenceBreachActive = false)
         }
     }
 
@@ -766,13 +1026,162 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 
-    fun addCredits(amount: Int) {
-        val current = preferences.childCredits
-        val updated = current + amount
+    fun addCredits(
+        amount: Int,
+        type: CreditTransactionType = CreditTransactionType.TASK_COMPLETED,
+        title: String = "Credit Reward"
+    ) {
+        creditRepository.addCredits(amount, type, title)
+        val updated = creditRepository.wallet.value.totalCredits
+        _syncState.value = _syncState.value.copy(childCredits = updated)
         preferences.childCredits = updated
+
         try {
-            firestore?.collection("family_state")?.document("current")
-                ?.set(mapOf("childCredits" to updated), com.google.firebase.firestore.SetOptions.merge())
+            rtdb?.getReference("children")?.child("credits")?.child("balance")?.setValue(updated)
+            rtdb?.getReference("children")?.child("credits")?.child("lastUpdated")?.setValue(System.currentTimeMillis())
+        } catch (_: Exception) {}
+
+        scope.launch {
+            try {
+                firestore?.collection("family_state")?.document("current")
+                    ?.set(mapOf("childCredits" to updated), com.google.firebase.firestore.SetOptions.merge())
+            } catch (_: Exception) {}
+        }
+    }
+
+    // Safe Check-In Implementation (Requirement 10)
+    fun onChildCheckIn(label: String, note: String, lat: Double, lng: Double) {
+        val timeNow = java.text.SimpleDateFormat("hh:mm a, MMM d", java.util.Locale.getDefault()).format(java.util.Date())
+        val checkIn = ChildArrivalCheckIn(
+            id = java.util.UUID.randomUUID().toString(),
+            childName = _syncState.value.activeChildName,
+            timestamp = System.currentTimeMillis(),
+            latitude = lat,
+            longitude = lng,
+            locationLabel = label,
+            customNote = note,
+            batteryLevel = _syncState.value.kidBattery,
+            isParentAcknowledged = false
+        )
+        _syncState.value = _syncState.value.copy(
+            latestCheckIn = checkIn,
+            checkInHistory = listOf(checkIn) + _syncState.value.checkInHistory
+        )
+        logChildActivity("safe_checkin_dispatched", "Child checked in safely: $label ($note)")
+        notificationManager.showSafeCheckInNotification(_syncState.value.activeChildName, label, timeNow)
+
+        try {
+            rtdb?.getReference("children")?.child("checkins")?.child("latest")?.setValue(checkIn)
+            rtdb?.getReference("children")?.child("checkins")?.child("history")?.child(checkIn.id)?.setValue(checkIn)
+        } catch (_: Exception) {}
+    }
+
+    fun acknowledgeCheckIn(id: String) {
+        val current = _syncState.value.latestCheckIn ?: return
+        val updated = current.copy(isParentAcknowledged = true)
+        _syncState.value = _syncState.value.copy(latestCheckIn = updated)
+        logParentActivity("checkin_acknowledged", "Parent acknowledged arrival check-in for ${updated.childName}")
+        try {
+            rtdb?.getReference("children")?.child("checkins")?.child("latest")?.child("isParentAcknowledged")?.setValue(true)
+        } catch (_: Exception) {}
+    }
+
+    // Task & Reward Workflow Implementation (Requirement 5)
+    fun createTask(title: String, creditsReward: Int, category: TaskCategory = TaskCategory.CHORE) {
+        val newTask = PendingTaskItem(
+            id = java.util.UUID.randomUUID().toString(),
+            title = title,
+            category = category,
+            creditsReward = creditsReward,
+            isCompleted = false,
+            approvalStatus = TaskApprovalStatus.NOT_COMPLETED,
+            dueDate = "Today, 6:00 PM",
+            childName = _syncState.value.activeChildName
+        )
+        val updatedTasks = listOf(newTask) + _syncState.value.tasks
+        _syncState.value = _syncState.value.copy(tasks = updatedTasks)
+        logParentActivity("task_created", "Parent created task: '$title' (+${creditsReward} credits)")
+        syncTasksToBackend(updatedTasks)
+    }
+
+    fun submitTaskByChild(taskId: String) {
+        val updatedTasks = _syncState.value.tasks.map {
+            if (it.id == taskId) {
+                it.copy(approvalStatus = TaskApprovalStatus.SUBMITTED_PENDING_APPROVAL)
+            } else it
+        }
+        _syncState.value = _syncState.value.copy(tasks = updatedTasks)
+        val task = updatedTasks.find { it.id == taskId }
+        logChildActivity("task_submitted", "Submitted task '${task?.title}' for parent approval")
+        notificationManager.showNotification(
+            "📋 Task Awaiting Approval",
+            "${_syncState.value.activeChildName} marked '${task?.title}' as done. Parent review required."
+        )
+        syncTasksToBackend(updatedTasks)
+    }
+
+    fun approveTaskByParent(taskId: String): Boolean {
+        val task = _syncState.value.tasks.find { it.id == taskId } ?: return false
+        if (task.approvalStatus == TaskApprovalStatus.APPROVED_AND_CREDITED) {
+            return false // Prevent duplicate awards!
+        }
+
+        val updatedTasks = _syncState.value.tasks.map {
+            if (it.id == taskId) {
+                it.copy(
+                    approvalStatus = TaskApprovalStatus.APPROVED_AND_CREDITED,
+                    isCompleted = true
+                )
+            } else it
+        }
+        _syncState.value = _syncState.value.copy(tasks = updatedTasks)
+
+        // Award configured credits exactly once!
+        addCredits(
+            amount = task.creditsReward,
+            type = CreditTransactionType.TASK_COMPLETED,
+            title = "Parent Approved: ${task.title}"
+        )
+
+        logParentActivity("task_approved", "Parent approved '${task.title}' and awarded +${task.creditsReward} credits")
+        syncTasksToBackend(updatedTasks)
+        return true
+    }
+
+    fun rejectTaskByParent(taskId: String, reason: String = "Please review and complete"): Boolean {
+        val updatedTasks = _syncState.value.tasks.map {
+            if (it.id == taskId) {
+                it.copy(
+                    approvalStatus = TaskApprovalStatus.REJECTED,
+                    rejectionReason = reason,
+                    isCompleted = false
+                )
+            } else it
+        }
+        _syncState.value = _syncState.value.copy(tasks = updatedTasks)
+        val task = updatedTasks.find { it.id == taskId }
+        logParentActivity("task_rejected", "Parent rejected '${task?.title}': $reason")
+        syncTasksToBackend(updatedTasks)
+        return true
+    }
+
+    private fun syncTasksToBackend(tasks: List<PendingTaskItem>) {
+        try {
+            rtdb?.getReference("children")?.child("tasks")?.setValue(
+                tasks.map {
+                    mapOf(
+                        "id" to it.id,
+                        "title" to it.title,
+                        "category" to it.category.name,
+                        "creditsReward" to it.creditsReward,
+                        "isCompleted" to it.isCompleted,
+                        "approvalStatus" to it.approvalStatus.name,
+                        "dueDate" to it.dueDate,
+                        "childName" to it.childName,
+                        "rejectionReason" to (it.rejectionReason ?: "")
+                    )
+                }
+            )
         } catch (_: Exception) {}
     }
 
@@ -867,6 +1276,22 @@ class RealtimeFamilySyncManager @Inject constructor(
             schoolHours = schoolHours,
             householdChildren = updatedKids
         )
+
+        logParentActivity("child_profile_updated", "Updated profile for $name (Age $age, Avatar $avatar)")
+
+        // Real-Time Database synchronization across parent and child apps (Requirement 3)
+        try {
+            rtdb?.getReference("children")?.child("profile")?.setValue(
+                mapOf(
+                    "name" to name,
+                    "age" to age,
+                    "avatar" to avatar,
+                    "dailyLimitMinutes" to dailyLimitMinutes,
+                    "bedtime" to bedtime,
+                    "schoolHours" to schoolHours
+                )
+            )
+        } catch (_: Exception) {}
 
         scope.launch {
             try {

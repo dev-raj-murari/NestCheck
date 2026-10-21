@@ -90,7 +90,6 @@ fun NestCheckApp(startDestination: String = Screen.Splash.route) {
         composable(Screen.RewardShop.route) { RewardShopScreen(navController) }
         composable(Screen.BedtimeLock.route) { BedtimeLockScreen(navController) }
         composable(Screen.DevicePaused.route) { DevicePausedScreen(navController) }
-        composable(Screen.HabitChallenges.route) { HabitStreaksScreen(navController) }
         composable(Screen.WaterReminder.route) { WaterReminderScreen(navController) }
 
         // Dev Raj's Feature Routes (F13, F45, F14, F37, F15, F16, F18, F44, F17, F38, F19, F20, F39, F42, F43)

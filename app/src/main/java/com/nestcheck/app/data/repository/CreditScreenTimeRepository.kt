@@ -2,6 +2,7 @@ package com.nestcheck.app.data.repository
 
 import com.nestcheck.app.data.model.CreditLedgerRecord
 import com.nestcheck.app.data.model.CreditScreenTimeWallet
+import com.nestcheck.app.data.local.NestCheckPreferences
 import com.nestcheck.app.data.model.CreditTransactionType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,12 +12,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class CreditScreenTimeRepository @Inject constructor() {
+class CreditScreenTimeRepository @Inject constructor(
+    private val preferences: NestCheckPreferences
+) {
 
     private val _wallet = MutableStateFlow(
         CreditScreenTimeWallet(
-            totalCredits = 180,
-            activeRemainingSeconds = 90 * 60L, // 90 mins (180 credits / 2)
+            totalCredits = preferences.childCredits,
+            activeRemainingSeconds = (preferences.childCredits / 2) * 60L,
             isTrackingActive = true,
             conversionRateCreditsPerMin = 2,
             todayEarnedCredits = 60,
@@ -68,6 +71,7 @@ class CreditScreenTimeRepository @Inject constructor() {
         val additionalSeconds = (amount / 2) * 60L
         val newRemainingSeconds = (current.activeRemainingSeconds + additionalSeconds).coerceAtLeast(0L)
 
+        preferences.childCredits = newCredits
         _wallet.value = current.copy(
             totalCredits = newCredits,
             activeRemainingSeconds = newRemainingSeconds,
@@ -103,6 +107,7 @@ class CreditScreenTimeRepository @Inject constructor() {
         burnCarrySeconds %= SECONDS_PER_CREDIT
         val newTotalCredits = (current.totalCredits - burnedCreditsThisTick).coerceAtLeast(0)
 
+        preferences.childCredits = newTotalCredits
         _wallet.value = current.copy(
             activeRemainingSeconds = newRemainingSeconds,
             totalCredits = newTotalCredits,
@@ -119,8 +124,10 @@ class CreditScreenTimeRepository @Inject constructor() {
         val spend = addedMinutes * 2
         val addedSeconds = addedMinutes * 60L
 
+        val remainingCredits = (current.totalCredits - spend).coerceAtLeast(0)
+        preferences.childCredits = remainingCredits
         _wallet.value = current.copy(
-            totalCredits = current.totalCredits - spend,
+            totalCredits = remainingCredits,
             activeRemainingSeconds = current.activeRemainingSeconds + addedSeconds,
             todayBurnedCredits = current.todayBurnedCredits + spend,
             lastSyncTimestamp = System.currentTimeMillis()
@@ -146,11 +153,24 @@ class CreditScreenTimeRepository @Inject constructor() {
         val current = _wallet.value
         val newSeconds = (minutes * 60L).coerceAtLeast(0L)
         val correspondingCredits = minutes * 2
+        preferences.childCredits = correspondingCredits
         _wallet.value = current.copy(
             activeRemainingSeconds = newSeconds,
             totalCredits = correspondingCredits,
             lastSyncTimestamp = System.currentTimeMillis()
         )
+    }
+
+    fun syncWithExternalBalance(balance: Int) {
+        if (_wallet.value.totalCredits != balance) {
+            val current = _wallet.value
+            _wallet.value = current.copy(
+                totalCredits = balance,
+                activeRemainingSeconds = (balance / 2) * 60L,
+                lastSyncTimestamp = System.currentTimeMillis()
+            )
+            preferences.childCredits = balance
+        }
     }
 
     private companion object {

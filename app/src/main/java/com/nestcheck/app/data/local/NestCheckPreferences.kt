@@ -196,8 +196,20 @@ class NestCheckPreferences @Inject constructor(
         set(value) = prefs.edit().putBoolean(KEY_GEOFENCE_BREACH_ACTIVE, value).apply()
 
     var childCredits: Int
-        get() = prefs.getInt(KEY_CHILD_CREDITS, 210)
+        get() = prefs.getInt(KEY_CHILD_CREDITS, 180)
         set(value) = prefs.edit().putInt(KEY_CHILD_CREDITS, value).apply()
+
+    var isParentLoggedIn: Boolean
+        get() = prefs.getBoolean(KEY_IS_PARENT_LOGGED_IN, false)
+        set(value) = prefs.edit().putBoolean(KEY_IS_PARENT_LOGGED_IN, value).apply()
+
+    var isKidLoggedIn: Boolean
+        get() = prefs.getBoolean(KEY_IS_KID_LOGGED_IN, false)
+        set(value) = prefs.edit().putBoolean(KEY_IS_KID_LOGGED_IN, value).apply()
+
+    var hydrationGoalBonusAwarded: Boolean
+        get() = prefs.getBoolean(KEY_HYDRATION_BONUS_AWARDED, false)
+        set(value) = prefs.edit().putBoolean(KEY_HYDRATION_BONUS_AWARDED, value).apply()
 
     fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.registerOnSharedPreferenceChangeListener(listener)
@@ -249,5 +261,8 @@ class NestCheckPreferences @Inject constructor(
         private const val KEY_SOS_ACTIVE = "sos_active"
         private const val KEY_GEOFENCE_BREACH_ACTIVE = "geofence_breach_active"
         private const val KEY_CHILD_CREDITS = "child_credits"
+        private const val KEY_IS_PARENT_LOGGED_IN = "is_parent_logged_in"
+        private const val KEY_IS_KID_LOGGED_IN = "is_kid_logged_in"
+        private const val KEY_HYDRATION_BONUS_AWARDED = "hydration_bonus_awarded"
     }
 }

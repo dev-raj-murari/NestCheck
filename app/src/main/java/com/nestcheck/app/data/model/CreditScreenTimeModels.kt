@@ -19,7 +19,10 @@ enum class CreditTransactionType(val displayName: String, val isPositive: Boolea
     PARENT_GRANTED("Granted by Parent", true),
     SCREEN_TIME_BURN("Screen Time Consumed", false),
     MANUAL_REDEEM("Redeemed for Screen Time", false),
-    PENALTY_DEDUCTION("Safety Rule Penalty", false)
+    PENALTY_DEDUCTION("Safety Rule Penalty", false),
+    HYDRATION_STEP("Hydration Step", true),
+    BONUS_AWARDED("Goal Completion Bonus", true),
+    FOCUS_SESSION_COMPLETED("Focus Session Completed", true)
 }
 
 data class CreditLedgerRecord(

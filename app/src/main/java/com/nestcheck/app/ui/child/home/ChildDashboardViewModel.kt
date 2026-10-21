@@ -11,6 +11,7 @@ import com.nestcheck.app.data.repository.LocationRepository
 import com.nestcheck.app.data.repository.NotificationRepository
 import com.nestcheck.app.data.repository.ProfileRepository
 import com.nestcheck.app.data.sync.RealtimeFamilySyncManager
+import kotlinx.coroutines.flow.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,8 +39,9 @@ class ChildDashboardViewModel @Inject constructor(
     val wallet: StateFlow<CreditScreenTimeWallet> = creditRepository.wallet
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CreditScreenTimeWallet())
 
-    val pendingTasks: StateFlow<List<PendingTaskItem>> = dashboardRepository.pendingTasks
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val pendingTasks: StateFlow<List<PendingTaskItem>> = syncManager.syncState
+        .map { it.tasks }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), syncManager.syncState.value.tasks)
 
     val upcomingExams: StateFlow<List<UpcomingExam>> = dashboardRepository.upcomingExams
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -58,15 +60,11 @@ class ChildDashboardViewModel @Inject constructor(
 
     fun toggleTask(taskId: String) {
         viewModelScope.launch {
-            val updatedTask = dashboardRepository.toggleTask(taskId)
-            if (updatedTask?.approvalStatus == TaskApprovalStatus.PENDING_PARENT_APPROVAL) {
-                // Inform parent that child submitted task for verification
-                notificationRepository.addNotification(
-                    type = NotificationType.STEP_GOAL_COMPLETE,
-                    title = "📋 Task Awaiting Approval: ${updatedTask.title}",
-                    message = "${childProfile.value.name} marked '${updatedTask.title}' as done. Parent review required to credit +${updatedTask.creditsReward} pts."
-                )
+            val currentTask = syncManager.syncState.value.tasks.find { it.id == taskId } ?: return@launch
+            if (currentTask.approvalStatus == TaskApprovalStatus.APPROVED_AND_CREDITED || currentTask.approvalStatus == TaskApprovalStatus.APPROVED) {
+                return@launch // Already approved and rewarded
             }
+            syncManager.submitTaskByChild(taskId)
         }
     }
 
@@ -98,17 +96,8 @@ class ChildDashboardViewModel @Inject constructor(
             message = "${childProfile.value.name} exited MPSTME NMIMS boundary at $timeNow. Live GPS tracking active."
         )
 
-        // 3. Set local breach state
-        _geofenceBreach.value = GeofenceBreachSimResult(
-            id = UUID.randomUUID().toString(),
-            zoneName = alert.zoneName,
-            breachType = "UNAUTHORIZED PERIMETER CROSSING (EXIT)",
-            latitude = alert.latitude,
-            longitude = alert.longitude,
-            timestamp = alert.timestamp,
-            isParentNotified = true,
-            alertMessage = "Child crossed MPSTME NMIMS Mumbai safe perimeter! Parent app immediately notified via instant push & GPS telemetry dispatch."
-        )
+        // Child screen does not display duplicate breach result card (Requirement 4)
+        _geofenceBreach.value = null
     }
 
     fun dismissGeofenceAlert() {

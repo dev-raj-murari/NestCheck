@@ -1,4 +1,4 @@
-﻿package com.nestcheck.app.ui.child.home.components
+package com.nestcheck.app.ui.child.home.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,9 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FmdGood
 import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,9 +21,9 @@ import com.nestcheck.app.data.model.GeofenceBreachSimResult
 
 @Composable
 fun GeofenceCrossingSimulator(
-    breachResult: GeofenceBreachSimResult?,
+    breachResult: GeofenceBreachSimResult? = null,
     onSimulateBreach: () -> Unit,
-    onDismissBreach: () -> Unit,
+    onDismissBreach: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val cardBg = Color(0xFFFFFFFF)
@@ -34,6 +33,8 @@ fun GeofenceCrossingSimulator(
     val primaryBlue = Color(0xFF0B57D0)
     val redCritical = Color(0xFFEF4444)
     val greenSuccess = Color(0xFF10B981)
+
+    var testDispatchedTime by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = modifier
@@ -91,14 +92,18 @@ fun GeofenceCrossingSimulator(
             }
 
             Text(
-                text = "Simulate crossing MPSTME NMIMS Mumbai safe boundary to test real-time parent notification dispatch and GPS telemetry updates.",
+                text = "Simulate crossing the MPSTME NMIMS Mumbai safe boundary. The resulting alert is delivered directly to the Parent App.",
                 color = textMuted,
                 fontSize = 12.sp
             )
 
             // Simulation Action Button
             Button(
-                onClick = onSimulateBreach,
+                onClick = {
+                    onSimulateBreach()
+                    val now = java.text.SimpleDateFormat("hh:mm:ss a", java.util.Locale.getDefault()).format(java.util.Date())
+                    testDispatchedTime = now
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF0F4F9))
@@ -118,79 +123,23 @@ fun GeofenceCrossingSimulator(
                 )
             }
 
-            // Real-Time Breach Notification Result Card
-            breachResult?.let { breach ->
+            // Brief confirmation indicator (NOT a duplicate breach result card!)
+            testDispatchedTime?.let { time ->
                 Surface(
-                    color = Color(0xFFFEF2F2),
-                    shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFECACA)),
+                    color = Color(0xFFE6F4EA),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Warning,
-                                    contentDescription = null,
-                                    tint = redCritical,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = "PERIMETER CROSSING DETECTED",
-                                    color = redCritical,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Surface(
-                                color = Color(0xFFE6F4EA),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "Parent Alerted",
-                                    color = greenSuccess,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-
                         Text(
-                            text = breach.alertMessage,
-                            color = textDark,
+                            text = "✓ Simulated crossing alert sent to Parent Console at $time",
+                            color = greenSuccess,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.SemiBold
                         )
-
-                        Text(
-                            text = "Lat/Lng: ${breach.latitude}° N, ${breach.longitude}° E • Zone: ${breach.zoneName}",
-                            color = textMuted,
-                            fontSize = 11.sp
-                        )
-
-                        TextButton(
-                            onClick = onDismissBreach,
-                            modifier = Modifier.align(Alignment.End),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "Acknowledge & Dismiss",
-                                color = textDark,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
                     }
                 }
             }

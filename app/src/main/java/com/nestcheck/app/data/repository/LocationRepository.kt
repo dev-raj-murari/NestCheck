@@ -365,11 +365,11 @@ class LocationRepository @Inject constructor() {
     )
     val checkIns: StateFlow<List<ChildArrivalCheckIn>> = _checkIns.asStateFlow()
 
-    fun sendChildCheckIn(label: String, note: String): ChildArrivalCheckIn {
+    fun sendChildCheckIn(label: String, note: String, childName: String = "Leo"): ChildArrivalCheckIn {
         val loc = _liveLocation.value
         val checkIn = ChildArrivalCheckIn(
             id = UUID.randomUUID().toString(),
-            childName = "Alex",
+            childName = childName,
             timestamp = System.currentTimeMillis(),
             latitude = loc.latitude,
             longitude = loc.longitude,

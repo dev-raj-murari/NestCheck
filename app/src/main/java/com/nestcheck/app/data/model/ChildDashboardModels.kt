@@ -11,18 +11,27 @@ enum class TaskCategory(val label: String) {
 
 enum class TaskApprovalStatus(val label: String) {
     NOT_COMPLETED("Not Completed"),
+    PENDING("Pending"),
+    IN_PROGRESS("In Progress"),
     PENDING_PARENT_APPROVAL("Pending Parent Approval"),
-    APPROVED_AND_CREDITED("Approved & Credited")
+    SUBMITTED_PENDING_APPROVAL("Submitted — Waiting for Parent"),
+    APPROVED_AND_CREDITED("Approved & Credited"),
+    APPROVED("Approved"),
+    REJECTED("Rejected")
 }
 
 data class PendingTaskItem(
     val id: String = UUID.randomUUID().toString(),
-    val title: String,
-    val category: TaskCategory,
-    val creditsReward: Int,
+    val title: String = "",
+    val category: TaskCategory = TaskCategory.CHORE,
+    val creditsReward: Int = 20,
     val isCompleted: Boolean = false,
     val approvalStatus: TaskApprovalStatus = if (isCompleted) TaskApprovalStatus.APPROVED_AND_CREDITED else TaskApprovalStatus.NOT_COMPLETED,
-    val dueDate: String = "Today, 6:00 PM"
+    val dueDate: String = "Today, 6:00 PM",
+    val submissionNote: String = "",
+    val rejectionReason: String? = null,
+    val submittedTimestamp: Long = 0L,
+    val childName: String = "Leo"
 ) {
     val screenTimeBonusMinutes: Int
         get() = creditsReward / 2

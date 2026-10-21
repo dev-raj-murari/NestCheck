@@ -622,42 +622,247 @@ fun ScreenTimeTab(
             }
     
 
-        // Critical Geofence Breach Alert Banner
-        if (syncState.geofenceBreachActive) {
+        // 1. Geofence Perimeter Alert Banner (Requirement 4)
+        val alert = syncState.activeGeofenceAlert
+        if ((alert != null && !alert.isDismissed) || syncState.geofenceBreachActive) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFDC2626))
+                    colors = CardDefaults.cardColors(containerColor = if (alert?.isTestEvent == true) Color(0xFFFFFBEB) else Color(0xFFFEF2F2)),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, if (alert?.isTestEvent == true) Color(0xFFF59E0B) else Color(0xFFDC2626))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = Color.White)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("GEOFENCE BOUNDARY BREACH", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Outlined.WarningAmber,
+                                    contentDescription = null,
+                                    tint = if (alert?.isTestEvent == true) Color(0xFFD97706) else Color(0xFFDC2626),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = alert?.title ?: "PERIMETER CROSSING DETECTED",
+                                    color = if (alert?.isTestEvent == true) Color(0xFFB45309) else Color(0xFF991B1B),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                            Surface(
+                                color = if (alert?.isTestEvent == true) Color(0xFFFEF3C7) else Color(0xFFFEE2E2),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = if (alert?.isTestEvent == true) "SIMULATED TEST EVENT" else "ACTUAL EVENT",
+                                    color = if (alert?.isTestEvent == true) Color(0xFFB45309) else Color(0xFFDC2626),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = alert?.message ?: "The child crossed the configured school perimeter.",
+                            color = GflTextDark,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "${syncState.activeChildName} left MPSTME Campus Safe Zone! Current location: ${syncState.locationAddress}",
-                            color = Color.White.copy(alpha = 0.95f),
-                            fontSize = 13.sp
+                            text = "Child: ${alert?.childName ?: syncState.activeChildName} • School/Geofence: ${alert?.schoolOrGeofenceName ?: "MPSTME NMIMS Campus"}",
+                            color = GflTextDark,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = "Event Time: ${alert?.formattedTime?.ifBlank { "Just now" } ?: "Just now"} • Status: ${if (alert?.isAcknowledged == true) "Acknowledged ✓" else "Requires Parental Attention"}",
+                            color = GflTextMuted,
+                            fontSize = 11.5.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (alert?.isAcknowledged != true) {
+                                Button(
+                                    onClick = { syncManager.acknowledgeGeofenceAlert(alert?.id ?: "") },
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (alert?.isTestEvent == true) Color(0xFFD97706) else Color(0xFFDC2626)),
+                                    shape = RoundedCornerShape(20.dp),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Acknowledge", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            } else {
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = Color(0xFFE6F4EA)
+                                ) {
+                                    Text("✓ Acknowledged", color = Color(0xFF16A34A), fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                                }
+                            }
+
+                            OutlinedButton(
+                                onClick = { syncManager.dismissGeofenceAlert(alert?.id ?: "") },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = GflTextDark),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder),
+                                shape = RoundedCornerShape(20.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                            ) {
+                                Text("Dismiss", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+
+                            Spacer(modifier = Modifier.weight(1f))
+                            TextButton(
+                                onClick = { navController.navigate(Screen.LiveMap.route) },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("View Map", color = GflBlue, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Safe Check-In Received Banner (Requirement 10)
+        val checkIn = syncState.latestCheckIn
+        if (checkIn != null && !checkIn.isParentAcknowledged) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF86EFAC))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("SAFE CHECK-IN RECEIVED", color = Color(0xFF15803D), fontWeight = FontWeight.ExtraBold, fontSize = 13.5.sp)
+                            }
+                            val timeStr = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault()).format(java.util.Date(checkIn.timestamp))
+                            Text(timeStr, color = GflTextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "${checkIn.childName} has checked in safely.",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GflTextDark
+                        )
+                        Text(
+                            text = "Location: ${checkIn.locationLabel} • Note: ${checkIn.customNote}",
+                            fontSize = 12.sp,
+                            color = GflTextMuted
                         )
                         Spacer(modifier = Modifier.height(10.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
                             Button(
-                                onClick = { navController.navigate(Screen.LiveMap.route) },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFFDC2626)),
-                                shape = RoundedCornerShape(20.dp)
+                                onClick = { syncManager.acknowledgeCheckIn(checkIn.id) },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                                shape = RoundedCornerShape(20.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 5.dp)
                             ) {
-                                Text("View on Map", fontWeight = FontWeight.Bold)
+                                Text("Acknowledge Arrival", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
-                            OutlinedButton(
-                                onClick = { syncManager.dismissGeofenceBreach() },
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.7f)),
-                                shape = RoundedCornerShape(20.dp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Pending Child Task Approvals Section (Requirement 5)
+        val pendingApprovalTasks = syncState.tasks.filter { 
+            it.approvalStatus == com.nestcheck.app.data.model.TaskApprovalStatus.SUBMITTED_PENDING_APPROVAL || 
+            it.approvalStatus == com.nestcheck.app.data.model.TaskApprovalStatus.PENDING_PARENT_APPROVAL 
+        }
+        if (pendingApprovalTasks.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = GflCardWhite),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF59E0B))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Outlined.AssignmentLate, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("PENDING TASK APPROVALS", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFFB45309))
+                            }
+                            Surface(
+                                color = Color(0xFFFEF3C7),
+                                shape = RoundedCornerShape(10.dp)
                             ) {
-                                Text("Dismiss Alert", fontWeight = FontWeight.Bold)
+                                Text(
+                                    "${pendingApprovalTasks.size} Pending",
+                                    color = Color(0xFFB45309),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        pendingApprovalTasks.forEach { task ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFFFFFBEB),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFDE68A)),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(task.title, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = GflTextDark)
+                                    Text("Submitted by ${task.childName} • Reward: +${task.creditsReward} credits (${task.creditsReward / 2}m screen time)", fontSize = 11.5.sp, color = GflTextMuted)
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { syncManager.rejectTaskByParent(task.id, "Please review and complete all tasks thoroughly") },
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626)),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDC2626).copy(alpha = 0.5f)),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                                        ) {
+                                            Text("Reject", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Button(
+                                            onClick = { syncManager.approveTaskByParent(task.id) },
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
+                                        ) {
+                                            Text("Approve (+${task.creditsReward} pts)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

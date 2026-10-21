@@ -216,6 +216,57 @@ class NestCheckNotificationManager @Inject constructor(
         notificationManager.notify(NOTIFICATION_ID_TAMPER, notification)
     }
 
+    fun showSafeCheckInNotification(childName: String, locationLabel: String, time: String) {
+        val openAppIntent = Intent(context, ParentMainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val appPendingIntent = PendingIntent.getActivity(
+            context,
+            1006,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_CONTROLS)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle("SAFE CHECK-IN RECEIVED")
+            .setContentText("$childName has checked in safely at $locationLabel ($time).")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText("SAFE CHECK-IN RECEIVED\n$childName has checked in safely.\nLocation: $locationLabel\nTime: $time")
+            )
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setColor(0xFF1E8E3E.toInt())
+            .setContentIntent(appPendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID_CHECKIN, notification)
+    }
+
+    fun showNotification(title: String, message: String) {
+        val openAppIntent = Intent(context, ParentMainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val appPendingIntent = PendingIntent.getActivity(
+            context,
+            1007,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_CONTROLS)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(appPendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+    }
+
     companion object {
         const val CHANNEL_SOS = "critical_sos_alerts"
         const val CHANNEL_CONTROLS = "parental_device_locks"
@@ -226,5 +277,6 @@ class NestCheckNotificationManager @Inject constructor(
         const val NOTIFICATION_ID_CONTROLS = 9002
         const val NOTIFICATION_ID_TAMPER = 9003
         const val NOTIFICATION_ID_GEOFENCE = 9004
+        const val NOTIFICATION_ID_CHECKIN = 9005
     }
 }

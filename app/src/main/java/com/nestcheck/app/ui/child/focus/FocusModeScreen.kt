@@ -1,5 +1,6 @@
 package com.nestcheck.app.ui.child.focus
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.FastForward
+import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.*
@@ -15,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,7 +31,8 @@ fun FocusModeScreen(
     navController: NavController,
     viewModel: FocusModeViewModel = hiltViewModel()
 ) {
-    val session by viewModel.focusSession.collectAsState()
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
     var selectedPreset by remember { mutableIntStateOf(25) }
 
     val presets = listOf(
@@ -74,24 +79,43 @@ fun FocusModeScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(CyberCard)
-                .border(1.dp, if (session.isActive) White else CyberBorder, RoundedCornerShape(16.dp))
+                .border(
+                    1.dp,
+                    if (uiState.isCompleted) SuccessGreen
+                    else if (uiState.isPaused) WarningAmber
+                    else if (uiState.isActive) White
+                    else CyberBorder,
+                    RoundedCornerShape(16.dp)
+                )
                 .padding(28.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = if (session.isActive) "SESSION IN PROGRESS" else "READY TO FOCUS",
-                    color = if (session.isActive) SuccessGreen else CyberTextDim,
+                    text = when {
+                        uiState.isCompleted && !uiState.isClaimed -> "SESSION FINISHED • READY TO CLAIM!"
+                        uiState.isClaimed -> "REWARD CLAIMED! GREAT JOB!"
+                        uiState.isActive && uiState.isPaused -> "SESSION PAUSED"
+                        uiState.isActive -> "SESSION IN PROGRESS (LIVE COUNTDOWN)"
+                        else -> "READY TO FOCUS"
+                    },
+                    color = when {
+                        uiState.isCompleted -> SuccessGreen
+                        uiState.isPaused -> WarningAmber
+                        uiState.isActive -> CyberBlue
+                        else -> CyberTextDim
+                    },
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                // LIVE COUNTDOWN TIMER DISPLAY
                 Text(
-                    text = if (session.isActive) "${session.targetMinutes}:00" else "${selectedPreset}:00",
+                    text = if (uiState.isActive) uiState.formattedTime else String.format("%02d:00", selectedPreset),
                     color = CyberTextBright,
-                    fontSize = 56.sp,
+                    fontSize = 54.sp,
                     fontFamily = TechMono,
                     fontWeight = FontWeight.Bold
                 )
@@ -99,39 +123,112 @@ fun FocusModeScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = if (session.isActive) "Non-whitelisted apps silenced" else "Select duration & tap start",
+                    text = when {
+                        uiState.isCompleted -> "All apps unlocked. Tap below to claim your credits!"
+                        uiState.isActive && uiState.isPaused -> "Countdown paused at ${uiState.formattedTime}. Tap Resume to continue."
+                        uiState.isActive -> "Distraction-free environment. Non-whitelisted apps silenced."
+                        else -> "Select study duration & tap start"
+                    },
                     color = CyberTextDim,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
 
-                if (session.isActive) {
-                    Spacer(modifier = Modifier.height(18.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(
-                            onClick = { viewModel.completeSession() },
-                            colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = Black),
-                            shape = RoundedCornerShape(6.dp)
+                if (uiState.isActive) {
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    if (!uiState.isCompleted) {
+                        // CONTROLS DURING RUNNING / PAUSED SESSION
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Complete (+${session.rewardCredits} pts)", fontWeight = FontWeight.Bold)
+                            if (!uiState.isPaused) {
+                                // PAUSE BUTTON
+                                Button(
+                                    onClick = { viewModel.pauseSession() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = WarningAmber, contentColor = Black),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(Icons.Outlined.Pause, contentDescription = "Pause", modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Pause", fontWeight = FontWeight.Bold)
+                                }
+                            } else {
+                                // RESUME BUTTON
+                                Button(
+                                    onClick = { viewModel.resumeSession() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = Black),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(Icons.Outlined.PlayArrow, contentDescription = "Resume", modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Resume", fontWeight = FontWeight.Bold)
+                                }
+                            }
+
+                            // QUIT / CANCEL BUTTON
+                            OutlinedButton(
+                                onClick = { viewModel.stopSession() },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = AlertRed),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AlertRed.copy(alpha = 0.6f)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(Icons.Outlined.Stop, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Quit", fontWeight = FontWeight.Bold)
+                            }
                         }
 
-                        OutlinedButton(
-                            onClick = { viewModel.stopSession() },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AlertRed),
-                            shape = RoundedCornerShape(6.dp)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Fast-forward demo button to test zero-timer claim
+                        TextButton(
+                            onClick = { viewModel.fastForwardToFinish() },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Icon(Icons.Outlined.Stop, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Quit", fontWeight = FontWeight.Bold)
+                            Icon(Icons.Outlined.FastForward, contentDescription = null, tint = CyberTextDim, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Fast-Forward Timer to 00:00 (Demo Test)", color = CyberTextDim, fontSize = 11.sp)
                         }
+
+                        // Disabled claim credits indicator
+                        Text(
+                            text = "🔒 Credits (+${uiState.rewardCredits} pts) locked until timer reaches 00:00",
+                            color = CyberTextDim,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    } else if (!uiState.isClaimed) {
+                        // COMPLETED SESSION: CLAIM CREDITS BUTTON (ENABLED ONLY AT 00:00)
+                        Button(
+                            onClick = {
+                                val success = viewModel.claimCredits()
+                                if (success) {
+                                    Toast.makeText(context, "🌟 +${uiState.rewardCredits} Credits Claimed Successfully!", Toast.LENGTH_LONG).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen, contentColor = Black),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth().height(48.dp)
+                        ) {
+                            Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Claim Reward (+${uiState.rewardCredits} Credits)", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                        }
+                    } else {
+                        Text(
+                            text = "✓ Reward of +${uiState.rewardCredits} Credits has been added to your bank!",
+                            color = SuccessGreen,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
         }
 
-        if (!session.isActive) {
+        if (!uiState.isActive) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
