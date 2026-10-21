@@ -1,20 +1,12 @@
 # NestCheck - Autonomous Parental Monitoring & Child Protection
 
-![MAD Subject Project](https://img.shields.io/badge/MAD-Subject%20Project-blue?style=for-the-badge)
-![Platform](https://img.shields.io/badge/Platform-Android%2014+-3DDC84?style=for-the-badge&logo=android&logoColor=white)
-![Language](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
-![UI](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
-![Backend](https://img.shields.io/badge/Firebase-RTDB%20%7C%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
-![Architecture](https://img.shields.io/badge/Architecture-MVVM%20%7C%20Clean-FF6F00?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-
 **NestCheck** is a next-generation, cyber-minimalist parental telemetry and child wellbeing platform engineered for Android. Built with **Jetpack Compose**, **Kotlin Coroutines / Flow**, **Hilt DI**, and a dual-layer **Firebase Realtime Database & Cloud Firestore** backend, NestCheck delivers instantaneous telemetry synchronization, interactive safety radar, weekly timetable management, in-app emergency alert popups, and a balanced task-and-reward economy.
 
 ---
 
 ## 👥 Authors & Team
-- **Dev Raj Murari** ([@dev-raj-murari](https://github.com/dev-raj-murari))
-- **Rohit Patil** ([@Rohit-Patil768](https://github.com/Rohit-Patil768))
+- **Dev Raj Murari** 
+- **Rohit Patil** 
 - **Sinan**
 
 ---
