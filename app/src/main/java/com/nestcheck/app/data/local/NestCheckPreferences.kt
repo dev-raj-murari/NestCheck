@@ -187,6 +187,14 @@ class NestCheckPreferences @Inject constructor(
         get() = prefs.getBoolean(KEY_TIMETABLE_CALENDAR_SYNCED, false)
         set(value) = prefs.edit().putBoolean(KEY_TIMETABLE_CALENDAR_SYNCED, value).apply()
 
+    var timetablePdfName: String
+        get() = prefs.getString(KEY_TIMETABLE_PDF_NAME, "MPSTME_NMIMS_Timetable.pdf") ?: "MPSTME_NMIMS_Timetable.pdf"
+        set(value) = prefs.edit().putString(KEY_TIMETABLE_PDF_NAME, value).apply()
+
+    var timetableItemsJson: String
+        get() = prefs.getString(KEY_TIMETABLE_ITEMS_JSON, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_TIMETABLE_ITEMS_JSON, value).apply()
+
     var sosActive: Boolean
         get() = prefs.getBoolean(KEY_SOS_ACTIVE, false)
         set(value) = prefs.edit().putBoolean(KEY_SOS_ACTIVE, value).apply()
@@ -258,6 +266,8 @@ class NestCheckPreferences @Inject constructor(
         private const val KEY_LOCATION_ADDRESS = "location_address"
         private const val KEY_KID_BATTERY = "kid_battery"
         private const val KEY_TIMETABLE_CALENDAR_SYNCED = "timetable_calendar_synced"
+        private const val KEY_TIMETABLE_PDF_NAME = "timetable_pdf_name"
+        private const val KEY_TIMETABLE_ITEMS_JSON = "timetable_items_json"
         private const val KEY_SOS_ACTIVE = "sos_active"
         private const val KEY_GEOFENCE_BREACH_ACTIVE = "geofence_breach_active"
         private const val KEY_CHILD_CREDITS = "child_credits"

@@ -63,6 +63,181 @@ fun ParentShellScreen(
 ) {
     val syncState by syncManager.syncState.collectAsState()
     var selectedTab by remember { mutableStateOf(FamilyLinkTab.TODAY) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // In-App Real-Time Geofence Alert Modal Dialog
+    val activeGeofenceAlert = syncState.activeGeofenceAlert
+    if ((activeGeofenceAlert != null && !activeGeofenceAlert.isDismissed) || syncState.geofenceBreachActive) {
+        val alertChild = activeGeofenceAlert?.childName ?: syncState.activeChildName
+        val alertZone = activeGeofenceAlert?.schoolOrGeofenceName ?: syncState.geofenceBreachZone.ifBlank { "MPSTME NMIMS Campus" }
+        val alertAddr = activeGeofenceAlert?.formattedTime?.ifBlank { syncState.locationAddress } ?: syncState.locationAddress
+        val lat = activeGeofenceAlert?.latitude ?: syncState.kidLatitude
+        val lng = activeGeofenceAlert?.longitude ?: syncState.kidLongitude
+
+        AlertDialog(
+            onDismissRequest = { /* Require explicit action */ },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFEE2E2)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Warning,
+                        contentDescription = "Geofence Breach",
+                        tint = Color(0xFFDC2626),
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = "🚨 Perimeter Crossing Alert!",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = GflTextDark,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "$alertChild has crossed the safe school perimeter!",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = Color(0xFFDC2626),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Surface(
+                        color = Color(0xFFF8FAFC),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text("Safe Zone: $alertZone", fontSize = 12.sp, color = GflTextMuted)
+                            Text("Location: $alertAddr", fontSize = 12.sp, color = GflTextDark, fontWeight = FontWeight.Medium)
+                            Text("Status: Live GPS Telemetry Active", fontSize = 11.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (activeGeofenceAlert != null) {
+                            syncManager.acknowledgeGeofenceAlert(activeGeofenceAlert.id)
+                        }
+                        syncManager.dismissGeofenceBreach()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GflBlue),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Acknowledge & Dismiss", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        val mapIntent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:$lat,$lng?q=$lat,$lng($alertChild+Location)"))
+                        try { context.startActivity(mapIntent) } catch (_: Exception) {}
+                    },
+                    shape = RoundedCornerShape(20.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GflBlue),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("View on Map", color = GflBlue, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            containerColor = GflCardWhite,
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
+    // In-App Real-Time Safe Check-In Modal Dialog
+    val latestCheckIn = syncState.latestCheckIn
+    if (latestCheckIn != null && !latestCheckIn.isParentAcknowledged) {
+        AlertDialog(
+            onDismissRequest = { /* Require explicit action */ },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFDCFCE7)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.CheckCircle,
+                        contentDescription = "Safe Check-In",
+                        tint = Color(0xFF16A34A),
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = "✅ Safe Check-In Received",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = GflTextDark,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "${latestCheckIn.childName} checked in safely!",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = Color(0xFF15803D),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Surface(
+                        color = Color(0xFFF8FAFC),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GflBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text("Location: ${latestCheckIn.locationLabel}", fontSize = 13.sp, color = GflTextDark, fontWeight = FontWeight.Bold)
+                            if (latestCheckIn.customNote.isNotBlank()) {
+                                Text("Note: ${latestCheckIn.customNote}", fontSize = 12.sp, color = GflTextMuted)
+                            }
+                            val timeStr = java.text.SimpleDateFormat("hh:mm a, MMM d", java.util.Locale.getDefault()).format(java.util.Date(latestCheckIn.timestamp))
+                            Text("Time: $timeStr", fontSize = 11.sp, color = GflTextMuted)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        syncManager.acknowledgeCheckIn(latestCheckIn.id)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Acknowledge Arrival", fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = GflCardWhite,
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
 
     Scaffold(
         containerColor = GflBgLight,

@@ -38,9 +38,9 @@ enum class DeviceApprovalStatus {
 
 data class TimetableItem(
     val id: String = java.util.UUID.randomUUID().toString(),
-    val dayOfWeek: String, // "Monday", "Tuesday", etc.
-    val subject: String,
-    val timeSlot: String, // e.g. "08:30 AM - 09:30 AM"
+    val dayOfWeek: String = "Monday",
+    val subject: String = "",
+    val timeSlot: String = "",
     val roomOrTeacher: String = "MPSTME Room 402"
 )
 
@@ -297,7 +297,9 @@ class RealtimeFamilySyncManager @Inject constructor(
             activeChildName = if (activeName.isNotBlank()) activeName else _syncState.value.activeChildName,
             activeChildAvatar = if (activeAvatar.isNotBlank()) activeAvatar else _syncState.value.activeChildAvatar,
             childAge = if (activeAge > 0) activeAge else _syncState.value.childAge,
-            childCredits = preferences.childCredits
+            childCredits = preferences.childCredits,
+            timetablePdfName = preferences.timetablePdfName,
+            timetableItems = if (preferences.timetableItemsJson.isNotBlank()) deserializeTimetable(preferences.timetableItemsJson) else _syncState.value.timetableItems
         )
     }
 
@@ -452,7 +454,7 @@ class RealtimeFamilySyncManager @Inject constructor(
                 })
 
             // 6. Real-Time Timetable Sync Listener
-            rtdb?.getReference("family")?.child("timetable")
+            rtdb?.getReference("children")?.child("timetable")
                 ?.addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         if (!snapshot.exists()) return
@@ -1361,18 +1363,64 @@ class RealtimeFamilySyncManager @Inject constructor(
         }
     }
 
+    fun serializeTimetable(items: List<TimetableItem>): String {
+        val array = org.json.JSONArray()
+        for (item in items) {
+            val obj = org.json.JSONObject()
+            obj.put("id", item.id)
+            obj.put("dayOfWeek", item.dayOfWeek)
+            obj.put("subject", item.subject)
+            obj.put("timeSlot", item.timeSlot)
+            obj.put("roomOrTeacher", item.roomOrTeacher)
+            array.put(obj)
+        }
+        return array.toString()
+    }
+
+    fun deserializeTimetable(json: String): List<TimetableItem> {
+        if (json.isBlank()) return emptyList()
+        val list = mutableListOf<TimetableItem>()
+        try {
+            val array = org.json.JSONArray(json)
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                list.add(
+                    TimetableItem(
+                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                        dayOfWeek = obj.optString("dayOfWeek", "Monday"),
+                        subject = obj.optString("subject", ""),
+                        timeSlot = obj.optString("timeSlot", ""),
+                        roomOrTeacher = obj.optString("roomOrTeacher", "MPSTME")
+                    )
+                )
+            }
+        } catch (_: Exception) {}
+        return list
+    }
+
     fun uploadTimetablePdf(fileName: String, newItems: List<TimetableItem>) {
         _syncState.value = _syncState.value.copy(
             timetablePdfName = fileName,
             timetableItems = newItems,
             timetableSyncedToCalendar = false
         )
+        preferences.timetablePdfName = fileName
+        preferences.timetableItemsJson = serializeTimetable(newItems)
         preferences.timetableSyncedToCalendar = false
         try {
-            val timetableRef = rtdb?.getReference("family")?.child("timetable")
+            val timetableRef = rtdb?.getReference("children")?.child("timetable")
             timetableRef?.child("pdfName")?.setValue(fileName)
             timetableRef?.child("syncedToCalendar")?.setValue(false)
-            timetableRef?.child("items")?.setValue(newItems)
+            val itemsMap = newItems.map {
+                mapOf(
+                    "id" to it.id,
+                    "dayOfWeek" to it.dayOfWeek,
+                    "subject" to it.subject,
+                    "timeSlot" to it.timeSlot,
+                    "roomOrTeacher" to it.roomOrTeacher
+                )
+            }
+            timetableRef?.child("items")?.setValue(itemsMap)
         } catch (e: Exception) {}
         scope.launch {
             try {
@@ -1393,7 +1441,7 @@ class RealtimeFamilySyncManager @Inject constructor(
         _syncState.value = _syncState.value.copy(timetableSyncedToCalendar = synced)
         preferences.timetableSyncedToCalendar = synced
         try {
-            rtdb?.getReference("family")?.child("timetable")?.child("syncedToCalendar")?.setValue(synced)
+            rtdb?.getReference("children")?.child("timetable")?.child("syncedToCalendar")?.setValue(synced)
         } catch (e: Exception) {}
         scope.launch {
             try {
