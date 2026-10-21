@@ -132,7 +132,8 @@ fun KidShellScreen(
         bottomBar = {
             NavigationBar(
                 containerColor = KidCardWhite,
-                tonalElevation = 4.dp
+                tonalElevation = 4.dp,
+                modifier = Modifier.border(1.dp, Color(0xFFF1F5F9))
             ) {
                 KidTab.values().forEach { tab ->
                     NavigationBarItem(
@@ -188,7 +189,8 @@ fun KidShellScreen(
                     tasks = pendingTasks,
                     requests = creditRequests,
                     onToggleTask = { dashboardViewModel.toggleTask(it) },
-                    onRequestCreditsClick = { dashboardViewModel.openRequestCreditsDialog() }
+                    onRequestCreditsClick = { dashboardViewModel.openRequestCreditsDialog() },
+                    onSpendCredits = { dashboardViewModel.quickConvertCredits(it) }
                 )
                 KidTab.WELLNESS -> KidWellnessTab(navController)
                 KidTab.SOS -> KidSosContent(viewModel.syncManager, syncState)
@@ -368,7 +370,8 @@ fun KidTasksContent(
     tasks: List<PendingTaskItem>,
     requests: List<CreditRequest>,
     onToggleTask: (String) -> Unit,
-    onRequestCreditsClick: () -> Unit
+    onRequestCreditsClick: () -> Unit,
+    onSpendCredits: (Int) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -382,7 +385,8 @@ fun KidTasksContent(
         item {
             TaskCreditHeroCard(
                 wallet = wallet,
-                onRequestCreditsClick = onRequestCreditsClick
+                onRequestCreditsClick = onRequestCreditsClick,
+                onSpendCredits = onSpendCredits
             )
         }
 
@@ -407,12 +411,14 @@ fun KidTasksContent(
 @Composable
 fun TaskCreditHeroCard(
     wallet: CreditScreenTimeWallet,
-    onRequestCreditsClick: () -> Unit
+    onRequestCreditsClick: () -> Unit,
+    onSpendCredits: (Int) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
+        colors = CardDefaults.cardColors(containerColor = KidCardWhite),
+        border = androidx.compose.foundation.BorderStroke(1.dp, KidBorder)
     ) {
         Column(
             modifier = Modifier.padding(20.dp)
@@ -423,12 +429,12 @@ fun TaskCreditHeroCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    color = Color(0xFF1E293B),
+                    color = Color(0xFFEFF6FF),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "TASK CREDIT RULE (2:1)",
-                        color = Color(0xFF38BDF8),
+                        color = KidBlue,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
@@ -436,12 +442,13 @@ fun TaskCreditHeroCard(
                 }
 
                 Surface(
-                    color = Color(0xFF0284C7).copy(alpha = 0.25f),
-                    shape = RoundedCornerShape(12.dp)
+                    color = Color(0xFFEFF6FF),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE))
                 ) {
                     Text(
                         text = "2 Credits = 1 Min Screen Time",
-                        color = Color(0xFF7DD3FC),
+                        color = KidBlue,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -453,16 +460,53 @@ fun TaskCreditHeroCard(
 
             Text(
                 text = "${wallet.totalCredits} Credits Available",
-                color = Color.White,
+                color = KidTextDark,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = "Equivalent to ${wallet.remainingMinutes} mins (${wallet.equivalentScreenTimeFormatted}) screen time",
-                color = Color(0xFF94A3B8),
+                color = KidTextMuted,
                 fontSize = 13.sp
             )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Quick Convert & Request merged section
+            Text(
+                text = "Quick Convert to Screen Time:",
+                color = KidTextDark,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(10 to 5, 20 to 10, 40 to 20).forEach { (pts, mins) ->
+                    val isAffordable = wallet.totalCredits >= pts
+                    OutlinedButton(
+                        onClick = { onSpendCredits(pts) },
+                        enabled = isAffordable,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (isAffordable) Color(0xFFEFF6FF) else Color(0xFFF1F5F9),
+                            contentColor = if (isAffordable) KidBlue else KidTextMuted
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isAffordable) Color(0xFFBFDBFE) else Color(0xFFE2E8F0)),
+                        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 4.dp)
+                    ) {
+                        Text(
+                            text = "+${mins}m ($pts pts)",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -472,23 +516,23 @@ fun TaskCreditHeroCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Complete parent quests to earn credits.\nRewards unlock screen time upon parent approval.",
-                    color = Color(0xFFCBD5E1),
+                    text = "Complete parent quests to earn credits, or request rewards for custom tasks.",
+                    color = KidTextMuted,
                     fontSize = 11.sp,
                     lineHeight = 16.sp,
                     modifier = Modifier.weight(1f)
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
 
                 Button(
                     onClick = onRequestCreditsClick,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2563EB),
+                        containerColor = KidBlue,
                         contentColor = Color.White
                     ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Text("+ Request", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }

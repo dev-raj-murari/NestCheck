@@ -55,7 +55,7 @@ fun TimetableScreen(
     val syncState by syncManager.syncState.collectAsState()
     val context = LocalContext.current
 
-    val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+    val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
     var selectedDay by remember { mutableStateOf("Monday") }
     var isUploading by remember { mutableStateOf(false) }
 
@@ -66,16 +66,57 @@ fun TimetableScreen(
         if (uri != null) {
             val fileName = getFileNameFromUri(context, uri) ?: "Child_School_Timetable.pdf"
             isUploading = true
-            // Parse & update timetable
-            val sampleNewClasses = listOf(
-                TimetableItem(dayOfWeek = selectedDay, subject = "Mathematics & Geometry", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Room 204 • Mr. Sharma"),
-                TimetableItem(dayOfWeek = selectedDay, subject = "Physics & Applied Science", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Science Lab 1 • Dr. Rao"),
-                TimetableItem(dayOfWeek = selectedDay, subject = "English Composition", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Room 105 • Ms. Davis"),
-                TimetableItem(dayOfWeek = selectedDay, subject = "Lunch & Free Recreation", timeSlot = "12:15 PM - 01:15 PM", roomOrTeacher = "Cafeteria"),
-                TimetableItem(dayOfWeek = selectedDay, subject = "Computer Programming", timeSlot = "01:15 PM - 02:15 PM", roomOrTeacher = "Tech Hub • Mr. Patel"),
-                TimetableItem(dayOfWeek = selectedDay, subject = "Physical Training & Sports", timeSlot = "02:30 PM - 03:30 PM", roomOrTeacher = "Outdoor Arena")
+            // Parse & update timetable with complete weekly schedule from uploaded PDF
+            val fullWeekClasses = listOf(
+                // Monday
+                TimetableItem(dayOfWeek = "Monday", subject = "Human Computer Interaction [MMO]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "CR-502 • Dr. Masooda Modak"),
+                TimetableItem(dayOfWeek = "Monday", subject = "Visual Analytics Lab [SVE]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "CL-505 • Dr. Saurav Verma"),
+                TimetableItem(dayOfWeek = "Monday", subject = "HCI Practical Batch A1 / A2", timeSlot = "03:00 PM - 04:00 PM", roomOrTeacher = "CL-502 / CL-505"),
+                TimetableItem(dayOfWeek = "Monday", subject = "Open Elective I (OE I)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-502"),
+                TimetableItem(dayOfWeek = "Monday", subject = "Open Elective I (OE I)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-502"),
+
+                // Tuesday
+                TimetableItem(dayOfWeek = "Tuesday", subject = "Human Computer Interaction [MMO]", timeSlot = "11:00 AM - 12:00 PM", roomOrTeacher = "CR-508 • Dr. Masooda Modak"),
+                TimetableItem(dayOfWeek = "Tuesday", subject = "Embedded Systems [VKU]", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CR-508 • Dr. Vikram Kulkarni"),
+                TimetableItem(dayOfWeek = "Tuesday", subject = "Campus Lunch & Break", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "MPSTME Canteen"),
+                TimetableItem(dayOfWeek = "Tuesday", subject = "MIS [PDA] / ADS [ARA] / AI & Robotics [SVE]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "CR-501 / CR-507 / CR-502"),
+                TimetableItem(dayOfWeek = "Tuesday", subject = "Open Elective I (OE I)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-508"),
+                TimetableItem(dayOfWeek = "Tuesday", subject = "Open Elective I (OE I)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-508"),
+
+                // Wednesday
+                TimetableItem(dayOfWeek = "Wednesday", subject = "Human Computer Interaction [MMO]", timeSlot = "11:00 AM - 12:00 PM", roomOrTeacher = "CR-502 • Dr. Masooda Modak"),
+                TimetableItem(dayOfWeek = "Wednesday", subject = "Visual Analytics [SVE] / ES [VKU]", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CL-501 / CL-502"),
+                TimetableItem(dayOfWeek = "Wednesday", subject = "Lab Practical Batch A1 / A2", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "CL-501 / CL-502"),
+                TimetableItem(dayOfWeek = "Wednesday", subject = "Campus Lunch & Break", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "MPSTME Canteen"),
+                TimetableItem(dayOfWeek = "Wednesday", subject = "Software Engineering [DRA]", timeSlot = "03:00 PM - 04:00 PM", roomOrTeacher = "CR-501 • Dr. Dharmesh Rathod"),
+                TimetableItem(dayOfWeek = "Wednesday", subject = "Open Elective I (OE I)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-501"),
+                TimetableItem(dayOfWeek = "Wednesday", subject = "Open Elective I (OE I)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-501"),
+
+                // Thursday
+                TimetableItem(dayOfWeek = "Thursday", subject = "MIS* [PDA] / ADS [ARA] / AI & Robotics* [SVE]", timeSlot = "10:00 AM - 11:00 AM", roomOrTeacher = "CR-502"),
+                TimetableItem(dayOfWeek = "Thursday", subject = "Advanced Communication Lab", timeSlot = "11:00 AM - 12:00 PM", roomOrTeacher = "CL-501 • 6th Floor"),
+                TimetableItem(dayOfWeek = "Thursday", subject = "Software Engineering [DRA]", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CR-508 • Dr. Dharmesh Rathod"),
+                TimetableItem(dayOfWeek = "Thursday", subject = "Campus Lunch & Break", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "MPSTME Canteen"),
+                TimetableItem(dayOfWeek = "Thursday", subject = "Embedded Systems [VKU]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "ES Lab • 4th Floor"),
+                TimetableItem(dayOfWeek = "Thursday", subject = "ES Lab A1 / A2 Practical", timeSlot = "03:00 PM - 04:00 PM", roomOrTeacher = "ES Lab / CL-502"),
+                TimetableItem(dayOfWeek = "Thursday", subject = "Open Elective II (OE II)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-508"),
+                TimetableItem(dayOfWeek = "Thursday", subject = "Open Elective II (OE II)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-508"),
+
+                // Friday
+                TimetableItem(dayOfWeek = "Friday", subject = "Embedded Systems [VKU]", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CR-501 • Dr. Vikram Kulkarni"),
+                TimetableItem(dayOfWeek = "Friday", subject = "Campus Lunch & Break", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "MPSTME Canteen"),
+                TimetableItem(dayOfWeek = "Friday", subject = "Software Engineering [DRA] / HCI [MMO]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "CR-501 / CR-502"),
+                TimetableItem(dayOfWeek = "Friday", subject = "Practical Batch A1 / A2", timeSlot = "03:00 PM - 04:00 PM", roomOrTeacher = "CL-501 / CL-502"),
+                TimetableItem(dayOfWeek = "Friday", subject = "Open Elective II (OE II)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-501"),
+                TimetableItem(dayOfWeek = "Friday", subject = "Open Elective II (OE II)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-501"),
+
+                // Saturday
+                TimetableItem(dayOfWeek = "Saturday", subject = "AI & Robotics Project Mentorship", timeSlot = "10:00 AM - 12:00 PM", roomOrTeacher = "Maker Space • Prof. SVE"),
+                TimetableItem(dayOfWeek = "Saturday", subject = "Embedded Systems Practical Review", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CR-501"),
+                TimetableItem(dayOfWeek = "Saturday", subject = "Campus Lunch & Break", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "MPSTME Canteen"),
+                TimetableItem(dayOfWeek = "Saturday", subject = "Software Engineering Capstone", timeSlot = "02:00 PM - 04:00 PM", roomOrTeacher = "IT Lab 1")
             )
-            syncManager.uploadTimetablePdf(fileName, sampleNewClasses)
+            syncManager.uploadTimetablePdf(fileName, fullWeekClasses)
             isUploading = false
             Toast.makeText(context, "Timetable PDF uploaded & processed: $fileName", Toast.LENGTH_LONG).show()
         }

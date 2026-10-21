@@ -161,32 +161,53 @@ data class FamilySyncState(
     val timetablePdfName: String = "MPSTME_NMIMS_Timetable.pdf",
     val timetableSyncedToCalendar: Boolean = false,
     val timetableItems: List<TimetableItem> = listOf(
-        TimetableItem(dayOfWeek = "Monday", subject = "Engineering Mathematics", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "MPSTME Room 402 • Dr. Sharma"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Data Structures & Algorithms", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Lab 5 • Prof. Rao"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Digital Logic & Computer Design", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "MPSTME Room 301 • Dr. Davis"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Campus Lunch & Break", timeSlot = "12:15 PM - 01:15 PM", roomOrTeacher = "MPSTME Canteen"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Object Oriented Programming (Java)", timeSlot = "01:15 PM - 02:15 PM", roomOrTeacher = "IT Lab 2 • Prof. Patel"),
-        TimetableItem(dayOfWeek = "Monday", subject = "Database Management Systems", timeSlot = "02:30 PM - 03:30 PM", roomOrTeacher = "MPSTME Room 405"),
+        // Monday
+        TimetableItem(dayOfWeek = "Monday", subject = "Human Computer Interaction [MMO]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "CR-502 • Dr. Masooda Modak"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Visual Analytics Lab [SVE]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "CL-505 • Dr. Saurav Verma"),
+        TimetableItem(dayOfWeek = "Monday", subject = "HCI Practical Batch A1 / A2", timeSlot = "03:00 PM - 04:00 PM", roomOrTeacher = "CL-502 / CL-505"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Open Elective I (OE I)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-502"),
+        TimetableItem(dayOfWeek = "Monday", subject = "Open Elective I (OE I)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-502"),
 
-        TimetableItem(dayOfWeek = "Tuesday", subject = "Operating Systems", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "MPSTME Room 402 • Dr. Mehta"),
-        TimetableItem(dayOfWeek = "Tuesday", subject = "Computer Networks", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Lab 3 • Prof. Gupta"),
-        TimetableItem(dayOfWeek = "Tuesday", subject = "Software Engineering", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "MPSTME Room 302 • Dr. Roy"),
-        TimetableItem(dayOfWeek = "Tuesday", subject = "AI & Machine Learning Seminar", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "MPSTME Auditorium"),
+        // Tuesday
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Human Computer Interaction [MMO]", timeSlot = "11:00 AM - 12:00 PM", roomOrTeacher = "CR-508 • Dr. Masooda Modak"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Embedded Systems [VKU]", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CR-508 • Dr. Vikram Kulkarni"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Campus Lunch & Break", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "MPSTME Canteen"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "MIS [PDA] / ADS [ARA] / AI & Robotics [SVE]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "CR-501 / CR-507 / CR-502"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Open Elective I (OE I)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-508"),
+        TimetableItem(dayOfWeek = "Tuesday", subject = "Open Elective I (OE I)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-508"),
 
-        TimetableItem(dayOfWeek = "Wednesday", subject = "Discrete Mathematics", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "MPSTME Room 402 • Dr. Sharma"),
-        TimetableItem(dayOfWeek = "Wednesday", subject = "Python & Web Technologies Lab", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "Lab 1 • Prof. Wilson"),
-        TimetableItem(dayOfWeek = "Wednesday", subject = "Microprocessors & Interfacing", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Hardware Lab • Dr. Sen"),
-        TimetableItem(dayOfWeek = "Wednesday", subject = "Technical Communication & Ethics", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "MPSTME Room 204"),
+        // Wednesday
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Human Computer Interaction [MMO]", timeSlot = "11:00 AM - 12:00 PM", roomOrTeacher = "CR-502 • Dr. Masooda Modak"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Visual Analytics [SVE] / ES [VKU]", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CL-501 / CL-502"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Lab Practical Batch A1 / A2", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "CL-501 / CL-502"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Campus Lunch & Break", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "MPSTME Canteen"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Software Engineering [DRA]", timeSlot = "03:00 PM - 04:00 PM", roomOrTeacher = "CR-501 • Dr. Dharmesh Rathod"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Open Elective I (OE I)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-501"),
+        TimetableItem(dayOfWeek = "Wednesday", subject = "Open Elective I (OE I)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-501"),
 
-        TimetableItem(dayOfWeek = "Thursday", subject = "Cloud Computing & DevOps", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "Cloud Lab • Prof. Rao"),
-        TimetableItem(dayOfWeek = "Thursday", subject = "Information Security", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "MPSTME Room 301 • Dr. Desai"),
-        TimetableItem(dayOfWeek = "Thursday", subject = "Algorithms Analysis Lab", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "Lab 5 • Prof. Rao"),
-        TimetableItem(dayOfWeek = "Thursday", subject = "Robotics & IoT Project Work", timeSlot = "01:15 PM - 02:30 PM", roomOrTeacher = "Maker Space"),
+        // Thursday
+        TimetableItem(dayOfWeek = "Thursday", subject = "MIS* [PDA] / ADS [ARA] / AI & Robotics* [SVE]", timeSlot = "10:00 AM - 11:00 AM", roomOrTeacher = "CR-502"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Advanced Communication Lab", timeSlot = "11:00 AM - 12:00 PM", roomOrTeacher = "CL-501 • 6th Floor"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Software Engineering [DRA]", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CR-508 • Dr. Dharmesh Rathod"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Campus Lunch & Break", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "MPSTME Canteen"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Embedded Systems [VKU]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "ES Lab • 4th Floor"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "ES Lab A1 / A2 Practical", timeSlot = "03:00 PM - 04:00 PM", roomOrTeacher = "ES Lab / CL-502"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Open Elective II (OE II)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-508"),
+        TimetableItem(dayOfWeek = "Thursday", subject = "Open Elective II (OE II)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-508"),
 
-        TimetableItem(dayOfWeek = "Friday", subject = "Weekly Engineering Quiz", timeSlot = "08:30 AM - 09:30 AM", roomOrTeacher = "MPSTME Room 402"),
-        TimetableItem(dayOfWeek = "Friday", subject = "Applied Statistics & Probability", timeSlot = "09:45 AM - 11:00 AM", roomOrTeacher = "MPSTME Room 405"),
-        TimetableItem(dayOfWeek = "Friday", subject = "Library / Independent Research", timeSlot = "11:15 AM - 12:15 PM", roomOrTeacher = "MPSTME Central Library"),
-        TimetableItem(dayOfWeek = "Friday", subject = "Student Project Mentorship", timeSlot = "01:15 PM - 03:00 PM", roomOrTeacher = "Innovation Lab")
+        // Friday
+        TimetableItem(dayOfWeek = "Friday", subject = "Embedded Systems [VKU]", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CR-501 • Dr. Vikram Kulkarni"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Campus Lunch & Break", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "MPSTME Canteen"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Software Engineering [DRA] / HCI [MMO]", timeSlot = "02:00 PM - 03:00 PM", roomOrTeacher = "CR-501 / CR-502"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Practical Batch A1 / A2", timeSlot = "03:00 PM - 04:00 PM", roomOrTeacher = "CL-501 / CL-502"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Open Elective II (OE II)", timeSlot = "04:00 PM - 05:00 PM", roomOrTeacher = "CR-501"),
+        TimetableItem(dayOfWeek = "Friday", subject = "Open Elective II (OE II)", timeSlot = "05:00 PM - 06:00 PM", roomOrTeacher = "CR-501"),
+
+        // Saturday
+        TimetableItem(dayOfWeek = "Saturday", subject = "AI & Robotics Project Mentorship", timeSlot = "10:00 AM - 12:00 PM", roomOrTeacher = "Maker Space • Prof. SVE"),
+        TimetableItem(dayOfWeek = "Saturday", subject = "Embedded Systems Practical Review", timeSlot = "12:00 PM - 01:00 PM", roomOrTeacher = "CR-501"),
+        TimetableItem(dayOfWeek = "Saturday", subject = "Campus Lunch & Break", timeSlot = "01:00 PM - 02:00 PM", roomOrTeacher = "MPSTME Canteen"),
+        TimetableItem(dayOfWeek = "Saturday", subject = "Software Engineering Capstone", timeSlot = "02:00 PM - 04:00 PM", roomOrTeacher = "IT Lab 1")
     )
 )
 
@@ -238,7 +259,7 @@ class RealtimeFamilySyncManager @Inject constructor(
             activeParentName = preferences.parentName,
             childAge = preferences.activeChildAge,
             householdChildren = listOf(
-                ChildProfile(uid = "child_1", name = preferences.activeChildName, age = preferences.activeChildAge, gender = preferences.activeChildGender, avatarUrl = preferences.activeChildAvatar, grade = preferences.activeChildGrade),
+                ChildProfile(uid = "child_leo", name = "Leo", age = 11, gender = "Boy", avatarUrl = "🦊", grade = "Grade 6"),
                 ChildProfile(uid = "child_olivia", name = "Olivia", age = 9, gender = "Girl", avatarUrl = "🦄", grade = "Grade 4"),
                 ChildProfile(uid = "child_aarav", name = "Aarav", age = 10, gender = "Boy", avatarUrl = "🚀", grade = "Grade 5")
             ),
@@ -263,11 +284,6 @@ class RealtimeFamilySyncManager @Inject constructor(
         val activeName = preferences.activeChildName
         val activeAvatar = preferences.activeChildAvatar
         val activeAge = preferences.activeChildAge
-        val updatedKids = _syncState.value.householdChildren.map {
-            if (it.uid == "child_1" || it.uid == "child_leo" || it.name.equals(activeName, ignoreCase = true) || it.name.equals(_syncState.value.activeChildName, ignoreCase = true)) {
-                it.copy(name = activeName, avatarUrl = activeAvatar, age = activeAge)
-            } else it
-        }
         _syncState.value = _syncState.value.copy(
             isDeviceLocked = preferences.isDeviceLocked,
             geofenceBreachActive = preferences.geofenceBreachActive,
@@ -278,10 +294,9 @@ class RealtimeFamilySyncManager @Inject constructor(
             locationAddress = preferences.locationAddress,
             kidBattery = preferences.kidBattery,
             timetableSyncedToCalendar = preferences.timetableSyncedToCalendar,
-            activeChildName = activeName,
-            activeChildAvatar = activeAvatar,
-            childAge = activeAge,
-            householdChildren = updatedKids,
+            activeChildName = if (activeName.isNotBlank()) activeName else _syncState.value.activeChildName,
+            activeChildAvatar = if (activeAvatar.isNotBlank()) activeAvatar else _syncState.value.activeChildAvatar,
+            childAge = if (activeAge > 0) activeAge else _syncState.value.childAge,
             childCredits = preferences.childCredits
         )
     }
@@ -390,8 +405,14 @@ class RealtimeFamilySyncManager @Inject constructor(
                             latitude = lat,
                             longitude = lng
                         )
+                        val prevAlert = _syncState.value.activeGeofenceAlert
                         _syncState.value = _syncState.value.copy(activeGeofenceAlert = alert, geofenceBreachActive = !isDismiss)
                         preferences.geofenceBreachActive = !isDismiss
+
+                        if (!isDismiss && (prevAlert == null || prevAlert.id != id)) {
+                            val addr = if (time.isNotBlank()) "$school ($time)" else school
+                            notificationManager.showGeofenceAlert(child, school, isExit = true, address = addr, lat = lat, lng = lng)
+                        }
                     }
                     override fun onCancelled(error: DatabaseError) {}
                 })
@@ -420,7 +441,42 @@ class RealtimeFamilySyncManager @Inject constructor(
                             customNote = note,
                             isParentAcknowledged = ack
                         )
+                        val prevCheckIn = _syncState.value.latestCheckIn
                         _syncState.value = _syncState.value.copy(latestCheckIn = checkIn)
+                        if (!ack && (prevCheckIn == null || prevCheckIn.id != id)) {
+                            val timeStr = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault()).format(java.util.Date(ts))
+                            notificationManager.showSafeCheckInNotification(child, label.ifBlank { "MPSTME Campus" }, timeStr)
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+
+            // 6. Real-Time Timetable Sync Listener
+            rtdb?.getReference("family")?.child("timetable")
+                ?.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (!snapshot.exists()) return
+                        val pdfName = snapshot.child("pdfName").getValue(String::class.java) ?: _syncState.value.timetablePdfName
+                        val synced = snapshot.child("syncedToCalendar").getValue(Boolean::class.java) ?: _syncState.value.timetableSyncedToCalendar
+                        val itemsSnapshot = snapshot.child("items")
+                        val items = mutableListOf<TimetableItem>()
+                        for (childSnap in itemsSnapshot.children) {
+                            val day = childSnap.child("dayOfWeek").getValue(String::class.java) ?: ""
+                            val subject = childSnap.child("subject").getValue(String::class.java) ?: ""
+                            val timeSlot = childSnap.child("timeSlot").getValue(String::class.java) ?: ""
+                            val room = childSnap.child("roomOrTeacher").getValue(String::class.java) ?: ""
+                            val id = childSnap.child("id").getValue(String::class.java) ?: java.util.UUID.randomUUID().toString()
+                            if (subject.isNotBlank()) {
+                                items.add(TimetableItem(id = id, dayOfWeek = day, subject = subject, timeSlot = timeSlot, roomOrTeacher = room))
+                            }
+                        }
+                        if (items.isNotEmpty()) {
+                            _syncState.value = _syncState.value.copy(
+                                timetablePdfName = pdfName,
+                                timetableSyncedToCalendar = synced,
+                                timetableItems = items
+                            )
+                        }
                     }
                     override fun onCancelled(error: DatabaseError) {}
                 })
@@ -512,17 +568,10 @@ class RealtimeFamilySyncManager @Inject constructor(
         preferences.activeChildAvatar = finalAvatar
         preferences.activeChildAge = finalAge
 
-        val updatedKids = _syncState.value.householdChildren.map {
-            if (it.name.equals(name, ignoreCase = true) || it.name.equals(_syncState.value.activeChildName, ignoreCase = true)) {
-                it.copy(name = name, avatarUrl = finalAvatar, age = finalAge)
-            } else it
-        }
-
         _syncState.value = _syncState.value.copy(
             activeChildName = name,
             activeChildAvatar = finalAvatar,
-            childAge = finalAge,
-            householdChildren = updatedKids
+            childAge = finalAge
         )
 
         scope.launch {
@@ -1262,7 +1311,7 @@ class RealtimeFamilySyncManager @Inject constructor(
         preferences.dailyLimitMinutes = dailyLimitMinutes
 
         val updatedKids = _syncState.value.householdChildren.map {
-            if (it.uid == "child_1" || it.uid == "child_leo" || it.name.equals(name, ignoreCase = true) || it.name.equals(_syncState.value.activeChildName, ignoreCase = true)) {
+            if (it.name.equals(name, ignoreCase = true) || it.name.equals(_syncState.value.activeChildName, ignoreCase = true)) {
                 it.copy(name = name, age = age, avatarUrl = avatar)
             } else it
         }
@@ -1319,6 +1368,12 @@ class RealtimeFamilySyncManager @Inject constructor(
             timetableSyncedToCalendar = false
         )
         preferences.timetableSyncedToCalendar = false
+        try {
+            val timetableRef = rtdb?.getReference("family")?.child("timetable")
+            timetableRef?.child("pdfName")?.setValue(fileName)
+            timetableRef?.child("syncedToCalendar")?.setValue(false)
+            timetableRef?.child("items")?.setValue(newItems)
+        } catch (e: Exception) {}
         scope.launch {
             try {
                 firestore?.collection("nestcheck_families")
@@ -1337,6 +1392,9 @@ class RealtimeFamilySyncManager @Inject constructor(
     fun setTimetableCalendarSynced(synced: Boolean) {
         _syncState.value = _syncState.value.copy(timetableSyncedToCalendar = synced)
         preferences.timetableSyncedToCalendar = synced
+        try {
+            rtdb?.getReference("family")?.child("timetable")?.child("syncedToCalendar")?.setValue(synced)
+        } catch (e: Exception) {}
         scope.launch {
             try {
                 firestore?.collection("nestcheck_families")
